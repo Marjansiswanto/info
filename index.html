@@ -83,6 +83,102 @@
   <div class="cell"><div class="num">+120%</div><div class="label">Pertumbuhan pengguna usia 40–49 sejak 2023</div></div>
 </div>
 
+<!-- ===== SCIE WEATHER GLOBE — kartu fitur + modal (disisipkan) ===== -->
+<style>
+  .scie-feature-section { padding: 40px clamp(16px,4vw,60px); }
+  .scie-feature-card {
+    position: relative; max-width: 640px; margin: 0 auto;
+    background: linear-gradient(135deg, rgba(20,14,4,0.9), rgba(6,4,2,0.95));
+    border: 1px solid #3a2a12; border-radius: 14px; padding: 22px 26px;
+    display:flex; align-items:center; gap:20px; cursor:pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .scie-feature-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,159,10,0.15); }
+  .scie-preview-globe {
+    flex: 0 0 74px; width: 74px; height: 74px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe3a3, #d98a1c 55%, #2a1a02 100%);
+    box-shadow: 0 0 22px rgba(255,159,10,0.35), inset -8px -8px 20px rgba(0,0,0,0.4);
+    animation: scie-spin 7s linear infinite; position: relative;
+  }
+  .scie-preview-globe::before, .scie-preview-globe::after {
+    content:''; position:absolute; border:1px solid rgba(255,230,180,0.25); border-radius:50%;
+  }
+  .scie-preview-globe::before { inset: 10%; }
+  .scie-preview-globe::after { inset: 25%; }
+  @keyframes scie-spin { from { filter:hue-rotate(0deg); } to { filter:hue-rotate(20deg); } }
+  .scie-feature-text { flex: 1; }
+  .scie-feature-card .badge {
+    display:inline-block; font-size:10px; letter-spacing:1px; color:#ffb84d;
+    border:1px solid #3a2a12; padding:2px 8px; border-radius:20px; margin-bottom:8px;
+  }
+  .scie-feature-card h3 { margin:0 0 6px 0; font-size:17px; color:#fff5e6; }
+  .scie-feature-card p { margin:0 0 10px 0; font-size:12.5px; line-height:1.55; color:#d9b98a; }
+  .scie-cta { font-size:12px; color:#ffb84d; font-weight:bold; }
+  .scie-cta span:last-child { display:inline-block; transition: transform 0.2s; }
+  .scie-feature-card:hover .scie-cta span:last-child { transform: translateX(4px); }
+
+  #scie-modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:9999;
+  }
+  #scie-modal-overlay.open { display:flex; align-items:center; justify-content:center; }
+  #scie-modal-box { width:94vw; height:90vh; background:#000; border:1px solid #3a2a12; border-radius:12px; overflow:hidden; position:relative; }
+  #scie-modal-box iframe { width:100%; height:100%; border:none; }
+  #scie-modal-close {
+    position:absolute; top:10px; right:14px; z-index:2; background:rgba(20,14,4,0.85);
+    color:#ffe3a3; border:1px solid #3a2a12; width:34px; height:34px; border-radius:50%; font-size:16px; cursor:pointer;
+  }
+  #scie-modal-loading {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#ffb84d; font-family:'Courier New',monospace; font-size:13px; background:#000;
+  }
+</style>
+
+<section class="scie-feature-section">
+  <div class="scie-feature-card" onclick="scieOpenGlobe()" data-src="scie-weather-globe.html">
+    <div class="scie-preview-globe"></div>
+    <div class="scie-feature-text">
+      <span class="badge">SCIE TOOL &middot; LIVE DATA</span>
+      <h3>Weather &amp; Thermal Globe</h3>
+      <p>Jelajahi data cuaca dan suhu permukaan dari seluruh dunia lewat globe 3D interaktif — klik lokasi, atur rentang waktu, unduh sebagai tabel (PDF/Word) atau JSON untuk kebutuhan riset.</p>
+      <div class="scie-cta"><span>Buka Animasi Globe</span> <span>&#8594;</span></div>
+    </div>
+  </div>
+</section>
+
+<div id="scie-modal-overlay">
+  <div id="scie-modal-box">
+    <button id="scie-modal-close" onclick="scieCloseGlobe()">&times;</button>
+    <div id="scie-modal-loading">Memuat globe cuaca...</div>
+    <iframe id="scie-modal-iframe" src="" title="SCIE Weather Globe"></iframe>
+  </div>
+</div>
+
+<script>
+  function scieOpenGlobe(){
+    const overlay = document.getElementById('scie-modal-overlay');
+    const iframe = document.getElementById('scie-modal-iframe');
+    const loading = document.getElementById('scie-modal-loading');
+    const card = document.querySelector('.scie-feature-card');
+    loading.style.display = 'flex';
+    iframe.src = card.getAttribute('data-src');
+    iframe.onload = () => { loading.style.display = 'none'; };
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function scieCloseGlobe(){
+    document.getElementById('scie-modal-overlay').classList.remove('open');
+    document.getElementById('scie-modal-iframe').src = '';
+    document.body.style.overflow = '';
+  }
+  document.getElementById('scie-modal-overlay').addEventListener('click', function(e){
+    if (e.target === this) scieCloseGlobe();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') scieCloseGlobe();
+  });
+</script>
+<!-- ===== akhir sisipan SCIE Weather Globe ===== -->
+
 <main>
 
   <section class="block" id="ringkasan">
