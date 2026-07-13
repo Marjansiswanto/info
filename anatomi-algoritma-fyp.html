@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomi Algoritma FYP — INFOSCIE</title>
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://celadon-fudge-908022.netlify.app/anatomi-algoritma-fyp.html">
+<meta property="og:title" content="Kenapa Konten Bagus Tetap Tidak Viral? Ini Yang Terjadi di Balik Layar FYP">
+<meta property="og:description" content="Bukan soal jam posting atau hashtag. Bongkar 5 tahap sistem AI Facebook menentukan siapa yang lihat kontenmu — dan sinyal mana yang paling menentukan.">
+<meta property="og:image" content="https://celadon-fudge-908022.netlify.app/og-anatomi-algoritma-fyp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="INFOSCIE — FIDI-SCIE Intelligence Brief">
+<meta property="og:locale" content="id_ID">
+
+<!-- Twitter Card (juga dibaca beberapa aplikasi lain) -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kenapa Konten Bagus Tetap Tidak Viral? Ini Yang Terjadi di Balik Layar FYP">
+<meta name="twitter:description" content="Bongkar 5 tahap sistem AI Facebook menentukan distribusi kontenmu.">
+<meta name="twitter:image" content="https://celadon-fudge-908022.netlify.app/og-anatomi-algoritma-fyp.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12151A;
+    --panel:#181C23;
+    --panel-alt:#1E232B;
+    --orange:#FF6A1A;
+    --orange-dim:rgba(255,106,26,0.14);
+    --text-primary:#E8EAED;
+    --text-secondary:#9AA2AD;
+    --text-muted:#6B7280;
+    --border:#2A3038;
+    --t0:#3DDC84;
+    --t1:#3D9BE9;
+    --t2:#F5A623;
+    --t3:#E23D3D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'Inter',sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--orange-dim); color:var(--orange); }
+
+  a{ color:var(--orange); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 32px;
+    background:rgba(18,21,26,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px; letter-spacing:0.12em;
+    color:var(--text-secondary);
+  }
+  .brand span{ color:var(--orange); }
+  .topbar nav a{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:var(--text-secondary);
+    margin-left:24px; letter-spacing:0.04em;
+  }
+  .topbar nav a:hover{ color:var(--orange); text-decoration:none; }
+
+  .live-clock{
+    display:flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--text-secondary);
+    border:1px solid rgba(255,255,255,0.08); border-radius:3px; padding:6px 12px;
+    white-space:nowrap;
+  }
+  .live-clock .dot-live{
+    width:6px; height:6px; border-radius:50%; background:#3DDC84;
+    box-shadow:0 0 6px #3DDC84; flex:none;
+    animation:pulse-live 2s ease-in-out infinite;
+  }
+  @keyframes pulse-live{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .live-clock .clock-time{color:var(--text-primary); font-weight:600;}
+  .live-clock .clock-date{color:var(--text-secondary); font-size:10.5px;}
+  #google_translate_element{ display:none; }
+  .goog-te-banner-frame{ display:none !important; }
+  body{ top:0 !important; }
+  .lang-badge{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-secondary);
+    border:1px solid rgba(255,255,255,0.08); border-radius:3px; padding:6px 10px;
+    cursor:pointer; background:transparent;
+  }
+  .lang-badge:hover{ border-color:var(--orange); color:var(--orange); }
+  @media (max-width:560px){ .live-clock .clock-date{ display:none; } }
+
+  .wrap{ max-width:900px; margin:0 auto; padding:0 24px; }
+
+  .hero{
+    padding:64px 0 40px;
+    border-bottom:1px solid var(--border);
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--orange); background:var(--orange-dim);
+    border:1px solid rgba(255,106,26,0.35);
+    padding:5px 10px; border-radius:3px;
+    margin-bottom:20px;
+  }
+  h1.title{
+    font-family:'Rajdhani',sans-serif;
+    font-weight:700;
+    font-size:44px;
+    line-height:1.12;
+    letter-spacing:0.01em;
+    color:#fff;
+    margin-bottom:18px;
+  }
+  .subtitle{
+    font-size:17px; color:var(--text-secondary); max-width:640px;
+    margin-bottom:28px;
+  }
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px; letter-spacing:0.03em;
+    padding:6px 11px; border-radius:3px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text-secondary);
+  }
+  .dot{ width:7px; height:7px; border-radius:50%; flex:none; }
+  .dot.t1{ background:var(--t0); }
+  .dot.t2{ background:var(--t2); }
+  .dot.t3{ background:var(--t3); }
+
+  .layout{
+    display:grid;
+    grid-template-columns:1fr 200px;
+    gap:48px;
+    padding:44px 0 100px;
+  }
+  @media (max-width:760px){ .layout{ grid-template-columns:1fr; } .toc{ display:none; } }
+
+  main section{ margin-bottom:44px; scroll-margin-top:90px; }
+  main h2{
+    font-family:'Rajdhani',sans-serif;
+    font-weight:600;
+    font-size:24px;
+    color:var(--orange);
+    letter-spacing:0.01em;
+    margin-bottom:6px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--border);
+  }
+  main h2 .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px; color:var(--text-muted);
+    margin-right:10px;
+  }
+  main p{
+    font-size:15.5px; color:#CBD1D9;
+    margin-top:16px;
+  }
+  main ul{ margin-top:14px; padding-left:20px; }
+  main li{ font-size:15px; color:#CBD1D9; margin-bottom:9px; }
+  main li::marker{ color:var(--orange); }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:22px;
+    margin-top:18px;
+  }
+  .panel-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:14px;
+  }
+
+  table{
+    width:100%; border-collapse:collapse;
+    margin-top:16px;
+    font-size:13.5px;
+  }
+  caption{
+    caption-side:bottom; text-align:left;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px; color:var(--text-muted);
+    padding-top:10px;
+  }
+  thead th{
+    background:#20262F;
+    color:var(--text-secondary);
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:500; font-size:11.5px; letter-spacing:0.05em; text-transform:uppercase;
+    text-align:left;
+    padding:10px 12px;
+    border-bottom:1px solid var(--border);
+  }
+  tbody td{
+    padding:11px 12px;
+    border-bottom:1px solid var(--border);
+    color:#CBD1D9;
+    vertical-align:top;
+  }
+  tbody tr:nth-child(even){ background:rgba(255,255,255,0.015); }
+  tbody tr:hover{ background:rgba(255,106,26,0.04); }
+  td.mono, th.mono{ font-family:'IBM Plex Mono',monospace; }
+
+  .pipeline{
+    display:flex; flex-direction:column; gap:0; margin-top:18px;
+  }
+  .pstep{
+    display:grid; grid-template-columns:44px 1fr; gap:16px;
+    padding:16px 0;
+    border-left:2px solid var(--border);
+    padding-left:20px;
+    position:relative;
+  }
+  .pstep:not(:last-child){ border-left-color:var(--border); }
+  .pstep::before{
+    content:'';
+    position:absolute; left:-6px; top:22px;
+    width:10px; height:10px; border-radius:50%;
+    background:var(--orange);
+    box-shadow:0 0 0 4px var(--bg);
+  }
+  .pstep .pnum{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--orange); font-size:13px; padding-top:1px;
+  }
+  .pstep .pname{
+    font-family:'Rajdhani',sans-serif; font-weight:600; font-size:16.5px; color:#fff;
+  }
+  .pstep .pdesc{ font-size:14px; color:var(--text-secondary); margin-top:4px; }
+
+  .signal-bar{ height:6px; border-radius:3px; background:var(--border); overflow:hidden; margin-top:6px; }
+  .signal-bar > i{ display:block; height:100%; background:var(--orange); }
+
+  .toc{ position:sticky; top:80px; align-self:start; }
+  .toc-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--text-muted); margin-bottom:12px;
+  }
+  .toc a{
+    display:block; font-size:13px; color:var(--text-secondary);
+    padding:6px 0; border-left:2px solid transparent; padding-left:12px;
+  }
+  .toc a:hover{ color:var(--orange); border-left-color:var(--orange); text-decoration:none; }
+
+  .callout{
+    border-left:3px solid var(--orange);
+    background:var(--orange-dim);
+    padding:16px 18px;
+    border-radius:0 6px 6px 0;
+    margin-top:20px;
+  }
+  .callout p{ margin-top:0; color:#E8CFC0; font-size:14.5px; }
+
+  .refs{ list-style:none; padding:0; margin-top:16px; }
+  .refs li{
+    font-size:13.5px; color:var(--text-secondary);
+    padding:10px 0; border-bottom:1px solid var(--border);
+    display:flex; gap:10px;
+  }
+  .refs li .rnum{ font-family:'IBM Plex Mono',monospace; color:var(--orange); flex:none; }
+
+  .dl-btn{
+    display:inline-flex; align-items:center; gap:9px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px; letter-spacing:0.04em; font-weight:500;
+    color:var(--orange);
+    background:var(--orange-dim);
+    border:1px solid rgba(255,106,26,0.4);
+    padding:11px 18px; border-radius:4px;
+    margin-top:22px;
+    transition:background .15s ease, color .15s ease;
+  }
+  .dl-btn:hover{ background:var(--orange); color:#12151A; text-decoration:none; }
+  .dl-btn svg{ width:14px; height:14px; }
+
+  footer{
+    border-top:1px solid var(--border);
+    padding:32px 0 60px;
+    text-align:center;
+  }
+  footer p{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--text-muted); }
+</style>
+</head>
+<script src="script.js" defer></script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
+<body>
+
+<div class="topbar">
+  <div class="brand">INFO<span>SCIE</span> // INTELLIGENCE BRIEF</div>
+  <nav>
+    <a href="index.html">INDEX</a>
+    <a href="Riset_Algoritma_FYP_FB.docx" download>UNDUH .DOCX</a>
+    <a href="#referensi">SUMBER</a>
+    <span id="live-clock-widget" class="live-clock"></span>
+    <select class="lang-badge" onchange="manualSetLanguage(this.value)" id="lang-select">
+      <option value="id">ID</option>
+      <option value="en">EN</option>
+      <option value="ja">日本語</option>
+      <option value="ko">한국어</option>
+      <option value="zh-CN">中文</option>
+      <option value="ar">العربية</option>
+      <option value="fr">FR</option>
+      <option value="de">DE</option>
+      <option value="es">ES</option>
+    </select>
+  </nav>
+</div>
+<div id="google_translate_element"></div>
+
+<div class="wrap">
+  <section class="hero">
+    <span class="eyebrow">● Riset &amp; Analisis Data</span>
+    <h1 class="title">Anatomi Algoritma FYP: Sistem Ranking Berbasis Machine Learning dan Implikasi Cost-to-Reach</h1>
+    <p class="subtitle">Bagaimana sistem AI Facebook memilih konten untuk For You Page — dan mengapa effort produksi konten tidak berbanding lurus dengan hasil distribusi.</p>
+    <div class="meta-row">
+      <span class="badge"><span class="dot t1"></span>Tier 1 — Dokumentasi Resmi Meta</span>
+      <span class="badge"><span class="dot t2"></span>Tier 2 — Analisis Industri</span>
+      <span class="badge">Juli 2026</span>
+      <span class="badge">Marjan Siswanto — SCIE</span>
+    </div>
+    <a class="dl-btn" href="Riset_Algoritma_FYP_FB.docx" download>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Unduh Laporan Lengkap (.docx)
+    </a>
+  </section>
+
+  <div class="layout">
+    <main>
+
+      <section id="ringkasan">
+        <h2><span class="num">01</span>Ringkasan Eksekutif</h2>
+        <p>Dokumen ini menganalisis mekanisme kerja sistem rekomendasi For You Page (FYP) pada Facebook, khususnya untuk konten Reels, berdasarkan dokumentasi resmi Meta Transparency Center dan publikasi teknis Meta Engineering. Analisis diperluas dengan kerangka Cost of Goods Manufactured (COGM) untuk mengukur beban effort produksi konten relatif terhadap probabilitas keberhasilan distribusi.</p>
+        <div class="callout">
+          <p><strong>Temuan utama:</strong> FYP adalah hasil dari sistem multi-model machine learning yang menilai ulang setiap konten secara personal per pengguna dan per sesi — bukan skor tetap yang melekat pada suatu unggahan. Tidak ada formula yang menjamin distribusi luas, hanya pola yang secara statistik meningkatkan probabilitas.</p>
+        </div>
+      </section>
+
+      <section id="metodologi">
+        <h2><span class="num">02</span>Latar Belakang &amp; Metodologi</h2>
+        <p>Analisis ini menggabungkan tiga tingkat sumber:</p>
+        <ul>
+          <li><strong>Tier 1</strong> — Dokumentasi resmi Meta (Transparency Center system cards, Meta Engineering blog) yang menjelaskan arsitektur sistem langsung dari pengembang.</li>
+          <li><strong>Tier 2</strong> — Analisis praktisi/agensi pemasaran digital (SocialBee, Dash Social, Publer, Fanpage Karma) yang mengombinasikan observasi lapangan dengan interpretasi kebijakan Meta.</li>
+          <li><strong>Tier 3</strong> — Konten populer non-resmi (tips viral, daftar hashtag), digunakan hanya sebagai indikasi praktik pasar, bukan sumber klaim teknis.</li>
+        </ul>
+      </section>
+
+      <section id="pipeline">
+        <h2><span class="num">03</span>Arsitektur Sistem — Pipeline Lima Tahap</h2>
+        <p>Berdasarkan system card resmi Facebook Reels, distribusi konten ke FYP mengikuti proses bertingkat berikut:</p>
+        <div class="pipeline">
+          <div class="pstep">
+            <div class="pnum">01</div>
+            <div><div class="pname">Inventory</div><div class="pdesc">Kumpulkan seluruh reels/kandidat konten yang berpotensi relevan, dari akun yang diikuti maupun tidak diikuti.</div></div>
+          </div>
+          <div class="pstep">
+            <div class="pnum">02</div>
+            <div><div class="pname">Lightweight Filtering</div><div class="pdesc">Model ringan menyaring ribuan kandidat menjadi ~10–100 reels paling relevan berdasarkan durasi, kemiripan konten, dan histori interaksi.</div></div>
+          </div>
+          <div class="pstep">
+            <div class="pnum">03</div>
+            <div><div class="pname">Prediction Models</div><div class="pdesc">Model machine learning menghitung beberapa skor prediksi sekaligus — probabilitas tonton selesai, klik, dan retensi.</div></div>
+          </div>
+          <div class="pstep">
+            <div class="pnum">04</div>
+            <div><div class="pname">Integrity Check</div><div class="pdesc">Proses filtrasi untuk mengurangi distribusi konten bermasalah atau melanggar standar komunitas.</div></div>
+          </div>
+          <div class="pstep">
+            <div class="pnum">05</div>
+            <div><div class="pname">Relevance Score &amp; Ranking</div><div class="pdesc">Semua skor prediksi digabung menjadi satu nilai relevansi akhir, diurutkan ulang setiap sesi/refresh per pengguna.</div></div>
+          </div>
+        </div>
+        <p>Karakteristik penting sistem ini adalah personalisasi total: skor akhir dihitung ulang untuk setiap pengguna pada setiap sesi, sehingga video yang sama dapat memperoleh distribusi luas pada satu pengguna namun tidak muncul sama sekali pada pengguna lain.</p>
+      </section>
+
+      <section id="sinyal">
+        <h2><span class="num">04</span>Hierarki Sinyal Engagement</h2>
+        <p>Tidak semua bentuk interaksi bernilai sama di mata sistem ranking. Urutan bobot sinyal secara kualitatif:</p>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Peringkat</th><th>Sinyal</th><th>Bobot</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">1</td><td>Saves</td><td><div class="signal-bar"><i style="width:100%"></i></div></td></tr>
+              <tr><td class="mono">2</td><td>Shares</td><td><div class="signal-bar"><i style="width:88%"></i></div></td></tr>
+              <tr><td class="mono">3</td><td>Komentar substantif</td><td><div class="signal-bar"><i style="width:72%"></i></div></td></tr>
+              <tr><td class="mono">4</td><td>Watch time / completion rate</td><td><div class="signal-bar"><i style="width:68%"></i></div></td></tr>
+              <tr><td class="mono">5</td><td>Likes / reaksi</td><td><div class="signal-bar"><i style="width:40%"></i></div></td></tr>
+              <tr><td class="mono">—</td><td>Sinyal negatif (hide/skip/snooze)</td><td><div class="signal-bar"><i style="width:100%;background:var(--t3)"></i></div></td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:12px;font-size:12.5px;color:var(--text-muted)">Visualisasi bobot bersifat kualitatif — Meta tidak mempublikasikan nilai numerik resmi.</p>
+        </div>
+      </section>
+
+      <section id="benchmark">
+        <h2><span class="num">05</span>Data Benchmark Industri</h2>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Metrik</th><th>Nilai / Temuan</th><th>Sumber</th></tr></thead>
+            <tbody>
+              <tr><td>Rata-rata organic reach (Feed)</td><td>~1,65% dari total followers, tren menurun</td><td class="mono">[9][10]</td></tr>
+              <tr><td>Distribusi non-follower di Feed</td><td>Hingga 50% konten Feed berasal dari akun tak diikuti</td><td class="mono">[10]</td></tr>
+              <tr><td>Boost distribusi Reels same-day</td><td>+50% dibanding konten lama</td><td class="mono">[10]</td></tr>
+              <tr><td>Precision heuristik minat (pra-UTIS)</td><td>48,3% akurasi</td><td class="mono">[3]</td></tr>
+              <tr><td>Durasi ideal Reels 2026</td><td>15–45 detik</td><td class="mono">[8]</td></tr>
+              <tr><td>Jendela uji awal engagement</td><td>±1 jam pertama ke sebagian follower</td><td class="mono">[10]</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="cogm">
+        <h2><span class="num">06</span>Analisis Cost-to-Reach: Kerangka COGM</h2>
+        <p>Effort produksi konten dapat dipetakan ke struktur biaya bergaya Cost of Goods Manufactured (COGM):</p>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Komponen COGM</th><th>Analogi Produksi Konten</th><th>Contoh Item Biaya</th></tr></thead>
+            <tbody>
+              <tr><td>Bahan Baku Langsung</td><td>Aset produksi mentah</td><td>Riset tren, stock footage/audio, lisensi software</td></tr>
+              <tr><td>Tenaga Kerja Langsung</td><td>Jam kerja kreator/tim</td><td>Scripting, shooting, editing, revisi pasca-performa</td></tr>
+              <tr><td>Overhead Produksi</td><td>Biaya pendukung tidak langsung</td><td>Monitoring algoritma, A/B testing, biaya boost</td></tr>
+              <tr><td>Yield / Hasil</td><td>Tidak linear terhadap effort</td><td>FYP tidak terjamin walau proses &amp; spesifikasi sesuai standar</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Perbedaan fundamental dengan manufaktur konvensional terletak pada hubungan input-output. Pada produksi barang fisik, kesesuaian spesifikasi dan proses umumnya menghasilkan output yang dapat diprediksi dan diulang (<em>repeatable yield</em>). Pada produksi konten untuk FYP, yield bersifat probabilistik — dua unit konten dengan input effort identik dapat menghasilkan distribusi yang sangat berbeda, karena skor akhir ditentukan oleh respons perilaku pengguna riil pada jam-jam pertama pasca-publikasi, bukan oleh atribut konten itu sendiri.</p>
+        <div class="callout">
+          <p><strong>Implikasi praktis:</strong> organisasi yang memperlakukan konten sebagai lini produksi perlu mengalokasikan overhead untuk trial-and-error (A/B testing) sebagai biaya tetap yang melekat pada proses, bukan sebagai anomali atau kegagalan produksi.</p>
+        </div>
+      </section>
+
+      <section id="studi-kasus">
+        <h2><span class="num">07</span>Studi Kasus — Perbandingan Struktur Skrip</h2>
+        <p>Dua contoh skrip yang telah disusun sebelumnya (konten edukasi dan konten demo teknis) menunjukkan pola struktural yang sama meski topik berbeda: hook berbasis masalah/angka pada 3 detik pertama, potongan visual cepat untuk menjaga retensi, dan penutup berupa pertanyaan terbuka alih-alih ajakan bertransaksi langsung. Pola ini selaras dengan sinyal berbobot tinggi pada bagian 04 — khususnya retensi tonton dan pemicu komentar substantif — namun tetap tidak menjamin hasil FYP, karena validasi akhir hanya dapat diperoleh dari data performa riil pasca-publikasi.</p>
+      </section>
+
+      <section id="kesimpulan">
+        <h2><span class="num">08</span>Kesimpulan &amp; Rekomendasi Strategis</h2>
+        <ul>
+          <li>FYP bukan status permanen suatu konten, melainkan skor dinamis yang dihitung ulang per pengguna — strategi produksi sebaiknya diarahkan pada memaksimalkan probabilitas, bukan mengejar kepastian.</li>
+          <li>Prioritaskan sinyal berbobot tinggi (saves, shares, komentar substantif) dalam desain konten, dibanding sekadar mengejar jumlah likes.</li>
+          <li>Perlakukan biaya trial-and-error (A/B testing) sebagai overhead tetap dalam anggaran produksi konten, bukan biaya tak terduga.</li>
+          <li>Konten berbasis studi kasus/data konkret berpotensi lebih selaras dengan preferensi audiens niche dibanding konten hiburan umum.</li>
+          <li><strong>Batasan riset:</strong> Meta tidak mempublikasikan formula pembobotan yang presisi; seluruh angka bobot relatif bersifat kualitatif berdasarkan sintesis sumber, bukan nilai numerik resmi.</li>
+        </ul>
+      </section>
+
+      <section id="referensi">
+        <h2><span class="num">09</span>Referensi</h2>
+        <ul class="refs">
+          <li><span class="rnum">[1]</span>Meta Transparency Center — "Facebook Reels AI System." transparency.meta.com</li>
+          <li><span class="rnum">[2]</span>Meta Transparency Center — "Facebook Feed Recommendations AI System." transparency.meta.com</li>
+          <li><span class="rnum">[3]</span>Meta Engineering — "Adapting the Facebook Reels RecSys AI Model Based on User Feedback." Januari 2026.</li>
+          <li><span class="rnum">[4]</span>Meta Engineering — "Friend Bubbles: Enhancing Social Discovery on Facebook Reels." Maret 2026.</li>
+          <li><span class="rnum">[5]</span>About Meta Newsroom — "How AI Influences What You See on Facebook and Instagram."</li>
+          <li><span class="rnum">[6]</span>SocialBee — "Facebook Algorithm Explained: 2026 Insights."</li>
+          <li><span class="rnum">[7]</span>Dash Social — "Facebook Algorithm Explained (2026)."</li>
+          <li><span class="rnum">[8]</span>PostEverywhere — "How the Facebook Algorithm Works in 2026 (Updated)."</li>
+          <li><span class="rnum">[9]</span>Fanpage Karma Insights — "The Facebook Algorithm 2026 Explained." Juni 2026.</li>
+          <li><span class="rnum">[10]</span>Publer Blog — "Understanding the Facebook Algorithm in 2026 + 11 Tips."</li>
+        </ul>
+      </section>
+
+    </main>
+
+    <aside class="toc">
+      <div class="toc-label">Di Halaman Ini</div>
+      <a href="#ringkasan">01 · Ringkasan</a>
+      <a href="#metodologi">02 · Metodologi</a>
+      <a href="#pipeline">03 · Pipeline Sistem</a>
+      <a href="#sinyal">04 · Hierarki Sinyal</a>
+      <a href="#benchmark">05 · Benchmark</a>
+      <a href="#cogm">06 · Cost-to-Reach</a>
+      <a href="#studi-kasus">07 · Studi Kasus</a>
+      <a href="#kesimpulan">08 · Kesimpulan</a>
+      <a href="#referensi">09 · Referensi</a>
+    </aside>
+  </div>
+</div>
+
+<footer>
+  <p>STRATEGIC COGNITIVE INTELLIGENCE ENGINE (SCIE) — INDEPENDEN, TIDAK BERAFILIASI DENGAN SIG</p>
+</footer>
+
+</body>
+</html>
