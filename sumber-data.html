@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sumber Data & Akuntabilitas | InfoSCIE</title>
+<meta name="description" content="Akuntabilitas data: sumber, metodologi, dan tingkat confidence untuk setiap angka pada laporan InfoSCIE.">
+<link rel="stylesheet" href="style.css">
+<script src="script.js" defer></script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
+</head>
+<body>
+
+<div class="ticker" aria-hidden="true">
+  <span><span class="dot">●</span> AKUNTABILITAS DATA</span>
+  <span>TIDAK ADA ANGKA RESMI DARI META / TIKTOK — SELURUHNYA ESTIMASI PIHAK KETIGA</span>
+  <span>PERLAKUKAN SEBAGAI ARAH TREN, BUKAN ANGKA PRESISI</span>
+  <span><span class="dot">●</span> SCIE — STRATEGIC COGNITIVE INTELLIGENCE ENGINE</span>
+</div>
+
+<header class="nav">
+  <a href="index.html" class="brand">
+    <span class="mark"></span>
+    <span>INFOSCIE<small>FIDI&nbsp;·&nbsp;SCIE&nbsp;INTELLIGENCE&nbsp;BRIEF</small></span>
+  </a>
+  <nav class="links">
+    <a href="index.html">Laporan Riset</a>
+    <a href="kredit-etika-pemasaran.html">Artikel</a>
+    <a href="anatomi-algoritma-fyp.html">Riset FYP</a>
+    <a href="itujisamaji.html">ItujiSamaji</a>
+    <a href="itujisamaji-galeri.html">Galeri</a>
+    <a href="sumber-data.html" class="active">Sumber Data</a>
+    <span id="live-clock-widget" class="live-clock"></span>
+    <select class="lang-badge" onchange="manualSetLanguage(this.value)" id="lang-select">
+      <option value="id">ID</option>
+      <option value="en">EN</option>
+      <option value="ja">日本語</option>
+      <option value="ko">한국어</option>
+      <option value="zh-CN">中文</option>
+      <option value="ar">العربية</option>
+      <option value="fr">FR</option>
+      <option value="de">DE</option>
+      <option value="es">ES</option>
+    </select>
+  </nav>
+</header>
+<div id="google_translate_element"></div>
+
+<section class="hero">
+  <span class="eyebrow">Akuntabilitas Data</span>
+  <h1>Setiap angka<br>punya <em>tingkat kepercayaan.</em></h1>
+  <p class="lead">Tidak semua data lahir sama. Halaman ini memetakan asal, metodologi, dan potensi bias di balik setiap statistik yang dikutip dalam laporan InfoSCIE — agar keputusan strategis dibangun di atas pemahaman yang jujur soal keterbatasan data, bukan angka yang dianggap pasti.</p>
+</section>
+
+<main>
+
+  <section class="block" id="legenda">
+    <div class="block-head">
+      <span class="tag">Legenda</span>
+      <div><h2>Sistem rating confidence</h2>
+      <p class="desc">Tiga tingkat keandalan yang digunakan di seluruh laporan InfoSCIE.</p></div>
+    </div>
+    <div class="legend-grid">
+      <div class="legend-card">
+        <h3><span class="conf conf-verified"><span class="bars"><i></i><i></i><i></i></span>TERVERIFIKASI</span></h3>
+        <p>Angka dipublikasikan langsung oleh platform (Meta/TikTok Newsroom, laporan transparansi resmi) atau lembaga riset independen dengan metodologi terbuka. Confidence tinggi.</p>
+      </div>
+      <div class="legend-card">
+        <h3><span class="conf conf-industry"><span class="bars"><i></i><i></i><i></i></span>ESTIMASI INDUSTRI</span></h3>
+        <p>Angka dari agregator riset lintas-sumber (DataReportal, Statista, eMarketer) yang menggabungkan data iklan platform, survei, dan model estimasi. Confidence sedang — umumnya konsisten antar rilis, tapi bukan sensus resmi.</p>
+      </div>
+      <div class="legend-card">
+        <h3><span class="conf conf-vendor"><span class="bars"><i></i><i></i><i></i></span>DERIVATIF VENDOR</span></h3>
+        <p>Angka dari perusahaan tools analitik/scheduling pihak ketiga (SociaVault, Socialinsider, OpusClip, dsb). Metodologi sering proprietary, dan vendor punya insentif komersial menunjukkan platform tertentu "lebih menguntungkan". Confidence terendah — perlu cross-check.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="sumber-utama">
+    <div class="block-head">
+      <span class="tag">Ledger</span>
+      <div><h2>Daftar sumber per klaim data</h2></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Klaim data</th><th>Sumber</th><th>Tipe</th><th>Confidence</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Engagement rate TikTok 3,70%, ↑49% YoY</td>
+            <td class="muted">Socialinsider 2026 Benchmark Report (70jt post)</td>
+            <td class="muted">Agregator riset</td>
+            <td><span class="conf conf-industry"><span class="bars"><i></i><i></i><i></i></span>Industri</span></td>
+          </tr>
+          <tr>
+            <td>Engagement rate per niche (14 kategori)</td>
+            <td class="muted">SociaVault Labs (150.000 akun, fraud-filtered)</td>
+            <td class="muted">Vendor analitik</td>
+            <td><span class="conf conf-vendor"><span class="bars"><i></i><i></i><i></i></span>Vendor</span></td>
+          </tr>
+          <tr>
+            <td>Engagement rate Facebook 0,15%, Instagram 0,48%</td>
+            <td class="muted">Social Insider / Influencer Marketing Factory</td>
+            <td class="muted">Agregator riset</td>
+            <td><span class="conf conf-industry"><span class="bars"><i></i><i></i><i></i></span>Industri</span></td>
+          </tr>
+          <tr>
+            <td>Pengguna TikTok Indonesia (108jt–180jt, bervariasi)</td>
+            <td class="muted">DataReportal · eMarketer · Statista · Axis Intelligence · Resourcera</td>
+            <td class="muted">5 sumber berbeda, angka tidak konvergen</td>
+            <td><span class="conf conf-industry"><span class="bars"><i></i><i></i><i></i></span>Industri</span></td>
+          </tr>
+          <tr>
+            <td>Distribusi usia global TikTok (25–34 = 35,3%)</td>
+            <td class="muted">DataReportal, dikutip DesignRush</td>
+            <td class="muted">Agregator riset</td>
+            <td><span class="conf conf-industry"><span class="bars"><i></i><i></i><i></i></span>Industri</span></td>
+          </tr>
+          <tr>
+            <td>Pertumbuhan usia 40–49 (+120%), 50+ (+240%) sejak 2023</td>
+            <td class="muted">Meltwater, dikutip posteverywhere.ai</td>
+            <td class="muted">Agregator riset</td>
+            <td><span class="conf conf-industry"><span class="bars"><i></i><i></i><i></i></span>Industri</span></td>
+          </tr>
+          <tr>
+            <td>DAU TikTok global (875jt–1,12 miliar)</td>
+            <td class="muted">Berbagai analis (Axis Intelligence eksplisit menyebut "estimasi")</td>
+            <td class="muted">Estimasi terbuka, rentang lebar</td>
+            <td><span class="conf conf-vendor"><span class="bars"><i></i><i></i><i></i></span>Vendor</span></td>
+          </tr>
+          <tr>
+            <td>Waktu penggunaan Android Indonesia (44j 54m/bulan)</td>
+            <td class="muted">The Global Statistics</td>
+            <td class="muted">Agregator riset</td>
+            <td><span class="conf conf-industry"><span class="bars"><i></i><i></i><i></i></span>Industri</span></td>
+          </tr>
+          <tr>
+            <td>MAU Facebook 3,07 miliar, Instagram 3 miliar</td>
+            <td class="muted">posteverywhere.ai, DataReportal 2026</td>
+            <td class="muted">Agregator riset</td>
+            <td><span class="conf conf-industry"><span class="bars"><i></i><i></i><i></i></span>Industri</span></td>
+          </tr>
+          <tr>
+            <td>Niche TikTok Shop terpopuler Indonesia (beauty, makanan beku)</td>
+            <td class="muted">MEA Digital Agency</td>
+            <td class="muted">Vendor agensi (data internal/observasi pasar)</td>
+            <td><span class="conf conf-vendor"><span class="bars"><i></i><i></i><i></i></span>Vendor</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="block" id="keterbatasan">
+    <div class="block-head">
+      <span class="tag">Keterbatasan</span>
+      <div><h2>Yang perlu diketahui sebelum menggunakan data ini</h2></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <h3 style="font-size:16px; margin-bottom:8px;">1. Tidak ada angka resmi dari Meta atau TikTok</h3>
+        <p class="lead" style="font-size:14px; margin-bottom:20px;">Seluruh data dalam laporan ini adalah estimasi atau hasil pengumpulan pihak ketiga. Kedua platform tidak mempublikasikan breakdown demografi-per-negara secara resmi dan rinci ke publik.</p>
+
+        <h3 style="font-size:16px; margin-bottom:8px;">2. Metodologi engagement rate tidak seragam</h3>
+        <p class="lead" style="font-size:14px; margin-bottom:20px;">Angka engagement rate TikTok bervariasi dari 2,65% (Statista) hingga 4,25% (SociaVault) tergantung rumus: ada yang menghitung (likes+komentar)/followers, ada yang menambahkan shares, ada yang berbasis views. Perbedaan angka bukan berarti data salah — melainkan rumus yang berbeda.</p>
+
+        <h3 style="font-size:16px; margin-bottom:8px;">3. Potensi bias komersial vendor</h3>
+        <p class="lead" style="font-size:14px;">Sumber seperti SociaVault, Socialinsider, dan posterly adalah penyedia tools analitik/scheduling. Insentif bisnis mereka adalah menunjukkan satu platform "lebih unggul" untuk mendorong penggunaan produk masing-masing.</p>
+      </div>
+      <div class="callout" style="margin-top:0; align-self:start;">
+        <b>Rekomendasi validasi lanjutan</b><br><br>
+        Untuk keputusan yang mengikat sumber daya (budget, waktu produksi):
+        <ul style="margin:12px 0 0 18px; padding:0; color:var(--muted); font-size:13.5px; line-height:1.9;">
+          <li>Cross-check dengan <b style="color:var(--text)">TikTok Creative Center</b> untuk data trending resmi per negara</li>
+          <li>Gunakan <b style="color:var(--text)">Meta Business Suite Insights</b> untuk data akun sendiri, bukan hanya rata-rata industri</li>
+          <li>Perlakukan seluruh angka di laporan ini sebagai <b style="color:var(--text)">arah tren</b>, bukan dasar perhitungan ROI presisi</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div>© 2026 SCIE — Strategic Cognitive Intelligence Engine.<br>Framework oleh Marjan Siswanto. Tidak berafiliasi dengan organisasi manapun.</div>
+  <div><a href="index.html">← Kembali ke laporan riset</a></div>
+</footer>
+
+</body>
+</html>
