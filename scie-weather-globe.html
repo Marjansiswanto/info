@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>SCIE Weather Globe — Referensi Data Cuaca & Thermal Dunia</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; overflow: hidden; height: 100%; width: 100%;
+    background: radial-gradient(circle at 50% 35%, #04182b 0%, #000509 100%);
+    font-family: 'Courier New', monospace; color: #cdeff5;
+  }
+  #info {
+    position: absolute; top: 14px; left: 20px; z-index: 10;
+    color: #7ff9ff; font-size: 12.5px; text-shadow: 0 0 8px rgba(127,249,255,0.5);
+    max-width: 320px;
+  }
+  #info h1 { font-size: 15px; margin: 0 0 4px 0; color: #eafeff; }
+
+  #panel {
+    position: absolute; top: 14px; right: 16px; z-index: 20;
+    width: 300px; background: rgba(4,20,35,0.88); border: 1px solid #1a4a5c;
+    border-radius: 10px; padding: 14px 16px; font-size: 12px;
+    max-height: 92vh; overflow-y: auto;
+  }
+  #panel h2 { font-size: 13.5px; color: #eafeff; margin: 0 0 10px 0; border-bottom: 1px solid #1a4a5c; padding-bottom: 6px;}
+  #panel label { display:block; margin-top:8px; margin-bottom:3px; color:#7ff9ff; font-size:11px;}
+  #panel input, #panel select {
+    width: 100%; background:#02121f; border:1px solid #1a4a5c; color:#eafeff;
+    padding:5px 6px; border-radius:5px; font-family:'Courier New',monospace; font-size:11.5px;
+  }
+  .row2 { display:flex; gap:8px; }
+  .row2 > div { flex:1; }
+  button {
+    margin-top: 12px; width: 100%; padding: 9px; border-radius: 6px; border: none;
+    background: linear-gradient(135deg,#0a6b8f,#22c9e6); color:#001820; font-weight:bold;
+    font-family:'Courier New',monospace; cursor: pointer; font-size: 12.5px; letter-spacing: 0.5px;
+  }
+  button:hover { filter: brightness(1.15); }
+  button.secondary { background: #123042; color:#8ff3ff; border:1px solid #1a4a5c; margin-top:6px;}
+
+  #result {
+    margin-top: 12px; padding-top: 10px; border-top: 1px dashed #1a4a5c;
+    font-size: 11.3px; line-height:1.55;
+  }
+  #result .row { display:flex; justify-content:space-between; padding:2px 0; }
+  #result .row span:first-child { color:#7ff9ff; }
+  #result .row span:last-child { color:#eafeff; font-weight:bold; }
+
+  #historian { margin-top:10px; font-size: 10.6px; max-height:110px; overflow-y:auto; }
+  #historian div { padding:4px 0; border-bottom:1px solid #10303f; cursor:pointer; }
+  #historian div:hover { color:#eafeff; }
+
+  #status { position:absolute; bottom:14px; left:20px; font-size:11px; color:#5fb; z-index:10; max-width: 400px;}
+  #loading { color:#ffcc66; }
+  #errormsg { color:#ff6b6b; }
+
+  #crosshair {
+    position:absolute; width:14px; height:14px; border:2px solid #ff4d6d;
+    border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; z-index:15; display:none;
+  }
+  a.dl { color:#8ff3ff; }
+  canvas { display:block; }
+</style>
+</head>
+<body>
+
+<div id="info">
+  <h1>SCIE Weather Globe</h1>
+  Klik titik di globe untuk pilih lokasi &middot; scroll untuk zoom &middot; drag untuk putar manual
+</div>
+
+<div id="panel">
+  <h2>Referensi Data Cuaca &amp; Thermal Dunia</h2>
+
+  <label>Lokasi terpilih (klik globe)</label>
+  <div class="row2">
+    <div><input type="text" id="latBox" placeholder="Lintang" readonly></div>
+    <div><input type="text" id="lonBox" placeholder="Bujur" readonly></div>
+  </div>
+
+  <label>Jenis Data</label>
+  <select id="jenisData">
+    <option value="lengkap">Data Cuaca Lengkap</option>
+    <option value="thermal">Data Thermal / Landscape Saja</option>
+  </select>
+
+  <label>Rentang Waktu</label>
+  <div class="row2">
+    <div><input type="date" id="tglMulai"></div>
+    <div><input type="date" id="tglAkhir"></div>
+  </div>
+
+  <button id="btnCreate">CREATE — Ambil Data</button>
+  <button class="secondary" id="btnDownload">Unduh Hasil (JSON)</button>
+  <button class="secondary" id="btnPDF">Unduh Tabel + Grafik (PDF)</button>
+  <button class="secondary" id="btnDoc">Unduh Tabel (Word .doc)</button>
+
+  <div id="result"><i style="color:#5f8a99">Belum ada data. Pilih lokasi &amp; rentang waktu, lalu tekan CREATE.</i></div>
+
+  <label style="margin-top:14px;">Riwayat Pencarian (Historian, sesi ini)</label>
+  <div id="historian"><i style="color:#5f8a99">Kosong</i></div>
+</div>
+
+<div id="crosshair"></div>
+<div id="status"></div>
+<canvas id="chartCanvas" width="700" height="320" style="position:absolute; left:-9999px; background:#0a1a22;"></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+<script>
+/* ================= GLOBE SETUP ================= */
+let scene, camera, renderer, globeGroup, globeMesh, raycaster, mouse;
+let isDragging = false, prevX=0, prevY=0;
+let camDist = 7;
+const RADIUS = 2.2;
+let historianData = [];
+
+init();
+animate();
+
+function buatTeksturDunia() {
+  const W = 2048, H = 1024;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#020c14'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = 'rgba(34,201,230,0.12)'; ctx.lineWidth = 1;
+  for (let i=0;i<=24;i++){const x=i*W/24;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for (let j=0;j<=12;j++){const y=j*H/12;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  function benua(points, teks, warna){
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(points[0][0],points[0][1]);
+    for(let i=1;i<points.length;i++) ctx.lineTo(points[i][0],points[i][1]);
+    ctx.closePath(); ctx.clip();
+    ctx.fillStyle = warna; ctx.font = '13px Courier New';
+    const bb = points.reduce((a,p)=>({minX:Math.min(a.minX,p[0]),maxX:Math.max(a.maxX,p[0]),minY:Math.min(a.minY,p[1]),maxY:Math.max(a.maxY,p[1])}),{minX:W,maxX:0,minY:H,maxY:0});
+    let ci=0;
+    for(let y=bb.minY;y<bb.maxY;y+=15){ for(let x=bb.minX;x<bb.maxX;x+=11){ ctx.fillText(teks[ci%teks.length], x, y); ci++; } }
+    ctx.restore();
+  }
+  benua([[1020,180],[1300,150],[1560,220],[1780,300],[1900,380],[1850,470],[1700,520],[1500,480],[1300,500],[1150,430],[1000,380],[950,280]],"EURASIA-",'#8ff3ff');
+  benua([[1020,420],[1150,410],[1220,500],[1240,650],[1180,800],[1080,830],[1000,760],[960,600],[970,480]],"AFRIKA-",'#e8d98a');
+  benua([[280,190],[480,160],[600,260],[560,400],[430,460],[300,420],[220,300]],"AM-UTARA-",'#8ff3c7');
+  benua([[480,520],[600,540],[650,680],[580,860],[480,880],[420,720],[430,580]],"AM-SELATAN-",'#8ff3c7');
+  benua([[1650,700],[1800,690],[1850,780],[1780,830],[1650,810]],"AUSTRALIA-",'#e8d98a');
+  benua([[0,960],[2048,960],[2048,1024],[0,1024]],"ANTARTIKA-",'#8ff3ff');
+  ctx.fillStyle='rgba(234,255,255,0.6)';
+  for(let i=0;i<250;i++){const x=Math.random()*W,y=Math.random()*H;ctx.beginPath();ctx.arc(x,y,1.2,0,Math.PI*2);ctx.fill();}
+  const tex = new THREE.CanvasTexture(canvas); tex.needsUpdate=true; return tex;
+}
+
+function init(){
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.set(0,0.4,camDist);
+
+  renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  globeGroup = new THREE.Group();
+  globeGroup.rotation.z = 0.41;
+  scene.add(globeGroup);
+
+  const tex = buatTeksturDunia();
+  const geo = new THREE.SphereGeometry(RADIUS, 96, 96);
+  const mat = new THREE.MeshPhongMaterial({map:tex, shininess:35, emissive:0x0a2a33, emissiveIntensity:0.22});
+  globeMesh = new THREE.Mesh(geo, mat);
+  globeGroup.add(globeMesh);
+
+  const glowGeo = new THREE.SphereGeometry(RADIUS*1.055,64,64);
+  const glowMat = new THREE.MeshBasicMaterial({color:0x22c9e6, transparent:true, opacity:0.10, side:THREE.BackSide});
+  globeGroup.add(new THREE.Mesh(glowGeo, glowMat));
+
+  scene.add(new THREE.AmbientLight(0x334455,1.1));
+  const sun = new THREE.PointLight(0xffffff,1.6); sun.position.set(8,4,8); scene.add(sun);
+
+  const starGeo = new THREE.BufferGeometry(); const starPos=[];
+  for(let i=0;i<500;i++) starPos.push((Math.random()-0.5)*80,(Math.random()-0.5)*80,(Math.random()-0.5)*80-15);
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos,3));
+  scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0x7ff9ff,size:0.045,transparent:true,opacity:0.55})));
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  const dom = renderer.domElement;
+  dom.addEventListener('mousedown', e=>{isDragging=true; prevX=e.clientX; prevY=e.clientY;});
+  dom.addEventListener('mouseup', e=>{
+    if (!moved) pickLocation(e);
+    isDragging=false;
+  });
+  let moved = false;
+  dom.addEventListener('mousedown', ()=>{moved=false;});
+  dom.addEventListener('mousemove', e=>{
+    if(isDragging){
+      const dx = e.clientX-prevX, dy = e.clientY-prevY;
+      if(Math.abs(dx)>2||Math.abs(dy)>2) moved = true;
+      globeGroup.rotation.y += dx*0.005;
+      globeGroup.rotation.x += dy*0.003;
+      prevX=e.clientX; prevY=e.clientY;
+    }
+  });
+  dom.addEventListener('wheel', e=>{
+    camDist += e.deltaY*0.003;
+    camDist = Math.min(Math.max(camDist,3.2),16);
+    camera.position.z = camDist;
+    e.preventDefault();
+  }, {passive:false});
+
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // default tanggal: 7 hari terakhir
+  const today = new Date();
+  const weekAgo = new Date(today.getTime() - 7*86400000);
+  document.getElementById('tglAkhir').value = today.toISOString().slice(0,10);
+  document.getElementById('tglMulai').value = weekAgo.toISOString().slice(0,10);
+
+  document.getElementById('btnCreate').addEventListener('click', createData);
+  document.getElementById('btnDownload').addEventListener('click', downloadData);
+}
+
+function pickLocation(e){
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObject(globeMesh);
+  if(hits.length>0){
+    const p = hits[0].point.clone();
+    globeGroup.worldToLocal(p);
+    const lat = 90 - (Math.acos(p.y/RADIUS) * 180/Math.PI);
+    let lon = (Math.atan2(p.z, p.x) * 180/Math.PI) - 90;
+    if (lon < -180) lon += 360;
+    if (lon > 180) lon -= 360;
+    document.getElementById('latBox').value = lat.toFixed(3);
+    document.getElementById('lonBox').value = lon.toFixed(3);
+    document.getElementById('crosshair').style.display='block';
+    document.getElementById('crosshair').style.left = e.clientX+'px';
+    document.getElementById('crosshair').style.top = e.clientY+'px';
+  }
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  if(!isDragging) globeMesh.rotation.y += 0.0009; // rotasi otomatis pelan saat idle
+  renderer.render(scene, camera);
+}
+
+/* ================= AMBIL DATA CUACA (Open-Meteo, gratis tanpa API key) ================= */
+async function createData(){
+  const lat = document.getElementById('latBox').value;
+  const lon = document.getElementById('lonBox').value;
+  const jenis = document.getElementById('jenisData').value;
+  const mulai = document.getElementById('tglMulai').value;
+  const akhir = document.getElementById('tglAkhir').value;
+  const statusEl = document.getElementById('status');
+  const resultEl = document.getElementById('result');
+
+  if(!lat || !lon){ statusEl.innerHTML = '<span id="errormsg">Pilih lokasi di globe terlebih dahulu (klik satu titik).</span>'; return; }
+  if(!mulai || !akhir){ statusEl.innerHTML = '<span id="errormsg">Tentukan rentang tanggal.</span>'; return; }
+
+  statusEl.innerHTML = '<span id="loading">Mengambil data dari Open-Meteo...</span>';
+
+  let variabel = "temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,relative_humidity_2m_mean,cloudcover_mean";
+  if (jenis === 'thermal') {
+    variabel = "temperature_2m_max,temperature_2m_min,soil_temperature_0_to_7cm_mean";
+  }
+
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${mulai}&end_date=${akhir}&daily=${variabel}&timezone=auto`;
+
+  try {
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    historianData.push({lat, lon, mulai, akhir, jenis, data, waktu: new Date().toLocaleString()});
+    tampilkanHasil(data, jenis);
+    tampilkanHistorian();
+    statusEl.innerHTML = 'Data berhasil dimuat dari Open-Meteo (archive-api.open-meteo.com).';
+  } catch(err) {
+    statusEl.innerHTML = '<span id="errormsg">Gagal mengambil data: '+err.message+'. Cek koneksi internet halaman ini.</span>';
+  }
+}
+
+function tampilkanHasil(data, jenis){
+  const resultEl = document.getElementById('result');
+  if(!data.daily){ resultEl.innerHTML = '<i>Tidak ada data untuk rentang/lokasi ini.</i>'; return; }
+  const d = data.daily;
+  const n = d.time.length;
+  const avg = arr => (arr.reduce((a,b)=>a+(b||0),0)/arr.length).toFixed(1);
+
+  let html = `<div class="row"><span>Jumlah hari</span><span>${n}</span></div>`;
+  html += `<div class="row"><span>Suhu maks rata-rata</span><span>${avg(d.temperature_2m_max)} °C</span></div>`;
+  html += `<div class="row"><span>Suhu min rata-rata</span><span>${avg(d.temperature_2m_min)} °C</span></div>`;
+  if (jenis === 'lengkap') {
+    html += `<div class="row"><span>Curah hujan total</span><span>${d.precipitation_sum.reduce((a,b)=>a+(b||0),0).toFixed(1)} mm</span></div>`;
+    html += `<div class="row"><span>Kec. angin maks rata-rata</span><span>${avg(d.windspeed_10m_max)} km/j</span></div>`;
+    html += `<div class="row"><span>Kelembaban rata-rata</span><span>${avg(d.relative_humidity_2m_mean)} %</span></div>`;
+    html += `<div class="row"><span>Tutupan awan rata-rata</span><span>${avg(d.cloudcover_mean)} %</span></div>`;
+  } else {
+    html += `<div class="row"><span>Suhu tanah (0-7cm) rata-rata</span><span>${avg(d.soil_temperature_0_to_7cm_mean)} °C</span></div>`;
+  }
+  html += `<div style="margin-top:8px;color:#5f8a99;font-size:10px">Sumber: Open-Meteo ERA5 Reanalysis (CC BY 4.0)</div>`;
+  resultEl.innerHTML = html;
+}
+
+function tampilkanHistorian(){
+  const el = document.getElementById('historian');
+  if(historianData.length===0){ el.innerHTML = '<i style="color:#5f8a99">Kosong</i>'; return; }
+  el.innerHTML = historianData.slice().reverse().map((h,idx)=>{
+    const realIdx = historianData.length-1-idx;
+    return `<div onclick="muatUlangHistorian(${realIdx})">${h.waktu} — (${parseFloat(h.lat).toFixed(1)}, ${parseFloat(h.lon).toFixed(1)}) [${h.jenis}] ${h.mulai}→${h.akhir}</div>`;
+  }).join('');
+}
+
+function muatUlangHistorian(idx){
+  const h = historianData[idx];
+  tampilkanHasil(h.data, h.jenis);
+  document.getElementById('latBox').value = h.lat;
+  document.getElementById('lonBox').value = h.lon;
+  document.getElementById('tglMulai').value = h.mulai;
+  document.getElementById('tglAkhir').value = h.akhir;
+  document.getElementById('jenisData').value = h.jenis;
+}
+
+function downloadData(){
+  if(historianData.length===0){ alert('Belum ada data untuk diunduh.'); return; }
+  const last = historianData[historianData.length-1];
+  const blob = new Blob([JSON.stringify(last.data, null, 2)], {type:'application/json'});
+  const urlObj = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = urlObj;
+  a.download = `scie-weather-${last.lat}_${last.lon}_${last.mulai}_${last.akhir}.json`;
+  a.click();
+  URL.revokeObjectURL(urlObj);
+}
+
+/* ================= EXPORT: PDF (tabel + grafik) & WORD (tabel) ================= */
+let chartInstance = null;
+
+function siapkanChart(last){
+  const d = last.data.daily;
+  const ctx = document.getElementById('chartCanvas').getContext('2d');
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: d.time,
+      datasets: [
+        { label:'Suhu Maks (°C)', data:d.temperature_2m_max, borderColor:'#ff8c00', backgroundColor:'transparent', tension:0.3 },
+        { label:'Suhu Min (°C)', data:d.temperature_2m_min, borderColor:'#22c9e6', backgroundColor:'transparent', tension:0.3 }
+      ]
+    },
+    options: {
+      responsive:false, animation:false,
+      plugins:{ legend:{ labels:{ color:'#eafeff' } }, title:{ display:true, text:`Suhu Harian — Lat ${last.lat}, Lon ${last.lon}`, color:'#7ff9ff' } },
+      scales:{
+        x:{ ticks:{ color:'#7ff9ff', maxTicksLimit:10 }, grid:{ color:'#123042' } },
+        y:{ ticks:{ color:'#7ff9ff' }, grid:{ color:'#123042' } }
+      }
+    }
+  });
+}
+
+function buatBarisTabel(last){
+  const d = last.data.daily;
+  const jenis = last.jenis;
+  const rows = [];
+  for(let i=0;i<d.time.length;i++){
+    if(jenis==='lengkap'){
+      rows.push([
+        d.time[i],
+        d.temperature_2m_max[i]+' °C',
+        d.temperature_2m_min[i]+' °C',
+        (d.precipitation_sum[i]??0)+' mm',
+        (d.windspeed_10m_max[i]??'-')+' km/j',
+        (d.relative_humidity_2m_mean[i]??'-')+' %',
+        (d.cloudcover_mean[i]??'-')+' %'
+      ]);
+    } else {
+      rows.push([
+        d.time[i],
+        d.temperature_2m_max[i]+' °C',
+        d.temperature_2m_min[i]+' °C',
+        (d.soil_temperature_0_to_7cm_mean[i]??'-')+' °C'
+      ]);
+    }
+  }
+  return rows;
+}
+
+async function downloadPDF(){
+  if(historianData.length===0){ alert('Belum ada data. Tekan CREATE dahulu.'); return; }
+  const last = historianData[historianData.length-1];
+  siapkanChart(last);
+  await new Promise(r=>setTimeout(r, 350)); // beri waktu chart render
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'pt' });
+
+  doc.setFontSize(16);
+  doc.text('SCIE Weather Globe — Laporan Data Cuaca', 40, 40);
+  doc.setFontSize(10);
+  doc.text(`Lokasi: Lat ${last.lat}, Lon ${last.lon}   |   Rentang: ${last.mulai} s/d ${last.akhir}   |   Jenis: ${last.jenis}`, 40, 58);
+  doc.text('Sumber data: Open-Meteo ERA5 Reanalysis (CC BY 4.0)', 40, 72);
+
+  const chartImg = document.getElementById('chartCanvas').toDataURL('image/png');
+  doc.addImage(chartImg, 'PNG', 40, 84, 500, 220);
+
+  const jenis = last.jenis;
+  const head = jenis==='lengkap'
+    ? [['Tanggal','Suhu Maks','Suhu Min','Curah Hujan','Angin Maks','Kelembaban','Awan']]
+    : [['Tanggal','Suhu Maks','Suhu Min','Suhu Tanah']];
+  const body = buatBarisTabel(last);
+
+  doc.autoTable({
+    head: head, body: body, startY: 84, margin:{left:560},
+    styles:{ fontSize:7.5, cellPadding:3 },
+    headStyles:{ fillColor:[10,107,143] },
+    tableWidth: 220
+  });
+
+  // tabel penuh di halaman berikutnya juga (biar mudah dibaca)
+  doc.addPage();
+  doc.setFontSize(13);
+  doc.text('Tabel Data Lengkap', 40, 40);
+  doc.autoTable({ head: head, body: body, startY: 55, styles:{fontSize:8, cellPadding:4}, headStyles:{fillColor:[10,107,143]} });
+
+  doc.save(`scie-weather-${last.lat}_${last.lon}_${last.mulai}_${last.akhir}.pdf`);
+}
+
+function downloadDoc(){
+  if(historianData.length===0){ alert('Belum ada data. Tekan CREATE dahulu.'); return; }
+  const last = historianData[historianData.length-1];
+  const jenis = last.jenis;
+  const head = jenis==='lengkap'
+    ? ['Tanggal','Suhu Maks (°C)','Suhu Min (°C)','Curah Hujan (mm)','Angin Maks (km/j)','Kelembaban (%)','Awan (%)']
+    : ['Tanggal','Suhu Maks (°C)','Suhu Min (°C)','Suhu Tanah (°C)'];
+  const body = buatBarisTabel(last);
+
+  let html = `<html><head><meta charset="UTF-8"></head><body style="font-family:Calibri,Arial,sans-serif;">
+  <h2>SCIE Weather Globe — Laporan Data Cuaca</h2>
+  <p><b>Lokasi:</b> Lat ${last.lat}, Lon ${last.lon} &nbsp; | &nbsp; <b>Rentang:</b> ${last.mulai} s/d ${last.akhir} &nbsp; | &nbsp; <b>Jenis:</b> ${last.jenis}</p>
+  <p style="font-size:11px;color:#555">Sumber data: Open-Meteo ERA5 Reanalysis (CC BY 4.0)</p>
+  <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;font-size:12px;">
+    <tr style="background:#0a6b8f;color:#fff;">${head.map(h=>`<th>${h}</th>`).join('')}</tr>
+    ${body.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}
+  </table>
+  </body></html>`;
+
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const urlObj = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = urlObj;
+  a.download = `scie-weather-${last.lat}_${last.lon}_${last.mulai}_${last.akhir}.doc`;
+  a.click();
+  URL.revokeObjectURL(urlObj);
+}
+
+document.getElementById('btnPDF').addEventListener('click', downloadPDF);
+document.getElementById('btnDoc').addEventListener('click', downloadDoc);
+</script>
+</body>
+</html>
