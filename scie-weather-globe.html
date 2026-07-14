@@ -149,9 +149,6 @@ let camDist = 7;
 const RADIUS = 2.2;
 let historianData = [];
 
-init();
-animate();
-
 // Peta dunia ASLI (citra satelit, sumber NASA Blue Marble via threejs.org CDN)
 const EARTH_TEXTURE_URL = 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg';
 const EARTH_CLOUDS_URL  = 'https://threejs.org/examples/textures/planets/earth_clouds_1024.png';
@@ -380,6 +377,10 @@ function animate(){
   if(!isDragging) globeGroup.rotation.y += 0.0009; // rotasi otomatis pelan saat idle (grup: bumi+kota+awan ikut berputar bersama)
   renderer.render(scene, camera);
 }
+
+// Panggil di sini (bukan di atas) — supaya semua const/function di atasnya sudah pasti terdefinisi dulu
+init();
+animate();
 
 /* ================= AMBIL DATA CUACA (Open-Meteo, gratis tanpa API key) ================= */
 async function createData(){
