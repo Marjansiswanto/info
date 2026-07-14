@@ -61,6 +61,35 @@
   }
   a.dl { color:#8ff3ff; }
   canvas { display:block; }
+
+  /* ---- RESPONSIF: layar HP / lebar sempit ---- */
+  @media (max-width: 760px) {
+    #info { max-width: 70vw; font-size: 11px; top: 10px; left: 12px; }
+    #info h1 { font-size: 13px; }
+
+    #panel {
+      top: auto; bottom: 0; left: 0; right: 0;
+      width: 100%; max-width: 100%;
+      border-radius: 16px 16px 0 0;
+      max-height: 46vh;
+      padding: 14px 16px 18px;
+      box-shadow: 0 -6px 24px rgba(0,0,0,0.5);
+      transition: max-height 0.25s ease, padding 0.25s ease;
+    }
+    #panel.collapsed { max-height: 46px; overflow: hidden; padding-bottom: 4px; }
+    #panel::before {
+      content:''; display:block; width:40px; height:4px; background:#2a5568;
+      border-radius:3px; margin:0 auto 10px auto;
+    }
+    #panel h2 { font-size: 13px; }
+    #btnTogglePanel { display:block !important; }
+    #status { bottom: auto; top: 10px; right: 12px; left: auto; max-width: 55vw; font-size: 10px; text-align:right; }
+    #crosshair { display:none !important; }
+  }
+  @media (max-width: 420px) {
+    #panel { max-height: 52vh; }
+    button { padding: 11px; font-size: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -71,9 +100,11 @@
 </div>
 
 <div id="panel">
+  <button id="btnTogglePanel" style="display:none; margin:0 auto 10px auto; width:auto; padding:4px 14px; background:#123042; color:#8ff3ff; border:1px solid #1a4a5c;">▾ Tutup Panel</button>
   <h2>Referensi Data Cuaca &amp; Thermal Dunia</h2>
 
-  <label>Lokasi terpilih (klik globe)</label>
+  <label>Lokasi terpilih (klik globe / kota)</label>
+  <input type="text" id="namaLokasi" placeholder="Nama tempat" readonly style="margin-bottom:6px;">
   <div class="row2">
     <div><input type="text" id="latBox" placeholder="Lintang" readonly></div>
     <div><input type="text" id="lonBox" placeholder="Bujur" readonly></div>
@@ -121,36 +152,80 @@ let historianData = [];
 init();
 animate();
 
-function buatTeksturDunia() {
-  const W = 2048, H = 1024;
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#020c14'; ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle = 'rgba(34,201,230,0.12)'; ctx.lineWidth = 1;
-  for (let i=0;i<=24;i++){const x=i*W/24;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for (let j=0;j<=12;j++){const y=j*H/12;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+// Peta dunia ASLI (citra satelit, sumber NASA Blue Marble via threejs.org CDN)
+const EARTH_TEXTURE_URL = 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg';
+const EARTH_CLOUDS_URL  = 'https://threejs.org/examples/textures/planets/earth_clouds_1024.png';
 
-  function benua(points, teks, warna){
-    ctx.save(); ctx.beginPath();
-    ctx.moveTo(points[0][0],points[0][1]);
-    for(let i=1;i<points.length;i++) ctx.lineTo(points[i][0],points[i][1]);
-    ctx.closePath(); ctx.clip();
-    ctx.fillStyle = warna; ctx.font = '13px Courier New';
-    const bb = points.reduce((a,p)=>({minX:Math.min(a.minX,p[0]),maxX:Math.max(a.maxX,p[0]),minY:Math.min(a.minY,p[1]),maxY:Math.max(a.maxY,p[1])}),{minX:W,maxX:0,minY:H,maxY:0});
-    let ci=0;
-    for(let y=bb.minY;y<bb.maxY;y+=15){ for(let x=bb.minX;x<bb.maxX;x+=11){ ctx.fillText(teks[ci%teks.length], x, y); ci++; } }
-    ctx.restore();
-  }
-  benua([[1020,180],[1300,150],[1560,220],[1780,300],[1900,380],[1850,470],[1700,520],[1500,480],[1300,500],[1150,430],[1000,380],[950,280]],"EURASIA-",'#8ff3ff');
-  benua([[1020,420],[1150,410],[1220,500],[1240,650],[1180,800],[1080,830],[1000,760],[960,600],[970,480]],"AFRIKA-",'#e8d98a');
-  benua([[280,190],[480,160],[600,260],[560,400],[430,460],[300,420],[220,300]],"AM-UTARA-",'#8ff3c7');
-  benua([[480,520],[600,540],[650,680],[580,860],[480,880],[420,720],[430,580]],"AM-SELATAN-",'#8ff3c7');
-  benua([[1650,700],[1800,690],[1850,780],[1780,830],[1650,810]],"AUSTRALIA-",'#e8d98a');
-  benua([[0,960],[2048,960],[2048,1024],[0,1024]],"ANTARTIKA-",'#8ff3ff');
-  ctx.fillStyle='rgba(234,255,255,0.6)';
-  for(let i=0;i<250;i++){const x=Math.random()*W,y=Math.random()*H;ctx.beginPath();ctx.arc(x,y,1.2,0,Math.PI*2);ctx.fill();}
-  const tex = new THREE.CanvasTexture(canvas); tex.needsUpdate=true; return tex;
+// Daftar kota-kota besar dunia (nama + koordinat) untuk penanda & label di globe
+const KOTA_DUNIA = [
+  {nama:"Jakarta", lat:-6.21, lon:106.85},
+  {nama:"Makassar", lat:-5.15, lon:119.43},
+  {nama:"Surabaya", lat:-7.25, lon:112.75},
+  {nama:"Singapore", lat:1.35, lon:103.82},
+  {nama:"Kuala Lumpur", lat:3.14, lon:101.69},
+  {nama:"Bangkok", lat:13.76, lon:100.50},
+  {nama:"Manila", lat:14.60, lon:120.98},
+  {nama:"Tokyo", lat:35.68, lon:139.69},
+  {nama:"Seoul", lat:37.57, lon:126.98},
+  {nama:"Beijing", lat:39.90, lon:116.41},
+  {nama:"Shanghai", lat:31.23, lon:121.47},
+  {nama:"Hong Kong", lat:22.32, lon:114.17},
+  {nama:"New Delhi", lat:28.61, lon:77.21},
+  {nama:"Mumbai", lat:19.08, lon:72.88},
+  {nama:"Dubai", lat:25.20, lon:55.27},
+  {nama:"Riyadh", lat:24.71, lon:46.68},
+  {nama:"Istanbul", lat:41.01, lon:28.98},
+  {nama:"Moscow", lat:55.76, lon:37.62},
+  {nama:"London", lat:51.51, lon:-0.13},
+  {nama:"Paris", lat:48.86, lon:2.35},
+  {nama:"Berlin", lat:52.52, lon:13.41},
+  {nama:"Madrid", lat:40.42, lon:-3.70},
+  {nama:"Rome", lat:41.90, lon:12.50},
+  {nama:"Cairo", lat:30.04, lon:31.24},
+  {nama:"Lagos", lat:6.52, lon:3.38},
+  {nama:"Nairobi", lat:-1.29, lon:36.82},
+  {nama:"Johannesburg", lat:-26.20, lon:28.05},
+  {nama:"New York", lat:40.71, lon:-74.01},
+  {nama:"Los Angeles", lat:34.05, lon:-118.24},
+  {nama:"Chicago", lat:41.88, lon:-87.63},
+  {nama:"Mexico City", lat:19.43, lon:-99.13},
+  {nama:"Sao Paulo", lat:-23.55, lon:-46.63},
+  {nama:"Rio de Janeiro", lat:-22.91, lon:-43.17},
+  {nama:"Buenos Aires", lat:-34.60, lon:-58.38},
+  {nama:"Sydney", lat:-33.87, lon:151.21},
+  {nama:"Melbourne", lat:-37.81, lon:144.96},
+  {nama:"Auckland", lat:-36.85, lon:174.76},
+  {nama:"Toronto", lat:43.65, lon:-79.38},
+  {nama:"Vancouver", lat:49.28, lon:-123.12}
+];
+
+// Konversi lintang/bujur -> koordinat 3D di permukaan bola
+function latLonToVector3(lat, lon, radius){
+  const phi = (90 - lat) * Math.PI/180;
+  const theta = (lon + 90) * Math.PI/180; // offset +90 disesuaikan agar match orientasi tekstur equirectangular
+  return new THREE.Vector3(
+    -radius * Math.sin(phi) * Math.cos(theta),
+     radius * Math.cos(phi),
+     radius * Math.sin(phi) * Math.sin(theta)
+  );
+}
+
+// Buat sprite label teks (dipakai untuk nama kota)
+function buatLabelSprite(teks){
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 256; canvas.height = 64;
+  ctx.font = 'bold 28px Courier New';
+  ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,256,64);
+  ctx.fillStyle = '#eafeff';
+  ctx.shadowColor = '#000'; ctx.shadowBlur = 6;
+  ctx.textAlign = 'center';
+  ctx.fillText(teks, 128, 40);
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({map:tex, transparent:true, depthTest:false});
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(0.9, 0.22, 1);
+  return sprite;
 }
 
 function init(){
@@ -166,11 +241,44 @@ function init(){
   globeGroup.rotation.z = 0.41;
   scene.add(globeGroup);
 
-  const tex = buatTeksturDunia();
+  const loader = new THREE.TextureLoader();
+  loader.crossOrigin = 'anonymous';
+
+  // fallback: bola biru polos kalau tekstur asli gagal dimuat (mis. offline/CORS)
   const geo = new THREE.SphereGeometry(RADIUS, 96, 96);
-  const mat = new THREE.MeshPhongMaterial({map:tex, shininess:35, emissive:0x0a2a33, emissiveIntensity:0.22});
-  globeMesh = new THREE.Mesh(geo, mat);
+  const matFallback = new THREE.MeshPhongMaterial({color:0x0a3a52, shininess:20});
+  globeMesh = new THREE.Mesh(geo, matFallback);
   globeGroup.add(globeMesh);
+
+  loader.load(EARTH_TEXTURE_URL,
+    (tex) => { globeMesh.material = new THREE.MeshPhongMaterial({map:tex, shininess:12}); },
+    undefined,
+    () => { document.getElementById('status').innerHTML = '<span id="errormsg">Gagal memuat citra satelit bumi (cek koneksi) — menampilkan globe dasar.</span>'; }
+  );
+
+  // lapisan awan tipis di atas permukaan bumi
+  loader.load(EARTH_CLOUDS_URL, (cloudTex) => {
+    const cloudGeo = new THREE.SphereGeometry(RADIUS*1.008, 64, 64);
+    const cloudMat = new THREE.MeshPhongMaterial({map:cloudTex, transparent:true, opacity:0.35, depthWrite:false});
+    globeGroup.add(new THREE.Mesh(cloudGeo, cloudMat));
+  });
+
+  // penanda + label nama kota-kota besar
+  window.kotaMarkers = [];
+  KOTA_DUNIA.forEach(k => {
+    const pos = latLonToVector3(k.lat, k.lon, RADIUS*1.01);
+    const dotGeo = new THREE.SphereGeometry(0.018, 8, 8);
+    const dotMat = new THREE.MeshBasicMaterial({color:0xffcf5c});
+    const dot = new THREE.Mesh(dotGeo, dotMat);
+    dot.position.copy(pos);
+    dot.userData = { nama:k.nama, lat:k.lat, lon:k.lon };
+    globeGroup.add(dot);
+    window.kotaMarkers.push(dot);
+
+    const label = buatLabelSprite(k.nama);
+    label.position.copy(pos.clone().multiplyScalar(1.05));
+    globeGroup.add(label);
+  });
 
   const glowGeo = new THREE.SphereGeometry(RADIUS*1.055,64,64);
   const glowMat = new THREE.MeshBasicMaterial({color:0x22c9e6, transparent:true, opacity:0.10, side:THREE.BackSide});
@@ -225,6 +333,14 @@ function init(){
 
   document.getElementById('btnCreate').addEventListener('click', createData);
   document.getElementById('btnDownload').addEventListener('click', downloadData);
+
+  // toggle panel (khusus mobile) supaya globe bisa dilihat penuh
+  const panelEl = document.getElementById('panel');
+  const toggleBtn = document.getElementById('btnTogglePanel');
+  toggleBtn.addEventListener('click', () => {
+    panelEl.classList.toggle('collapsed');
+    toggleBtn.textContent = panelEl.classList.contains('collapsed') ? '▴ Buka Panel' : '▾ Tutup Panel';
+  });
 }
 
 function pickLocation(e){
@@ -240,8 +356,19 @@ function pickLocation(e){
     let lon = (Math.atan2(p.z, p.x) * 180/Math.PI) - 90;
     if (lon < -180) lon += 360;
     if (lon > 180) lon -= 360;
+
+    // cari kota terdekat (jarak sudut sederhana) — kalau cukup dekat, pakai nama kota itu
+    let terdekat = null, jarakMin = Infinity;
+    KOTA_DUNIA.forEach(k=>{
+      const dLat = k.lat-lat, dLon = k.lon-lon;
+      const d = Math.sqrt(dLat*dLat + dLon*dLon);
+      if (d < jarakMin){ jarakMin = d; terdekat = k; }
+    });
+
     document.getElementById('latBox').value = lat.toFixed(3);
     document.getElementById('lonBox').value = lon.toFixed(3);
+    document.getElementById('namaLokasi').value = (terdekat && jarakMin < 2.5) ? terdekat.nama : 'Lokasi kustom (tanpa nama kota)';
+
     document.getElementById('crosshair').style.display='block';
     document.getElementById('crosshair').style.left = e.clientX+'px';
     document.getElementById('crosshair').style.top = e.clientY+'px';
@@ -250,7 +377,7 @@ function pickLocation(e){
 
 function animate(){
   requestAnimationFrame(animate);
-  if(!isDragging) globeMesh.rotation.y += 0.0009; // rotasi otomatis pelan saat idle
+  if(!isDragging) globeGroup.rotation.y += 0.0009; // rotasi otomatis pelan saat idle (grup: bumi+kota+awan ikut berputar bersama)
   renderer.render(scene, camera);
 }
 
@@ -258,6 +385,7 @@ function animate(){
 async function createData(){
   const lat = document.getElementById('latBox').value;
   const lon = document.getElementById('lonBox').value;
+  const nama = document.getElementById('namaLokasi').value;
   const jenis = document.getElementById('jenisData').value;
   const mulai = document.getElementById('tglMulai').value;
   const akhir = document.getElementById('tglAkhir').value;
@@ -280,8 +408,8 @@ async function createData(){
     const res = await fetch(url);
     if(!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    historianData.push({lat, lon, mulai, akhir, jenis, data, waktu: new Date().toLocaleString()});
-    tampilkanHasil(data, jenis);
+    historianData.push({lat, lon, nama, mulai, akhir, jenis, data, waktu: new Date().toLocaleString()});
+    tampilkanHasil(data, jenis, nama, lat, lon);
     tampilkanHistorian();
     statusEl.innerHTML = 'Data berhasil dimuat dari Open-Meteo (archive-api.open-meteo.com).';
   } catch(err) {
@@ -289,14 +417,15 @@ async function createData(){
   }
 }
 
-function tampilkanHasil(data, jenis){
+function tampilkanHasil(data, jenis, nama, lat, lon){
   const resultEl = document.getElementById('result');
   if(!data.daily){ resultEl.innerHTML = '<i>Tidak ada data untuk rentang/lokasi ini.</i>'; return; }
   const d = data.daily;
   const n = d.time.length;
   const avg = arr => (arr.reduce((a,b)=>a+(b||0),0)/arr.length).toFixed(1);
 
-  let html = `<div class="row"><span>Jumlah hari</span><span>${n}</span></div>`;
+  let html = `<div class="row" style="border-bottom:1px dashed #1a4a5c;padding-bottom:6px;margin-bottom:6px;"><span>Lokasi</span><span>${nama || 'Kustom'} (${lat}, ${lon})</span></div>`;
+  html += `<div class="row"><span>Jumlah hari</span><span>${n}</span></div>`;
   html += `<div class="row"><span>Suhu maks rata-rata</span><span>${avg(d.temperature_2m_max)} °C</span></div>`;
   html += `<div class="row"><span>Suhu min rata-rata</span><span>${avg(d.temperature_2m_min)} °C</span></div>`;
   if (jenis === 'lengkap') {
@@ -316,15 +445,16 @@ function tampilkanHistorian(){
   if(historianData.length===0){ el.innerHTML = '<i style="color:#5f8a99">Kosong</i>'; return; }
   el.innerHTML = historianData.slice().reverse().map((h,idx)=>{
     const realIdx = historianData.length-1-idx;
-    return `<div onclick="muatUlangHistorian(${realIdx})">${h.waktu} — (${parseFloat(h.lat).toFixed(1)}, ${parseFloat(h.lon).toFixed(1)}) [${h.jenis}] ${h.mulai}→${h.akhir}</div>`;
+    return `<div onclick="muatUlangHistorian(${realIdx})">${h.waktu} — ${h.nama || '(kustom)'} (${parseFloat(h.lat).toFixed(1)}, ${parseFloat(h.lon).toFixed(1)}) [${h.jenis}] ${h.mulai}→${h.akhir}</div>`;
   }).join('');
 }
 
 function muatUlangHistorian(idx){
   const h = historianData[idx];
-  tampilkanHasil(h.data, h.jenis);
+  tampilkanHasil(h.data, h.jenis, h.nama, h.lat, h.lon);
   document.getElementById('latBox').value = h.lat;
   document.getElementById('lonBox').value = h.lon;
+  document.getElementById('namaLokasi').value = h.nama || '';
   document.getElementById('tglMulai').value = h.mulai;
   document.getElementById('tglAkhir').value = h.akhir;
   document.getElementById('jenisData').value = h.jenis;
@@ -360,7 +490,7 @@ function siapkanChart(last){
     },
     options: {
       responsive:false, animation:false,
-      plugins:{ legend:{ labels:{ color:'#eafeff' } }, title:{ display:true, text:`Suhu Harian — Lat ${last.lat}, Lon ${last.lon}`, color:'#7ff9ff' } },
+      plugins:{ legend:{ labels:{ color:'#eafeff' } }, title:{ display:true, text:`Suhu Harian — ${last.nama || 'Lokasi Kustom'} (${last.lat}, ${last.lon})`, color:'#7ff9ff' } },
       scales:{
         x:{ ticks:{ color:'#7ff9ff', maxTicksLimit:10 }, grid:{ color:'#123042' } },
         y:{ ticks:{ color:'#7ff9ff' }, grid:{ color:'#123042' } }
@@ -408,7 +538,7 @@ async function downloadPDF(){
   doc.setFontSize(16);
   doc.text('SCIE Weather Globe — Laporan Data Cuaca', 40, 40);
   doc.setFontSize(10);
-  doc.text(`Lokasi: Lat ${last.lat}, Lon ${last.lon}   |   Rentang: ${last.mulai} s/d ${last.akhir}   |   Jenis: ${last.jenis}`, 40, 58);
+  doc.text(`Lokasi: ${last.nama || 'Lokasi Kustom'} — Lat ${last.lat}, Lon ${last.lon}   |   Rentang: ${last.mulai} s/d ${last.akhir}   |   Jenis: ${last.jenis}`, 40, 58);
   doc.text('Sumber data: Open-Meteo ERA5 Reanalysis (CC BY 4.0)', 40, 72);
 
   const chartImg = document.getElementById('chartCanvas').toDataURL('image/png');
@@ -433,7 +563,7 @@ async function downloadPDF(){
   doc.text('Tabel Data Lengkap', 40, 40);
   doc.autoTable({ head: head, body: body, startY: 55, styles:{fontSize:8, cellPadding:4}, headStyles:{fillColor:[10,107,143]} });
 
-  doc.save(`scie-weather-${last.lat}_${last.lon}_${last.mulai}_${last.akhir}.pdf`);
+  doc.save(`scie-weather-${(last.nama||'lokasi').replace(/\s+/g,'_')}_${last.mulai}_${last.akhir}.pdf`);
 }
 
 function downloadDoc(){
@@ -447,7 +577,7 @@ function downloadDoc(){
 
   let html = `<html><head><meta charset="UTF-8"></head><body style="font-family:Calibri,Arial,sans-serif;">
   <h2>SCIE Weather Globe — Laporan Data Cuaca</h2>
-  <p><b>Lokasi:</b> Lat ${last.lat}, Lon ${last.lon} &nbsp; | &nbsp; <b>Rentang:</b> ${last.mulai} s/d ${last.akhir} &nbsp; | &nbsp; <b>Jenis:</b> ${last.jenis}</p>
+  <p><b>Lokasi:</b> ${last.nama || 'Lokasi Kustom'} — Lat ${last.lat}, Lon ${last.lon} &nbsp; | &nbsp; <b>Rentang:</b> ${last.mulai} s/d ${last.akhir} &nbsp; | &nbsp; <b>Jenis:</b> ${last.jenis}</p>
   <p style="font-size:11px;color:#555">Sumber data: Open-Meteo ERA5 Reanalysis (CC BY 4.0)</p>
   <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;font-size:12px;">
     <tr style="background:#0a6b8f;color:#fff;">${head.map(h=>`<th>${h}</th>`).join('')}</tr>
@@ -459,7 +589,7 @@ function downloadDoc(){
   const urlObj = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = urlObj;
-  a.download = `scie-weather-${last.lat}_${last.lon}_${last.mulai}_${last.akhir}.doc`;
+  a.download = `scie-weather-${(last.nama||'lokasi').replace(/\s+/g,'_')}_${last.mulai}_${last.akhir}.doc`;
   a.click();
   URL.revokeObjectURL(urlObj);
 }
