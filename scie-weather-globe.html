@@ -199,11 +199,11 @@ const KOTA_DUNIA = [
 // Konversi lintang/bujur -> koordinat 3D di permukaan bola
 function latLonToVector3(lat, lon, radius){
   const phi = (90 - lat) * Math.PI/180;
-  const theta = (lon + 90) * Math.PI/180; // offset +90 disesuaikan agar match orientasi tekstur equirectangular
+  const theta = (lon + 90) * Math.PI/180; // harus persis sama arah dengan rumus pembacaan koordinat di pickLocation()
   return new THREE.Vector3(
-    -radius * Math.sin(phi) * Math.cos(theta),
-     radius * Math.cos(phi),
-     radius * Math.sin(phi) * Math.sin(theta)
+    radius * Math.sin(phi) * Math.cos(theta),
+    radius * Math.cos(phi),
+    radius * Math.sin(phi) * Math.sin(theta)
   );
 }
 
