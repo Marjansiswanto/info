@@ -206,6 +206,10 @@
     <div><b>Update citra</b>Mosaik tahunan (EOX); EE App mengikuti konfigurasi masing-masing app</div>
     <div><b>Akses</b>Publik, tanpa API key untuk panel Sentinel-2</div>
   </div>
+
+  <div class="meta" style="margin-top:12px;">
+    <div><b>Catatan sifat data</b>Citra satelit optik (Sentinel-2/GEE) <u>bukan feed real-time</u> — satelit hanya memotret saat lintasan siang hari (revisit ±5 hari), sehingga citra selalu tampak "siang" dan bisa berasal dari beberapa hari/minggu terakhir, bukan detik ini.</div>
+  </div>
 </main>
 
 <footer>
@@ -214,7 +218,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  var map = L.map('s2-map', { zoomControl: true }).setView([-4.793, 119.616], 13); // default view: Pabrik PT Semen Tonasa, Biring Ere, Pangkep
+  var map = L.map('s2-map', { zoomControl: true }).setView([-4.793, 119.616], 14); // default view: Pabrik PT Semen Tonasa, Biring Ere, Pangkep — zoom mendekati batas resolusi 10m
 
   var s2Layer = L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg', {
     attribution: 'Sentinel-2 cloudless by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2020)',
