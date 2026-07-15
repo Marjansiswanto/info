@@ -218,11 +218,12 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  var map = L.map('s2-map', { zoomControl: true }).setView([-4.793, 119.616], 14); // default view: Pabrik PT Semen Tonasa, Biring Ere, Pangkep — zoom mendekati batas resolusi 10m
+  var map = L.map('s2-map', { zoomControl: true, maxZoom: 18 }).setView([-4.793, 119.616], 15); // default view: Pabrik PT Semen Tonasa, dibuka dekat
 
   var s2Layer = L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg', {
-    attribution: 'Sentinel-2 cloudless by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2020)',
-    maxZoom: 14
+    attribution: 'Sentinel-2 cloudless by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2020) — zoom di atas 14 diperbesar otomatis, bukan resolusi asli',
+    maxZoom: 18,
+    maxNativeZoom: 14
   }).addTo(map);
 
   var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
