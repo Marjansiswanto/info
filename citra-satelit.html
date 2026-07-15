@@ -72,10 +72,9 @@
 
   .grid{
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));
     gap:20px;
   }
-  @media(max-width:920px){ .grid{ grid-template-columns:1fr; } }
 
   .panel{
     border:1px solid var(--line-bright);
@@ -144,10 +143,79 @@
     font-size:10.5px; letter-spacing:.05em;
   }
 
+  #gnss-readout{
+    position:absolute; bottom:10px; left:10px; z-index:500;
+    background:rgba(10,12,13,0.88); border:1px solid var(--orange); padding:8px 12px;
+    font-size:11px; color:var(--text); display:flex; gap:14px;
+  }
+  #gnss-readout div{ display:flex; flex-direction:column; }
+  #gnss-readout b{ color:var(--orange); font-size:9.5px; letter-spacing:.08em; margin-bottom:2px; }
+  #gnss-readout span{ font-size:12px; }
+
   .leaflet-container{ background:#0a0c0d; }
+
+  /* ===== Modal konfirmasi lokasi ===== */
+  #loc-overlay{
+    position:fixed; inset:0; background:rgba(4,5,6,0.85); z-index:2000;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    backdrop-filter:blur(2px);
+  }
+  #loc-overlay.hidden{ display:none; }
+  #loc-card{
+    background:var(--panel); border:1px solid var(--line-bright); max-width:420px; width:100%;
+    padding:26px 24px; position:relative;
+  }
+  #loc-card::before, #loc-card::after{
+    content:''; position:absolute; width:12px; height:12px; border:1px solid var(--orange); opacity:.8;
+  }
+  #loc-card::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  #loc-card::after{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+  #loc-card .icon{ font-size:26px; color:var(--orange); margin-bottom:10px; }
+  #loc-card h2{ font-size:16px; margin:0 0 8px 0; color:var(--text); }
+  #loc-card p{ font-size:12.5px; color:var(--text-dim); line-height:1.6; margin:0 0 20px 0; }
+  #loc-card button.primary{
+    width:100%; background:var(--orange); color:#0a0c0d; border:none; font-family:var(--mono);
+    font-weight:700; letter-spacing:.05em; padding:12px; font-size:13px; cursor:pointer; margin-bottom:10px;
+  }
+  #loc-card button.primary:hover{ background:#ffab6b; }
+  #loc-search-row{ display:flex; gap:8px; margin-bottom:10px; }
+  #loc-search-row input{
+    flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text);
+    font-family:var(--mono); padding:10px; font-size:12.5px;
+  }
+  #loc-search-row button{
+    background:transparent; border:1px solid var(--line-bright); color:var(--orange);
+    font-family:var(--mono); padding:0 14px; cursor:pointer; font-size:12.5px;
+  }
+  #loc-search-results{ font-size:12px; color:var(--text-dim); max-height:140px; overflow-y:auto; margin-bottom:10px; }
+  #loc-search-results div{
+    padding:7px 8px; border-bottom:1px solid var(--line); cursor:pointer;
+  }
+  #loc-search-results div:hover{ background:#1a1e21; color:var(--text); }
+  #loc-skip{
+    display:block; text-align:center; font-size:11.5px; color:var(--text-dim);
+    text-decoration:underline; cursor:pointer; margin-top:4px; background:none; border:none; font-family:var(--mono);
+  }
+  #loc-status{ font-size:11.5px; color:var(--amber); margin-bottom:10px; min-height:16px; }
 </style>
 </head>
 <body>
+
+<div id="loc-overlay">
+  <div id="loc-card">
+    <div class="icon">◎</div>
+    <h2>Tampilkan Lokasi Anda?</h2>
+    <p>Kedua panel (Google Earth Engine &amp; Sentinel-2) dapat langsung dibuka di lokasi Anda saat ini, atau di lokasi lain yang Anda cari. Jika dilewati, tampilan akan memakai lokasi default: Pabrik PT Semen Tonasa.</p>
+    <div id="loc-status"></div>
+    <button class="primary" id="loc-use-mine">◎ GUNAKAN LOKASI SAYA</button>
+    <div id="loc-search-row">
+      <input type="text" id="loc-search-input" placeholder="Cari lokasi lain...">
+      <button id="loc-search-btn">CARI</button>
+    </div>
+    <div id="loc-search-results"></div>
+    <button id="loc-skip">Lewati — pakai lokasi default (Pabrik PT Semen Tonasa)</button>
+  </div>
+</div>
 
 <header>
   <div>
@@ -160,7 +228,7 @@
 <main>
   <div class="eyebrow">Modul Observasi</div>
   <h1>Google Earth Engine &amp; Sentinel-2 (Copernicus)</h1>
-  <div class="sub">Panel kiri: aplikasi Google Earth Engine yang dipublish. Panel kanan: mosaik Sentinel-2 cloudless publik (EOX / Copernicus), tanpa kebutuhan API key. Tampilan default berpusat di Pabrik PT Semen Tonasa, Biring Ere, Kab. Pangkep.</div>
+  <div class="sub">Panel 1: Google Earth Engine App. Panel 2: Sentinel-2 cloudless (EOX/Copernicus). Panel 3: cuaca &amp; awan live (Windy). Panel 4: navigasi darat &amp; laut dengan koordinat GNSS (OpenSeaMap). Tampilan default berpusat di Pabrik PT Semen Tonasa, Biring Ere, Kab. Pangkep — atau lokasi Anda, sesuai pilihan saat halaman dibuka.</div>
 
   <div class="grid">
 
@@ -176,7 +244,7 @@
           <iframe id="gee-frame" src="https://username.users.earthengine.app/view/nama-app"></iframe>
           Lalu hapus div#gee-placeholder dan un-comment iframe-nya.
         -->
-        <iframe id="gee-frame" src="https://sipatra-smart.projects.earthengine.app/view/sipatra-satelit" title="Google Earth Engine App - Sipatra Satelit"></iframe>
+        <iframe id="gee-frame" src="" title="Google Earth Engine App - Sipatra Satelit"></iframe>
       </div>
       <div class="toolbar">
         <button class="active">EE APP</button>
@@ -198,11 +266,48 @@
       </div>
     </div>
 
+    <!-- PANEL 3 : CUACA LIVE (WINDY) -->
+    <div class="panel">
+      <div class="panel-head">
+        <span>SUMBER_03 · CUACA LIVE (AWAN, HUJAN, ANGIN)</span>
+        <span class="tag pub">LIVE</span>
+      </div>
+      <div class="panel-body">
+        <iframe id="windy-frame" src="" title="Cuaca Live - Windy" style="width:100%;height:100%;border:0;display:block;"></iframe>
+      </div>
+      <div class="toolbar">
+        <span style="color:var(--text-dim); font-size:10.5px;">Punya timeline sendiri di dalam widget (geser di bagian bawah peta) — mundur ±3 jam, maju ±hari ke depan (perkiraan)</span>
+      </div>
+    </div>
+
+    <!-- PANEL 4 : NAVIGASI DARAT & LAUT (GNSS) -->
+    <div class="panel">
+      <div class="panel-head">
+        <span>SUMBER_04 · NAVIGASI DARAT &amp; LAUT (KOORDINAT GNSS PERANGKAT)</span>
+        <span class="tag pub">AKTIF</span>
+      </div>
+      <div class="panel-body" style="position:relative;">
+        <div id="nav-map" style="width:100%; height:100%;"></div>
+        <div id="gnss-readout">
+          <div><b>LAT</b><span id="gnss-lat">—</span></div>
+          <div><b>LON</b><span id="gnss-lon">—</span></div>
+          <div><b>AKURASI</b><span id="gnss-acc">—</span></div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="active" data-nav="seamark">RAMBU LAUT</button>
+        <button data-nav="plain">PETA POLOS</button>
+        <span style="color:var(--text-dim); font-size:10px; margin-left:auto; align-self:center;">Klik peta untuk baca koordinat titik</span>
+      </div>
+    </div>
+
   </div>
 
   <div class="meta">
     <div><b>Sumber A</b>Google Earth Engine App — sipatra-satelit (Sentinel-2, cloud-masked, median composite)<span class="badge confirmed">AKTIF</span></div>
     <div><b>Sumber B</b>Sentinel-2 cloudless mosaic — EOX IT Services / Copernicus<span class="badge confirmed">AKTIF</span></div>
+    <div><b>Sumber C</b>Cuaca &amp; awan live — Windy.com (data ECMWF + citra satelit meteorologi)<span class="badge confirmed">LIVE</span></div>
+    <div><b>Sumber D</b>Peta: OpenStreetMap + OpenSeaMap (data survei/komunitas, bukan dari satelit posisi). Koordinat: GNSS perangkat pengunjung — konstelasi (GPS/GLONASS/Galileo/BeiDou) tergantung hardware masing-masing, tidak dapat diverifikasi dari sisi web.<span class="badge confirmed">AKTIF</span></div>
     <div><b>Update citra</b>Mosaik tahunan (EOX); EE App mengikuti konfigurasi masing-masing app</div>
     <div><b>Akses</b>Publik, tanpa API key untuk panel Sentinel-2</div>
   </div>
@@ -218,7 +323,12 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  var map = L.map('s2-map', { zoomControl: true, maxZoom: 18 }).setView([-4.793, 119.616], 15); // default view: Pabrik PT Semen Tonasa, dibuka dekat
+  // ====== Koordinat default: Pabrik PT Semen Tonasa ======
+  var DEFAULT_LAT = -4.793, DEFAULT_LON = 119.616, DEFAULT_LABEL = 'PT Semen Tonasa (default)';
+  var GEE_APP_BASE = 'https://sipatra-smart.projects.earthengine.app/view/sipatra-satelit';
+
+  // ====== Inisialisasi peta Leaflet (Sentinel-2) ======
+  var map = L.map('s2-map', { zoomControl: true, maxZoom: 18 }).setView([DEFAULT_LAT, DEFAULT_LON], 15);
 
   var s2Layer = L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg', {
     attribution: 'Sentinel-2 cloudless by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2020) — zoom di atas 14 diperbesar otomatis, bukan resolusi asli',
@@ -231,9 +341,55 @@
     maxZoom: 19
   });
 
-  L.circleMarker([-4.793, 119.616], {
+  var lokasiMarker = L.circleMarker([DEFAULT_LAT, DEFAULT_LON], {
     radius: 7, color: '#ff8a3d', weight: 2, fillColor: '#ff8a3d', fillOpacity: 0.35
-  }).addTo(map).bindPopup('<b>PT Semen Tonasa</b><br>Biring Ere, Kec. Bungoro, Kab. Pangkep');
+  }).addTo(map).bindPopup('<b>' + DEFAULT_LABEL + '</b>');
+
+  // ====== PANEL 4: Peta Navigasi Darat & Laut (GNSS) ======
+  var navMap = L.map('nav-map', { zoomControl: true, maxZoom: 18 }).setView([DEFAULT_LAT, DEFAULT_LON], 13);
+
+  var navBaseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(navMap);
+
+  // OpenSeaMap: rambu laut, jalur pelayaran, mercusuar, kedalaman (publik, tanpa API key)
+  var seamarkLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+    attribution: 'Sea marks © OpenSeaMap contributors',
+    maxZoom: 18,
+    opacity: 0.9
+  }).addTo(navMap);
+
+  var navMarker = L.circleMarker([DEFAULT_LAT, DEFAULT_LON], {
+    radius: 7, color: '#ff8a3d', weight: 2, fillColor: '#ff8a3d', fillOpacity: 0.35
+  }).addTo(navMap).bindPopup('<b>' + DEFAULT_LABEL + '</b>');
+
+  document.querySelectorAll('.toolbar button[data-nav]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.toolbar button[data-nav]').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      if(btn.dataset.nav === 'seamark'){
+        navMap.addLayer(seamarkLayer);
+      } else {
+        navMap.removeLayer(seamarkLayer);
+      }
+    });
+  });
+
+  // Update kotak koordinat GNSS
+  function updateGnssReadout(lat, lon, akurasiMeter){
+    document.getElementById('gnss-lat').textContent = lat.toFixed(6) + '° ' + (lat >= 0 ? 'LU' : 'LS');
+    document.getElementById('gnss-lon').textContent = Math.abs(lon).toFixed(6) + '° ' + (lon >= 0 ? 'BT' : 'BB');
+    document.getElementById('gnss-acc').textContent = akurasiMeter ? ('±' + Math.round(akurasiMeter) + ' m') : '—';
+  }
+  updateGnssReadout(DEFAULT_LAT, DEFAULT_LON, null);
+
+  // Klik di peta navigasi -> baca koordinat titik yang diklik
+  navMap.on('click', function(e){
+    var lat = e.latlng.lat, lon = e.latlng.lng;
+    updateGnssReadout(lat, lon, null);
+    navMarker.setLatLng([lat, lon]).bindPopup('<b>Titik dipilih</b><br>' + lat.toFixed(6) + ', ' + lon.toFixed(6)).openPopup();
+  });
 
   document.querySelectorAll('.toolbar button[data-layer]').forEach(function(btn){
     btn.addEventListener('click', function(){
@@ -245,6 +401,112 @@
         map.removeLayer(s2Layer); map.addLayer(osmLayer);
       }
     });
+  });
+
+  // ====== Fungsi untuk memuat GEE App dengan koordinat tertentu ======
+  function loadGeeApp(lat, lon){
+    var frame = document.getElementById('gee-frame');
+    frame.src = GEE_APP_BASE + '?lat=' + lat.toFixed(6) + '&lon=' + lon.toFixed(6);
+  }
+
+  // ====== Fungsi untuk memuat panel cuaca live (Windy embed, publik tanpa API key) ======
+  function loadWindy(lat, lon){
+    var frame = document.getElementById('windy-frame');
+    var url = 'https://embed.windy.com/embed2.html'
+      + '?lat=' + lat.toFixed(3)
+      + '&lon=' + lon.toFixed(3)
+      + '&detailLat=' + lat.toFixed(3)
+      + '&detailLon=' + lon.toFixed(3)
+      + '&width=650&height=450&zoom=9'
+      + '&level=surface&overlay=satellite&product=ecmwf'
+      + '&menu=&message=true&marker=&calendar=now&pressure=&type=map'
+      + '&location=coordinates&metricWind=default&metricTemp=default&radarRange=-1';
+    frame.src = url;
+  }
+
+  // ====== Fungsi untuk menerapkan lokasi terpilih ke keempat panel ======
+  function gunakanLokasiPengunjung(lat, lon, label, akurasiMeter){
+    map.setView([lat, lon], 15);
+    lokasiMarker.setLatLng([lat, lon]).bindPopup('<b>' + (label || 'Lokasi Anda') + '</b>').openPopup();
+    loadGeeApp(lat, lon);
+    loadWindy(lat, lon);
+    navMap.setView([lat, lon], 13);
+    navMarker.setLatLng([lat, lon]).bindPopup('<b>' + (label || 'Lokasi Anda') + '</b>');
+    updateGnssReadout(lat, lon, akurasiMeter);
+    tutupModalLokasi();
+  }
+
+  function gunakanLokasiDefault(){
+    loadGeeApp(DEFAULT_LAT, DEFAULT_LON);
+    loadWindy(DEFAULT_LAT, DEFAULT_LON);
+    navMap.setView([DEFAULT_LAT, DEFAULT_LON], 13);
+    navMarker.setLatLng([DEFAULT_LAT, DEFAULT_LON]).bindPopup('<b>' + DEFAULT_LABEL + '</b>');
+    updateGnssReadout(DEFAULT_LAT, DEFAULT_LON, null);
+    tutupModalLokasi();
+  }
+
+  function tutupModalLokasi(){
+    document.getElementById('loc-overlay').classList.add('hidden');
+  }
+
+  function setStatus(msg){
+    document.getElementById('loc-status').textContent = msg || '';
+  }
+
+  // Tombol: gunakan lokasi saya
+  document.getElementById('loc-use-mine').addEventListener('click', function(){
+    if (!navigator.geolocation){
+      setStatus('Perangkat/browser tidak mendukung geolokasi. Memakai lokasi default...');
+      setTimeout(gunakanLokasiDefault, 1200);
+      return;
+    }
+    setStatus('Meminta izin lokasi... (izinkan lewat popup browser)');
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        gunakanLokasiPengunjung(pos.coords.latitude, pos.coords.longitude, 'Lokasi Anda', pos.coords.accuracy);
+      },
+      function(err){
+        setStatus('Izin ditolak / gagal mendapat lokasi. Memakai lokasi default...');
+        setTimeout(gunakanLokasiDefault, 1200);
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+    );
+  });
+
+  // Tombol: lewati, pakai default
+  document.getElementById('loc-skip').addEventListener('click', gunakanLokasiDefault);
+
+  // Pencarian lokasi manual (Nominatim OpenStreetMap, publik, tanpa API key)
+  function cariLokasi(){
+    var q = document.getElementById('loc-search-input').value.trim();
+    var resultsBox = document.getElementById('loc-search-results');
+    if (!q){ return; }
+    setStatus('Mencari "' + q + '"...');
+    resultsBox.innerHTML = '';
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q))
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        setStatus('');
+        if (!data || data.length === 0){
+          resultsBox.innerHTML = '<div>Tidak ditemukan. Coba kata kunci lain.</div>';
+          return;
+        }
+        data.forEach(function(item){
+          var div = document.createElement('div');
+          div.textContent = item.display_name;
+          div.addEventListener('click', function(){
+            gunakanLokasiPengunjung(parseFloat(item.lat), parseFloat(item.lon), item.display_name.split(',')[0]);
+          });
+          resultsBox.appendChild(div);
+        });
+      })
+      .catch(function(){
+        setStatus('Pencarian gagal (koneksi bermasalah). Coba lagi.');
+      });
+  }
+  document.getElementById('loc-search-btn').addEventListener('click', cariLokasi);
+  document.getElementById('loc-search-input').addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){ e.preventDefault(); cariLokasi(); }
   });
 </script>
 </body>
