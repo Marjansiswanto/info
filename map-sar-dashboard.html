@@ -11,7 +11,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --bg:#0a0c0d; --panel:#111417; --line:#22282c; --line-bright:#3a4249;
@@ -76,10 +75,6 @@
   #auth-status.ok{ color:var(--green); }
   #auth-status.info{ color:var(--amber); }
 
-  #totp-qr-box{ display:flex; justify-content:center; margin:14px 0; background:#fff; padding:10px; }
-  #totp-secret-text{
-    font-size:11px; color:var(--text-dim); word-break:break-all; text-align:center; margin-bottom:10px;
-  }
   .hidden{ display:none !important; }
 
   /* ===== Dashboard ===== */
@@ -229,7 +224,7 @@
     <!-- Form: Login -->
     <div id="form-login">
       <h2>Masuk — Map SAR</h2>
-      <p class="sub">Portal ini dilindungi login + verifikasi 2 langkah (TOTP). Hanya petugas terdaftar yang dapat mengakses dashboard.</p>
+      <p class="sub">Portal ini dilindungi login password. Hanya petugas terdaftar yang dapat mengakses dashboard. (POC — verifikasi 2 langkah akan diaktifkan setelah upgrade Firebase.)</p>
       <div id="auth-status"></div>
       <input type="email" id="login-email" placeholder="Email">
       <input type="password" id="login-password" placeholder="Password">
@@ -238,7 +233,7 @@
       <button class="secondary" id="btn-show-signup">Belum punya akun? Daftar</button>
     </div>
 
-    <!-- Form: Signup -->
+    <!-- Form: Lupa Password -->
     <div id="form-lupa-password" class="hidden">
       <h2>Reset Password</h2>
       <p class="sub">Masukkan email akun Anda. Link untuk buat password baru akan dikirim ke email itu.</p>
@@ -258,55 +253,6 @@
       <input type="tel" id="signup-phone" placeholder="No. HP WhatsApp (format: +62812xxxxxxx)">
       <button class="primary" id="btn-signup">DAFTAR</button>
       <button class="secondary" id="btn-show-login">Sudah punya akun? Masuk</button>
-    </div>
-
-    <!-- Form: Verifikasi Email (wajib sebelum setup TOTP) -->
-    <div id="form-verify-email" class="hidden">
-      <h2>Verifikasi Email Diperlukan</h2>
-      <p class="sub">Firebase mewajibkan email diverifikasi sebelum setup verifikasi 2 langkah (mencegah orang lain daftar pakai email Anda). Link verifikasi sudah dikirim ke email Anda — buka email, klik link-nya, lalu kembali ke sini.</p>
-      <div id="verify-email-status"></div>
-      <button class="primary" id="btn-cek-verifikasi">SUDAH KLIK LINK — LANJUTKAN</button>
-      <button class="secondary" id="btn-kirim-ulang-verifikasi">Kirim Ulang Email Verifikasi</button>
-    </div>
-
-    <!-- Form: TOTP Enrollment (setup pertama kali) -->
-    <div id="form-totp-enroll" class="hidden">
-      <h2>Aktifkan Verifikasi 2 Langkah</h2>
-      <p class="sub">Scan QR ini dengan aplikasi Authenticator (Google Authenticator / Authy / Microsoft Authenticator), lalu masukkan kode 6 digit yang muncul.</p>
-      <div id="totp-qr-box"></div>
-      <div id="totp-secret-text"></div>
-      <div id="enroll-status"></div>
-      <input type="text" id="enroll-code" placeholder="Kode 6 digit dari aplikasi">
-      <button class="primary" id="btn-verify-enroll">AKTIFKAN & MASUK</button>
-    </div>
-
-    <!-- Form: TOTP Verification (login rutin) -->
-    <div id="form-totp-verify" class="hidden">
-      <h2>Verifikasi 2 Langkah</h2>
-      <p class="sub">Masukkan kode 6 digit dari aplikasi Authenticator Anda.</p>
-      <div id="verify-status"></div>
-      <input type="text" id="verify-code" placeholder="Kode 6 digit">
-      <button class="primary" id="btn-verify-login">VERIFIKASI</button>
-    </div>
-
-    <!-- Form: Email OTP (lapis ke-3) -->
-    <div id="form-email-otp" class="hidden">
-      <h2>Verifikasi Email</h2>
-      <p class="sub">Kode telah dikirim ke email Anda. Masukkan kode 6 digit tersebut untuk melanjutkan. Kode berlaku 5 menit.</p>
-      <div id="email-otp-status"></div>
-      <input type="text" id="email-otp-code" placeholder="Kode 6 digit dari email">
-      <button class="primary" id="btn-verify-email-otp">VERIFIKASI EMAIL</button>
-      <button class="secondary" id="btn-resend-email-otp">Kirim Ulang Kode</button>
-    </div>
-
-    <!-- Form: WhatsApp OTP (lapis ke-4) -->
-    <div id="form-wa-otp" class="hidden">
-      <h2>Verifikasi WhatsApp</h2>
-      <p class="sub">Kode telah dikirim ke WhatsApp Anda. Masukkan kode 6 digit untuk masuk ke dashboard. Kode berlaku 5 menit.</p>
-      <div id="wa-otp-status"></div>
-      <input type="text" id="wa-otp-code" placeholder="Kode 6 digit dari WhatsApp">
-      <button class="primary" id="btn-verify-wa-otp">VERIFIKASI WHATSAPP</button>
-      <button class="secondary" id="btn-resend-wa-otp">Kirim Ulang Kode</button>
     </div>
 
   </div>
@@ -493,17 +439,13 @@
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-    sendEmailVerification, reload, sendPasswordResetEmail,
-    onAuthStateChanged, multiFactor, TotpMultiFactorGenerator, getMultiFactorResolver
+    sendPasswordResetEmail, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, setDoc, getDoc,
     collection, addDoc, onSnapshot, query, orderBy, serverTimestamp,
     deleteDoc
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-  import {
-    getFunctions, httpsCallable
-  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js";
   import {
     getStorage, ref, uploadBytes, getDownloadURL
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
@@ -523,17 +465,11 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const functions = getFunctions(app); // default region us-central1 -- sesuaikan jika deploy ke region lain
   const storage = getStorage(app);
-  const callSendOtp = httpsCallable(functions, 'sendOtp');
-  const callVerifyOtp = httpsCallable(functions, 'verifyOtp');
-
-  let emailOtpVerified = false; // reset setiap halaman dibuka ulang -> wajib verifikasi tiap buka portal
-  let waOtpVerified = false;
 
   // ---------- Helper UI ----------
   function showForm(id){
-    ['form-login','form-lupa-password','form-signup','form-verify-email','form-totp-enroll','form-totp-verify','form-email-otp','form-wa-otp'].forEach(f=>{
+    ['form-login','form-lupa-password','form-signup'].forEach(f=>{
       document.getElementById(f).classList.toggle('hidden', f !== id);
     });
   }
@@ -554,12 +490,13 @@
     setStatus('signup-status', 'Memproses pendaftaran...', 'info');
     try{
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      // Simpan nomor HP untuk keperluan WA OTP nanti + role default 'petugas'
+      // Simpan nomor HP (untuk keperluan verifikasi 2 langkah via Telegram nanti) + role default 'user'.
+      // Kenaikan ke 'editor'/'admin' untuk POC ini diatur manual lewat Firestore Console.
       await setDoc(doc(db, 'users', cred.user.uid), {
-        email, phone, role: 'petugas', dibuatPada: Date.now()
+        email, phone, role: 'user', status: 'active', dibuatPada: Date.now()
       });
-      // Kirim email verifikasi -- WAJIB sebelum bisa enroll TOTP
-      await kirimVerifikasiEmail(cred.user);
+      // Langsung masuk dashboard -- tanpa verifikasi 2 langkah untuk tahap POC ini
+      tampilkanDashboard();
     }catch(err){
       setStatus('signup-status', 'Gagal daftar: ' + err.message, 'err');
     }
@@ -589,15 +526,9 @@
     setStatus('auth-status', 'Memproses login...', 'info');
     try{
       await signInWithEmailAndPassword(auth, email, pass);
-      // Jika user belum enroll TOTP sama sekali, onAuthStateChanged di bawah akan menanganinya
+      // onAuthStateChanged di bawah akan menampilkan dashboard begitu login berhasil
     }catch(err){
-      if (err.code === 'auth/multi-factor-auth-required'){
-        window.__mfaResolver = getMultiFactorResolver(auth, err);
-        showForm('form-totp-verify');
-        setStatus('auth-status', '', '');
-      } else {
-        setStatus('auth-status', 'Login gagal: ' + pesanErrorFirebase(err), 'err');
-      }
+      setStatus('auth-status', 'Login gagal: ' + pesanErrorFirebase(err), 'err');
     }
   });
 
@@ -624,168 +555,7 @@
     }
   });
 
-  // ---------- Verifikasi Email (wajib sebelum TOTP) ----------
-  async function kirimVerifikasiEmail(user){
-    showForm('form-verify-email');
-    try{
-      await sendEmailVerification(user);
-      setStatus('verify-email-status', 'Email verifikasi terkirim ke ' + user.email + '. Cek inbox/folder spam.', 'ok');
-    }catch(err){
-      setStatus('verify-email-status', 'Gagal kirim email verifikasi: ' + err.message, 'err');
-    }
-  }
-
-  document.getElementById('btn-cek-verifikasi').addEventListener('click', async ()=>{
-    setStatus('verify-email-status', 'Mengecek status verifikasi...', 'info');
-    try{
-      await reload(auth.currentUser); // ambil status terbaru dari server
-      if (auth.currentUser.emailVerified){
-        setStatus('verify-email-status', 'Email terverifikasi! Lanjut ke setup TOTP...', 'ok');
-        await mulaiEnrollTotp(auth.currentUser);
-      } else {
-        setStatus('verify-email-status', 'Email belum terverifikasi. Cek email Anda dan klik link-nya dulu.', 'err');
-      }
-    }catch(err){
-      setStatus('verify-email-status', 'Gagal cek status: ' + err.message, 'err');
-    }
-  });
-
-  document.getElementById('btn-kirim-ulang-verifikasi').addEventListener('click', ()=>{
-    if (auth.currentUser) kirimVerifikasiEmail(auth.currentUser);
-  });
-
-  // ---------- TOTP Enrollment (pertama kali) ----------
-  async function mulaiEnrollTotp(user){
-    // Wajib email terverifikasi dulu (syarat Firebase Identity Platform)
-    await reload(user);
-    if (!user.emailVerified){
-      await kirimVerifikasiEmail(user);
-      return;
-    }
-    showForm('form-totp-enroll');
-    setStatus('enroll-status', 'Menyiapkan kode QR...', 'info');
-    try{
-      const session = await multiFactor(user).getSession();
-      const totpSecret = await TotpMultiFactorGenerator.generateSecret(session);
-      window.__totpSecret = totpSecret;
-
-      const otpauthUrl = totpSecret.generateQrCodeUrl(user.email, 'Map SAR POC');
-      document.getElementById('totp-qr-box').innerHTML = '';
-      new QRCode(document.getElementById('totp-qr-box'), { text: otpauthUrl, width: 180, height: 180 });
-      document.getElementById('totp-secret-text').textContent = 'Kode manual (jika QR tidak bisa discan): ' + totpSecret.secretKey;
-      setStatus('enroll-status', '', '');
-    }catch(err){
-      setStatus('enroll-status', 'Gagal menyiapkan TOTP: ' + err.message, 'err');
-    }
-  }
-
-  document.getElementById('btn-verify-enroll').addEventListener('click', async ()=>{
-    const code = document.getElementById('enroll-code').value.trim();
-    setStatus('enroll-status', 'Memverifikasi...', 'info');
-    try{
-      const assertion = TotpMultiFactorGenerator.assertionForEnrollment(window.__totpSecret, code);
-      await multiFactor(auth.currentUser).enroll(assertion, 'Authenticator App');
-      setStatus('enroll-status', 'Berhasil! Melanjutkan...', 'ok');
-      await lanjutkanKeTahapBerikutnya(auth.currentUser); // panggil langsung, jangan andalkan event auth state
-    }catch(err){
-      setStatus('enroll-status', 'Kode salah/gagal: ' + err.message, 'err');
-    }
-  });
-
-  // ---------- TOTP Verification (login rutin) ----------
-  document.getElementById('btn-verify-login').addEventListener('click', async ()=>{
-    const code = document.getElementById('verify-code').value.trim();
-    setStatus('verify-status', 'Memverifikasi...', 'info');
-    try{
-      const resolver = window.__mfaResolver;
-      const hint = resolver.hints.find(h => h.factorId === TotpMultiFactorGenerator.FACTOR_ID);
-      const assertion = TotpMultiFactorGenerator.assertionForSignIn(hint.uid, code);
-      await resolver.resolveSignIn(assertion);
-      if (auth.currentUser) await lanjutkanKeTahapBerikutnya(auth.currentUser); // jaga-jaga kalau event tidak terpicu
-    }catch(err){
-      setStatus('verify-status', 'Kode salah: ' + err.message, 'err');
-    }
-  });
-
-  // ---------- Email OTP (lapis ke-3) — server-side via Cloud Function ----------
-  async function kirimEmailOtp(user){
-    showForm('form-email-otp');
-    setStatus('email-otp-status', 'Mengirim kode ke email...', 'info');
-    try{
-      await callSendOtp({ channel: 'email', target: user.email });
-      setStatus('email-otp-status', 'Kode telah dikirim ke ' + user.email, 'ok');
-    }catch(err){
-      setStatus('email-otp-status', 'Gagal mengirim email: ' + err.message, 'err');
-    }
-  }
-
-  document.getElementById('btn-verify-email-otp').addEventListener('click', async ()=>{
-    const kode = document.getElementById('email-otp-code').value.trim();
-    setStatus('email-otp-status', 'Memverifikasi...', 'info');
-    try{
-      const res = await callVerifyOtp({ channel: 'email', code: kode });
-      if (res.data.success){
-        emailOtpVerified = true;
-        lanjutkanSetelahEmailOtp();
-      } else {
-        setStatus('email-otp-status', res.data.message || 'Kode salah.', 'err');
-      }
-    }catch(err){
-      setStatus('email-otp-status', 'Gagal verifikasi: ' + err.message, 'err');
-    }
-  });
-
-  document.getElementById('btn-resend-email-otp').addEventListener('click', ()=>{
-    if (auth.currentUser) kirimEmailOtp(auth.currentUser);
-  });
-
-  // ---------- WhatsApp OTP (lapis ke-4) — server-side via Cloud Function ----------
-  async function kirimWaOtp(user){
-    showForm('form-wa-otp');
-    setStatus('wa-otp-status', 'Mengambil nomor HP terdaftar...', 'info');
-    try{
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const phone = userDoc.exists() ? userDoc.data().phone : null;
-      if (!phone){
-        setStatus('wa-otp-status', 'Nomor HP belum terdaftar untuk akun ini. Hubungi admin.', 'err');
-        return;
-      }
-      setStatus('wa-otp-status', 'Mengirim kode ke WhatsApp ' + phone + '...', 'info');
-      await callSendOtp({ channel: 'wa', target: phone });
-      setStatus('wa-otp-status', 'Kode telah dikirim ke WhatsApp ' + phone, 'ok');
-    }catch(err){
-      setStatus('wa-otp-status', 'Gagal mengirim WhatsApp: ' + err.message, 'err');
-    }
-  }
-
-  document.getElementById('btn-verify-wa-otp').addEventListener('click', async ()=>{
-    const kode = document.getElementById('wa-otp-code').value.trim();
-    setStatus('wa-otp-status', 'Memverifikasi...', 'info');
-    try{
-      const res = await callVerifyOtp({ channel: 'wa', code: kode });
-      if (res.data.success){
-        waOtpVerified = true;
-        tampilkanDashboard();
-      } else {
-        setStatus('wa-otp-status', res.data.message || 'Kode salah.', 'err');
-      }
-    }catch(err){
-      setStatus('wa-otp-status', 'Gagal verifikasi: ' + err.message, 'err');
-    }
-  });
-
-  document.getElementById('btn-resend-wa-otp').addEventListener('click', ()=>{
-    if (auth.currentUser) kirimWaOtp(auth.currentUser);
-  });
-
-  function lanjutkanSetelahEmailOtp(){
-    if (!waOtpVerified){
-      kirimWaOtp(auth.currentUser);
-      return;
-    }
-    tampilkanDashboard();
-  }
-
+  // ---------- Setelah login/signup sukses ----------
   function tampilkanDashboard(){
     document.getElementById('auth-gate').classList.add('hidden');
     document.getElementById('dashboard').classList.remove('hidden');
@@ -794,32 +564,11 @@
   }
 
   // ---------- Auth State Listener ----------
-  // Fungsi terpusat: cek tahap berikutnya (TOTP -> Email OTP -> WA OTP -> Dashboard)
-  // Dipanggil dari onAuthStateChanged MAUPUN langsung setelah aksi berhasil
-  // (supaya tidak macet kalau event auth state tidak terpicu ulang)
-  async function lanjutkanKeTahapBerikutnya(user){
-    const factors = multiFactor(user).enrolledFactors;
-    if (factors.length === 0){
-      await mulaiEnrollTotp(user);
-      return;
-    }
-    if (!emailOtpVerified){
-      await kirimEmailOtp(user);
-      return;
-    }
-    if (!waOtpVerified){
-      await kirimWaOtp(user);
-      return;
-    }
-    tampilkanDashboard();
-  }
-
-  onAuthStateChanged(auth, async (user)=>{
+  // POC: langsung tampilkan dashboard begitu ada sesi login, tanpa lapis verifikasi tambahan.
+  onAuthStateChanged(auth, (user)=>{
     if (user){
-      await lanjutkanKeTahapBerikutnya(user);
+      tampilkanDashboard();
     } else {
-      emailOtpVerified = false;
-      waOtpVerified = false;
       document.getElementById('auth-gate').classList.remove('hidden');
       document.getElementById('dashboard').classList.add('hidden');
       document.getElementById('logout-btn').classList.add('hidden');
