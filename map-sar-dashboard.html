@@ -685,8 +685,8 @@
     try{
       const assertion = TotpMultiFactorGenerator.assertionForEnrollment(window.__totpSecret, code);
       await multiFactor(auth.currentUser).enroll(assertion, 'Authenticator App');
-      setStatus('enroll-status', 'Berhasil! Masuk ke dashboard...', 'ok');
-      // onAuthStateChanged akan menangani tampilan dashboard
+      setStatus('enroll-status', 'Berhasil! Melanjutkan...', 'ok');
+      await lanjutkanKeTahapBerikutnya(auth.currentUser); // panggil langsung, jangan andalkan event auth state
     }catch(err){
       setStatus('enroll-status', 'Kode salah/gagal: ' + err.message, 'err');
     }
@@ -701,6 +701,7 @@
       const hint = resolver.hints.find(h => h.factorId === TotpMultiFactorGenerator.FACTOR_ID);
       const assertion = TotpMultiFactorGenerator.assertionForSignIn(hint.uid, code);
       await resolver.resolveSignIn(assertion);
+      if (auth.currentUser) await lanjutkanKeTahapBerikutnya(auth.currentUser); // jaga-jaga kalau event tidak terpicu
     }catch(err){
       setStatus('verify-status', 'Kode salah: ' + err.message, 'err');
     }
@@ -793,24 +794,29 @@
   }
 
   // ---------- Auth State Listener ----------
+  // Fungsi terpusat: cek tahap berikutnya (TOTP -> Email OTP -> WA OTP -> Dashboard)
+  // Dipanggil dari onAuthStateChanged MAUPUN langsung setelah aksi berhasil
+  // (supaya tidak macet kalau event auth state tidak terpicu ulang)
+  async function lanjutkanKeTahapBerikutnya(user){
+    const factors = multiFactor(user).enrolledFactors;
+    if (factors.length === 0){
+      await mulaiEnrollTotp(user);
+      return;
+    }
+    if (!emailOtpVerified){
+      await kirimEmailOtp(user);
+      return;
+    }
+    if (!waOtpVerified){
+      await kirimWaOtp(user);
+      return;
+    }
+    tampilkanDashboard();
+  }
+
   onAuthStateChanged(auth, async (user)=>{
     if (user){
-      // Cek apakah user sudah enroll TOTP
-      const factors = multiFactor(user).enrolledFactors;
-      if (factors.length === 0){
-        await mulaiEnrollTotp(user);
-        return;
-      }
-      // Lolos password + TOTP -> wajib Email OTP, lalu WA OTP, setiap buka portal
-      if (!emailOtpVerified){
-        await kirimEmailOtp(user);
-        return;
-      }
-      if (!waOtpVerified){
-        await kirimWaOtp(user);
-        return;
-      }
-      tampilkanDashboard();
+      await lanjutkanKeTahapBerikutnya(user);
     } else {
       emailOtpVerified = false;
       waOtpVerified = false;
