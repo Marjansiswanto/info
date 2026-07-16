@@ -331,6 +331,7 @@
       <div class="tracking-control">
         <button id="btn-toggle-tracking" class="track-btn">📍 AKTIFKAN TRACKING SAYA</button>
         <button id="btn-personal-sos" class="sos-btn">🚨 SOS SAYA</button>
+        <button id="btn-bersihkan-jejak" class="track-btn" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);">🗑 BERSIHKAN JEJAK SAYA</button>
         <div id="tracking-status"></div>
       </div>
       <div class="personnel-list" id="personnel-list"></div>
@@ -629,7 +630,7 @@
   // user, editor, admin -> akses penuh ke fitur inti (SOS, tracking, chat).
   function terapkanBatasanRole(){
     const isGuest = (window.__userRole === 'guest' || window.__userRole === 'viewer');
-    const idFiturInti = ['btn-toggle-tracking', 'btn-personal-sos', 'btn-send-chat', 'btn-attach-photo', 'btn-start-call', 'chat-text-input'];
+    const idFiturInti = ['btn-toggle-tracking', 'btn-personal-sos', 'btn-bersihkan-jejak', 'btn-send-chat', 'btn-attach-photo', 'btn-start-call', 'chat-text-input'];
     idFiturInti.forEach(id=>{
       const el = document.getElementById(id);
       if (!el) return;
@@ -779,6 +780,22 @@
 
   const JAM_KERJA_STANDAR_MS = 8 * 60 * 60 * 1000; // 8 jam, sesuai UU Ketenagakerjaan No.13/2003 -- SESUAIKAN kalau standar SIPATRA-SMART berbeda
 
+  // Filter kualitas GPS -- supaya jejak rute tidak berantakan akibat lompatan sinyal lemah/fallback WiFi
+  const AKURASI_MAKS_METER = 50;      // titik dgn radius akurasi lebih besar dari ini dianggap tidak layak masuk jejak rute
+  const KECEPATAN_MAKS_MPS = 40;      // ~144 km/jam -- lompatan yang mustahil ditempuh personel (jalan kaki/motor) dalam SAR
+  let titikTerakhirValid = null;      // {lat, lon, waktuMs} -- titik terakhir yang lolos filter, dipakai HANYA sebagai acuan (bukan disimpan ke Firestore)
+
+  function titikLayakJadiJejak(coords){
+    if (coords.accuracy && coords.accuracy > AKURASI_MAKS_METER) return false; // sinyal GPS terlalu kasar
+    if (titikTerakhirValid){
+      const jarakM = hitungJarakMeter(titikTerakhirValid.lat, titikTerakhirValid.lon, coords.latitude, coords.longitude);
+      const selisihDetik = Math.max((Date.now() - titikTerakhirValid.waktuMs) / 1000, 1);
+      const kecepatanMps = jarakM / selisihDetik;
+      if (kecepatanMps > KECEPATAN_MAKS_MPS) return false; // lompatan mustahil
+    }
+    return true;
+  }
+
   // Rumus jarak antar-koordinat (Haversine), hasil dalam meter
   function hitungJarakMeter(lat1, lon1, lat2, lon2){
     const R = 6371000;
@@ -919,6 +936,9 @@
       }
     });
 
+    // Tombol bersihkan jejak lama
+    document.getElementById('btn-bersihkan-jejak').addEventListener('click', bersihkanJejakSaya);
+
     // Tombol SOS pribadi
     document.getElementById('btn-personal-sos').addEventListener('click', async ()=>{
       statusPribadi = (statusPribadi === 'sos') ? 'aman' : 'sos';
@@ -1042,14 +1062,39 @@
     try{
       await setDoc(doc(db, 'personnel', user.uid), dataUpdate, { merge: true });
       if (coords){
-        await addDoc(collection(db, 'personnel', user.uid, 'trackPoints'), {
-          lat: coords.latitude,
-          lon: coords.longitude,
-          waktuMs: Date.now()
-        });
+        // Posisi utama tetap update live (marker di peta selalu ikut posisi terbaru),
+        // tapi jejak rute (trackPoints) hanya dicatat kalau kualitas GPS layak --
+        // supaya polyline tidak jadi garis kusut akibat lompatan sinyal lemah/fallback WiFi.
+        if (titikLayakJadiJejak(coords)){
+          await addDoc(collection(db, 'personnel', user.uid, 'trackPoints'), {
+            lat: coords.latitude,
+            lon: coords.longitude,
+            waktuMs: Date.now(),
+            akurasi: coords.accuracy || null
+          });
+          titikTerakhirValid = { lat: coords.latitude, lon: coords.longitude, waktuMs: Date.now() };
+        }
       }
     }catch(err){
       setTrackingStatus('Gagal update posisi: ' + err.message);
+    }
+  }
+
+  // Hapus seluruh jejak rute (trackPoints) milik pengguna sendiri -- untuk membersihkan data lama yang berantakan
+  async function bersihkanJejakSaya(){
+    const user = auth.currentUser;
+    if (!user) return;
+    if (!confirm('Hapus semua riwayat jejak rute Anda? Posisi live tidak terpengaruh.')) return;
+    try{
+      setTrackingStatus('Membersihkan jejak lama...');
+      const snap = await getDocs(collection(db, 'personnel', user.uid, 'trackPoints'));
+      const hapusSemua = [];
+      snap.forEach(d => hapusSemua.push(deleteDoc(doc(db, 'personnel', user.uid, 'trackPoints', d.id))));
+      await Promise.all(hapusSemua);
+      titikTerakhirValid = null;
+      setTrackingStatus('Jejak lama berhasil dibersihkan (' + hapusSemua.length + ' titik dihapus).');
+    }catch(err){
+      setTrackingStatus('Gagal membersihkan jejak: ' + err.message);
     }
   }
 
