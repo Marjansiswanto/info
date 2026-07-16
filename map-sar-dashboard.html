@@ -234,7 +234,18 @@
       <input type="email" id="login-email" placeholder="Email">
       <input type="password" id="login-password" placeholder="Password">
       <button class="primary" id="btn-login">MASUK</button>
+      <button class="secondary" id="btn-lupa-password">Lupa Password?</button>
       <button class="secondary" id="btn-show-signup">Belum punya akun? Daftar</button>
+    </div>
+
+    <!-- Form: Signup -->
+    <div id="form-lupa-password" class="hidden">
+      <h2>Reset Password</h2>
+      <p class="sub">Masukkan email akun Anda. Link untuk buat password baru akan dikirim ke email itu.</p>
+      <div id="lupa-password-status"></div>
+      <input type="email" id="lupa-password-email" placeholder="Email">
+      <button class="primary" id="btn-kirim-reset-password">KIRIM LINK RESET</button>
+      <button class="secondary" id="btn-batal-lupa-password">Kembali ke Login</button>
     </div>
 
     <!-- Form: Signup -->
@@ -482,7 +493,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-    sendEmailVerification, reload,
+    sendEmailVerification, reload, sendPasswordResetEmail,
     onAuthStateChanged, multiFactor, TotpMultiFactorGenerator, getMultiFactorResolver
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
@@ -522,7 +533,7 @@
 
   // ---------- Helper UI ----------
   function showForm(id){
-    ['form-login','form-signup','form-verify-email','form-totp-enroll','form-totp-verify','form-email-otp','form-wa-otp'].forEach(f=>{
+    ['form-login','form-lupa-password','form-signup','form-verify-email','form-totp-enroll','form-totp-verify','form-email-otp','form-wa-otp'].forEach(f=>{
       document.getElementById(f).classList.toggle('hidden', f !== id);
     });
   }
@@ -555,9 +566,26 @@
   });
 
   // ---------- Login ----------
+  function pesanErrorFirebase(err){
+    const map = {
+      'auth/invalid-credential': 'Email atau password salah.',
+      'auth/wrong-password': 'Password salah.',
+      'auth/user-not-found': 'Akun dengan email ini tidak ditemukan.',
+      'auth/invalid-email': 'Format email tidak valid.',
+      'auth/too-many-requests': 'Terlalu banyak percobaan gagal. Coba lagi beberapa menit lagi.',
+      'auth/network-request-failed': 'Gagal terhubung ke server. Cek koneksi internet.',
+      'auth/user-disabled': 'Akun ini dinonaktifkan. Hubungi admin.'
+    };
+    return map[err.code] || (err.message || 'Terjadi kesalahan tidak diketahui: ' + (err.code || 'unknown'));
+  }
+
   document.getElementById('btn-login').addEventListener('click', async ()=>{
     const email = document.getElementById('login-email').value.trim();
     const pass = document.getElementById('login-password').value;
+    if (!email || !pass){
+      setStatus('auth-status', 'Isi email dan password terlebih dahulu.', 'err');
+      return;
+    }
     setStatus('auth-status', 'Memproses login...', 'info');
     try{
       await signInWithEmailAndPassword(auth, email, pass);
@@ -568,8 +596,31 @@
         showForm('form-totp-verify');
         setStatus('auth-status', '', '');
       } else {
-        setStatus('auth-status', 'Login gagal: ' + err.message, 'err');
+        setStatus('auth-status', 'Login gagal: ' + pesanErrorFirebase(err), 'err');
       }
+    }
+  });
+
+  // ---------- Lupa Password ----------
+  document.getElementById('btn-lupa-password').addEventListener('click', ()=>{
+    document.getElementById('lupa-password-email').value = document.getElementById('login-email').value.trim();
+    showForm('form-lupa-password');
+  });
+
+  document.getElementById('btn-batal-lupa-password').addEventListener('click', ()=> showForm('form-login'));
+
+  document.getElementById('btn-kirim-reset-password').addEventListener('click', async ()=>{
+    const email = document.getElementById('lupa-password-email').value.trim();
+    if (!email){
+      setStatus('lupa-password-status', 'Masukkan email terlebih dahulu.', 'err');
+      return;
+    }
+    setStatus('lupa-password-status', 'Mengirim link reset...', 'info');
+    try{
+      await sendPasswordResetEmail(auth, email);
+      setStatus('lupa-password-status', 'Link reset password terkirim ke ' + email + '. Cek inbox/spam.', 'ok');
+    }catch(err){
+      setStatus('lupa-password-status', 'Gagal kirim: ' + pesanErrorFirebase(err), 'err');
     }
   });
 
