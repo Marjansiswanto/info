@@ -203,6 +203,37 @@
     font-weight:700; padding:9px 16px; font-size:12px; cursor:pointer;
   }
   .call-controls button.hangup{ background:var(--red); color:#fff; }
+
+  /* ---- Marker personel ala Google Maps: dot mencolok + halo pulse + kerucut arah gerak + label nama ---- */
+  .personil-marker-wrap{ position:relative; width:100px; height:52px; }
+  .personil-marker-halo{
+    position:absolute; top:17px; left:50px; width:34px; height:34px;
+    margin:-17px 0 0 -17px; border-radius:50%; opacity:0.35;
+    animation: personil-pulse 1.8s ease-out infinite;
+  }
+  .personil-marker-cone{
+    position:absolute; top:17px; left:50px; width:0; height:0;
+    margin:-34px 0 0 -10px;
+    border-left:10px solid transparent; border-right:10px solid transparent;
+    border-bottom:24px solid; opacity:0.6; transform-origin:10px 34px;
+    filter: blur(0.3px);
+  }
+  .personil-marker-dot{
+    position:absolute; top:17px; left:50px; width:16px; height:16px;
+    margin:-8px 0 0 -8px; border-radius:50%;
+    border:3px solid #fff; box-shadow:0 0 8px rgba(0,0,0,0.6), 0 0 10px currentColor;
+  }
+  .personil-marker-label{
+    position:absolute; top:36px; left:50px; transform:translateX(-50%);
+    white-space:nowrap; font-family:var(--mono); font-size:10px; font-weight:700;
+    color:#fff; background:rgba(10,12,13,0.88); padding:2px 6px; border-radius:3px;
+    border:1px solid currentColor; letter-spacing:0.2px;
+  }
+  @keyframes personil-pulse{
+    0%   { transform:translate(-50%,-50%) scale(0.5); opacity:0.55; }
+    70%  { transform:translate(-50%,-50%) scale(2.4); opacity:0; }
+    100% { transform:translate(-50%,-50%) scale(2.4); opacity:0; }
+  }
 </style>
 </head>
 <body>
@@ -766,6 +797,29 @@
     return jam + ' jam ' + menit + ' menit';
   }
 
+  // Marker personel bergaya Google Maps: dot bercahaya + halo pulse + kerucut arah gerak + label nama/ID
+  function labelSingkatPersonel(teks){
+    if (!teks) return '?';
+    const bersih = String(teks).split('@')[0]; // kalau yang dikirim email, ambil sebelum @ saja
+    return bersih.length > 16 ? bersih.slice(0, 15) + '…' : bersih;
+  }
+
+  function buatIconPersonel(color, headingDeg, labelTeks){
+    const adaArah = (typeof headingDeg === 'number' && !isNaN(headingDeg));
+    const kerucut = adaArah
+      ? '<div class="personil-marker-cone" style="transform:rotate(' + headingDeg + 'deg); border-bottom-color:' + color + ';"></div>'
+      : '';
+    return L.divIcon({
+      className: 'personil-marker-wrap',
+      html: '<div class="personil-marker-halo" style="background:' + color + ';"></div>'
+        + kerucut
+        + '<div class="personil-marker-dot" style="background:' + color + '; color:' + color + ';"></div>'
+        + '<div class="personil-marker-label" style="color:' + color + ';">' + labelSingkatPersonel(labelTeks) + '</div>',
+      iconSize: [100, 52],
+      iconAnchor: [50, 17]
+    });
+  }
+
   function initPersonnelTracking(map){
     // Render real-time dari Firestore -> peta + daftar, untuk SEMUA user yang aktif tracking
     const q = collection(db, 'personnel');
@@ -783,14 +837,20 @@
 
         const color = p.status === 'sos' ? '#e05f5f' : (p.status === 'hilang' ? '#e0b73a' : '#5fd68a');
 
+        const personelBaruMuncul = !personnelMarkers[uid];
         if (personnelMarkers[uid]){
           personnelMarkers[uid].setLatLng([p.lat, p.lon]);
-          personnelMarkers[uid].setStyle({ color, fillColor: color });
+          personnelMarkers[uid].setIcon(buatIconPersonel(color, p.heading, p.nama || p.email));
           personnelMarkers[uid].setPopupContent('<b>' + (p.nama || p.email) + '</b><br>Status: ' + p.status.toUpperCase());
         } else {
-          personnelMarkers[uid] = L.circleMarker([p.lat, p.lon], { radius: 8, color, weight: 2, fillColor: color, fillOpacity: 0.5 })
+          personnelMarkers[uid] = L.marker([p.lat, p.lon], { icon: buatIconPersonel(color, p.heading, p.nama || p.email) })
             .addTo(map)
             .bindPopup('<b>' + (p.nama || p.email) + '</b><br>Status: ' + p.status.toUpperCase());
+        }
+
+        // Auto-zoom: begitu personel baru terlihat aktif tracking, peta otomatis fokus ke posisinya
+        if (personelBaruMuncul){
+          map.flyTo([p.lat, p.lon], 17, { duration: 1.2 });
         }
 
         if (p.status === 'sos') adaSos = true;
@@ -976,6 +1036,7 @@
       dataUpdate.lat = coords.latitude;
       dataUpdate.lon = coords.longitude;
       dataUpdate.akurasi = coords.accuracy || null;
+      dataUpdate.heading = (typeof coords.heading === 'number' && !isNaN(coords.heading)) ? coords.heading : null;
       window.__posisiTerkiniSaya = { lat: coords.latitude, lon: coords.longitude };
     }
     try{
