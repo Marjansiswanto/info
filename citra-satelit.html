@@ -98,6 +98,25 @@
     padding:2px 8px; font-size:10px; letter-spacing:.1em; font-weight:600;
   }
   .panel-head .tag.pub{ background:var(--green); }
+  .panel-head .fs-brand{
+    display:none; color:var(--orange); font-weight:600; letter-spacing:.12em; margin-right:12px; font-size:10.5px;
+  }
+  .panel-head .fs-btn{
+    background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);
+    font-family:var(--mono); font-size:12px; padding:3px 9px; cursor:pointer; margin-right:10px;
+  }
+  .panel-head .fs-btn:hover{ color:var(--orange); border-color:var(--orange); }
+
+  .panel.panel-fullscreen{
+    position:fixed; inset:0; z-index:3000; margin:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; background:var(--bg);
+  }
+  .panel.panel-fullscreen .panel-body{ flex:1 1 auto; height:auto; }
+  .panel.panel-fullscreen .panel-head .fs-brand{ display:inline; }
+  .panel.panel-fullscreen .panel-head{
+    background:linear-gradient(180deg, rgba(17,20,23,.98), rgba(17,20,23,.85));
+    backdrop-filter:blur(4px);
+  }
 
   .panel-body{ height:520px; }
   #gee-frame{ width:100%; height:100%; border:0; display:block; }
@@ -222,7 +241,10 @@
     <div class="brand"><b>INFOSCIE</b> // FIDI-SCIE</div>
     <div class="title">Citra Satelit — Observasi Bumi</div>
   </div>
-  <div class="status">LIVE FEED</div>
+  <div style="display:flex; align-items:center; gap:18px;">
+    <a href="index.html" style="color:var(--text-dim); font-size:11px; letter-spacing:.08em; text-decoration:none; border:1px solid var(--line-bright); padding:6px 12px;">← KEMBALI KE BERANDA</a>
+    <div class="status">LIVE FEED</div>
+  </div>
 </header>
 
 <main>
@@ -235,8 +257,8 @@
     <!-- PANEL 1 : GOOGLE EARTH ENGINE APP -->
     <div class="panel">
       <div class="panel-head">
-        <span>SUMBER_01 · GOOGLE EARTH ENGINE APP</span>
-        <span class="tag pub" id="gee-tag">AKTIF</span>
+        <span><span class="fs-brand">INFOSCIE // FIDI-SCIE ·</span>SUMBER_01 · GOOGLE EARTH ENGINE APP</span>
+        <span><button class="fs-btn" title="Layar penuh">⛶</button><span class="tag pub" id="gee-tag">AKTIF</span></span>
       </div>
       <div class="panel-body">
         <!--
@@ -254,8 +276,8 @@
     <!-- PANEL 2 : SENTINEL-2 COPERNICUS -->
     <div class="panel">
       <div class="panel-head">
-        <span>SUMBER_02 · SENTINEL-2 CLOUDLESS (COPERNICUS)</span>
-        <span class="tag pub">AKTIF</span>
+        <span><span class="fs-brand">INFOSCIE // FIDI-SCIE ·</span>SUMBER_02 · SENTINEL-2 CLOUDLESS (COPERNICUS)</span>
+        <span><button class="fs-btn" title="Layar penuh">⛶</button><span class="tag pub">AKTIF</span></span>
       </div>
       <div class="panel-body">
         <div id="s2-map"></div>
@@ -269,8 +291,8 @@
     <!-- PANEL 3 : CUACA LIVE (WINDY) -->
     <div class="panel">
       <div class="panel-head">
-        <span>SUMBER_03 · CUACA LIVE (AWAN, HUJAN, ANGIN)</span>
-        <span class="tag pub">LIVE</span>
+        <span><span class="fs-brand">INFOSCIE // FIDI-SCIE ·</span>SUMBER_03 · CUACA LIVE (AWAN, HUJAN, ANGIN)</span>
+        <span><button class="fs-btn" title="Layar penuh">⛶</button><span class="tag pub">LIVE</span></span>
       </div>
       <div class="panel-body">
         <iframe id="windy-frame" src="" title="Cuaca Live - Windy" style="width:100%;height:100%;border:0;display:block;"></iframe>
@@ -283,8 +305,8 @@
     <!-- PANEL 4 : NAVIGASI DARAT & LAUT (GNSS) -->
     <div class="panel">
       <div class="panel-head">
-        <span>SUMBER_04 · NAVIGASI DARAT &amp; LAUT (KOORDINAT GNSS PERANGKAT)</span>
-        <span class="tag pub">AKTIF</span>
+        <span><span class="fs-brand">INFOSCIE // FIDI-SCIE ·</span>SUMBER_04 · NAVIGASI DARAT &amp; LAUT (KOORDINAT GNSS PERANGKAT)</span>
+        <span><button class="fs-btn" title="Layar penuh">⛶</button><span class="tag pub">AKTIF</span></span>
       </div>
       <div class="panel-body" style="position:relative;">
         <div id="nav-map" style="width:100%; height:100%;"></div>
@@ -463,13 +485,23 @@
     setStatus('Meminta izin lokasi... (izinkan lewat popup browser)');
     navigator.geolocation.getCurrentPosition(
       function(pos){
-        gunakanLokasiPengunjung(pos.coords.latitude, pos.coords.longitude, 'Lokasi Anda', pos.coords.accuracy);
+        var akurasi = pos.coords.accuracy;
+        // Akurasi > 3000m biasanya berarti browser menebak lewat IP/menara seluler
+        // (bukan GPS asli) -- umum terjadi di laptop tanpa chip GPS.
+        if (akurasi && akurasi > 3000){
+          setStatus('Peringatan: akurasi rendah (±' + Math.round(akurasi) + ' m). Perangkat ini kemungkinan tidak punya GPS asli, jadi posisi ditebak lewat jaringan internet dan bisa meleset sampai ke kota lain. Untuk posisi presisi, buka halaman ini dari HP (yang punya GPS).');
+          setTimeout(function(){
+            gunakanLokasiPengunjung(pos.coords.latitude, pos.coords.longitude, 'Lokasi perkiraan (akurasi rendah)', akurasi);
+          }, 2500);
+        } else {
+          gunakanLokasiPengunjung(pos.coords.latitude, pos.coords.longitude, 'Lokasi Anda', akurasi);
+        }
       },
       function(err){
         setStatus('Izin ditolak / gagal mendapat lokasi. Memakai lokasi default...');
         setTimeout(gunakanLokasiDefault, 1200);
       },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 600000 }
     );
   });
 
@@ -483,12 +515,17 @@
     if (!q){ return; }
     setStatus('Mencari "' + q + '"...');
     resultsBox.innerHTML = '';
-    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q))
-      .then(function(res){ return res.json(); })
+    // countrycodes=id membiaskan hasil ke Indonesia; addressdetails membantu keakuratan pencocokan
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=6&countrycodes=id&addressdetails=1&q=' + encodeURIComponent(q))
+      .then(function(res){
+        if (!res.ok){ throw new Error('http-' + res.status); }
+        return res.json();
+      })
       .then(function(data){
         setStatus('');
         if (!data || data.length === 0){
-          resultsBox.innerHTML = '<div>Tidak ditemukan. Coba kata kunci lain.</div>';
+          resultsBox.innerHTML = '<div>Alamat spesifik (nama jalan kecil/gang/RT-RW) sering belum terdaftar di peta OpenStreetMap. '
+            + 'Coba kata kunci yang lebih umum, misalnya nama <b>kelurahan</b>, <b>kecamatan</b>, atau <b>landmark</b> terdekat (mis. "Kelurahan Panaikang Makassar").</div>';
           return;
         }
         data.forEach(function(item){
@@ -501,12 +538,62 @@
         });
       })
       .catch(function(){
-        setStatus('Pencarian gagal (koneksi bermasalah). Coba lagi.');
+        setStatus('Pencarian gagal — server peta (Nominatim) mungkin sedang sibuk atau koneksi bermasalah. Coba lagi beberapa detik lagi.');
       });
   }
   document.getElementById('loc-search-btn').addEventListener('click', cariLokasi);
   document.getElementById('loc-search-input').addEventListener('keydown', function(e){
     if (e.key === 'Enter'){ e.preventDefault(); cariLokasi(); }
+  });
+
+  // ====== Fitur Layar Penuh per panel ======
+  var panelFullscreenAktif = null;
+
+  function segarkanUkuranPeta(){
+    // Leaflet perlu diberi tahu ukuran kontainer berubah, atau peta akan terlihat terpotong/kosong
+    setTimeout(function(){
+      if (typeof map !== 'undefined') map.invalidateSize();
+      if (typeof navMap !== 'undefined') navMap.invalidateSize();
+    }, 160);
+  }
+
+  function masukLayarPenuh(panelEl){
+    if (panelFullscreenAktif && panelFullscreenAktif !== panelEl){
+      keluarLayarPenuh(); // pastikan cuma satu panel yang fullscreen sekaligus
+    }
+    panelEl.classList.add('panel-fullscreen');
+    document.body.style.overflow = 'hidden';
+    var btn = panelEl.querySelector('.fs-btn');
+    if (btn){ btn.textContent = '✕ KEMBALI (ESC)'; btn.title = 'Kembali ke tampilan 4 layar'; }
+    panelFullscreenAktif = panelEl;
+    segarkanUkuranPeta();
+  }
+
+  function keluarLayarPenuh(){
+    if (!panelFullscreenAktif) return;
+    var btn = panelFullscreenAktif.querySelector('.fs-btn');
+    if (btn){ btn.textContent = '⛶'; btn.title = 'Layar penuh'; }
+    panelFullscreenAktif.classList.remove('panel-fullscreen');
+    document.body.style.overflow = '';
+    panelFullscreenAktif = null;
+    segarkanUkuranPeta();
+  }
+
+  document.querySelectorAll('.fs-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var panelEl = btn.closest('.panel');
+      if (panelEl.classList.contains('panel-fullscreen')){
+        keluarLayarPenuh();
+      } else {
+        masukLayarPenuh(panelEl);
+      }
+    });
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && panelFullscreenAktif){
+      keluarLayarPenuh();
+    }
   });
 </script>
 </body>
