@@ -249,6 +249,15 @@
       <button class="secondary" id="btn-show-login">Sudah punya akun? Masuk</button>
     </div>
 
+    <!-- Form: Verifikasi Email (wajib sebelum setup TOTP) -->
+    <div id="form-verify-email" class="hidden">
+      <h2>Verifikasi Email Diperlukan</h2>
+      <p class="sub">Firebase mewajibkan email diverifikasi sebelum setup verifikasi 2 langkah (mencegah orang lain daftar pakai email Anda). Link verifikasi sudah dikirim ke email Anda — buka email, klik link-nya, lalu kembali ke sini.</p>
+      <div id="verify-email-status"></div>
+      <button class="primary" id="btn-cek-verifikasi">SUDAH KLIK LINK — LANJUTKAN</button>
+      <button class="secondary" id="btn-kirim-ulang-verifikasi">Kirim Ulang Email Verifikasi</button>
+    </div>
+
     <!-- Form: TOTP Enrollment (setup pertama kali) -->
     <div id="form-totp-enroll" class="hidden">
       <h2>Aktifkan Verifikasi 2 Langkah</h2>
@@ -473,6 +482,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+    sendEmailVerification, reload,
     onAuthStateChanged, multiFactor, TotpMultiFactorGenerator, getMultiFactorResolver
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
@@ -512,7 +522,7 @@
 
   // ---------- Helper UI ----------
   function showForm(id){
-    ['form-login','form-signup','form-totp-enroll','form-totp-verify','form-email-otp','form-wa-otp'].forEach(f=>{
+    ['form-login','form-signup','form-verify-email','form-totp-enroll','form-totp-verify','form-email-otp','form-wa-otp'].forEach(f=>{
       document.getElementById(f).classList.toggle('hidden', f !== id);
     });
   }
@@ -537,8 +547,8 @@
       await setDoc(doc(db, 'users', cred.user.uid), {
         email, phone, role: 'petugas', dibuatPada: Date.now()
       });
-      // Setelah daftar, langsung arahkan ke enrollment TOTP
-      await mulaiEnrollTotp(cred.user);
+      // Kirim email verifikasi -- WAJIB sebelum bisa enroll TOTP
+      await kirimVerifikasiEmail(cred.user);
     }catch(err){
       setStatus('signup-status', 'Gagal daftar: ' + err.message, 'err');
     }
@@ -563,8 +573,44 @@
     }
   });
 
+  // ---------- Verifikasi Email (wajib sebelum TOTP) ----------
+  async function kirimVerifikasiEmail(user){
+    showForm('form-verify-email');
+    try{
+      await sendEmailVerification(user);
+      setStatus('verify-email-status', 'Email verifikasi terkirim ke ' + user.email + '. Cek inbox/folder spam.', 'ok');
+    }catch(err){
+      setStatus('verify-email-status', 'Gagal kirim email verifikasi: ' + err.message, 'err');
+    }
+  }
+
+  document.getElementById('btn-cek-verifikasi').addEventListener('click', async ()=>{
+    setStatus('verify-email-status', 'Mengecek status verifikasi...', 'info');
+    try{
+      await reload(auth.currentUser); // ambil status terbaru dari server
+      if (auth.currentUser.emailVerified){
+        setStatus('verify-email-status', 'Email terverifikasi! Lanjut ke setup TOTP...', 'ok');
+        await mulaiEnrollTotp(auth.currentUser);
+      } else {
+        setStatus('verify-email-status', 'Email belum terverifikasi. Cek email Anda dan klik link-nya dulu.', 'err');
+      }
+    }catch(err){
+      setStatus('verify-email-status', 'Gagal cek status: ' + err.message, 'err');
+    }
+  });
+
+  document.getElementById('btn-kirim-ulang-verifikasi').addEventListener('click', ()=>{
+    if (auth.currentUser) kirimVerifikasiEmail(auth.currentUser);
+  });
+
   // ---------- TOTP Enrollment (pertama kali) ----------
   async function mulaiEnrollTotp(user){
+    // Wajib email terverifikasi dulu (syarat Firebase Identity Platform)
+    await reload(user);
+    if (!user.emailVerified){
+      await kirimVerifikasiEmail(user);
+      return;
+    }
     showForm('form-totp-enroll');
     setStatus('enroll-status', 'Menyiapkan kode QR...', 'info');
     try{
