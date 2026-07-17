@@ -180,7 +180,7 @@
     font-family:var(--mono); padding:8px 10px; cursor:pointer; font-size:13px;
   }
   .icon-btn:hover{ color:var(--orange); border-color:var(--orange); }
-  #chat-photo-input{ display:none; }
+  #chat-photo-input, #chat-video-input{ display:none; }
   #chat-upload-status{ font-size:10.5px; color:var(--amber); padding:4px 14px 0; min-height:14px; }
 
   /* ===== Modal Video Call ===== */
@@ -473,8 +473,10 @@
         <button data-report="Laporan Longsor">🚨 Longsor</button>
       </div>
       <div class="composer-row">
-        <button class="icon-btn" id="btn-attach-photo" title="Lampirkan foto">📷</button>
-        <input type="file" id="chat-photo-input" accept="image/*">
+        <button class="icon-btn" id="btn-attach-photo" title="Ambil/lampirkan foto">📷</button>
+        <input type="file" id="chat-photo-input" accept="image/*" capture="environment">
+        <button class="icon-btn" id="btn-attach-video" title="Rekam/lampirkan video">🎬</button>
+        <input type="file" id="chat-video-input" accept="video/*" capture="environment">
         <input type="text" id="chat-text-input" placeholder="Tulis pesan...">
         <button class="icon-btn" id="btn-send-chat" title="Kirim">➤</button>
         <button class="icon-btn" id="btn-start-call" title="Video call">🎥</button>
@@ -784,8 +786,8 @@
   // user, editor, admin -> akses penuh ke fitur inti (SOS, tracking, chat).
   function terapkanBatasanRole(){
     const isGuest = (window.__userRole === 'guest' || window.__userRole === 'viewer');
-    const isAdmin = (window.__userRole === 'admin');
-    const idFiturInti = ['btn-toggle-tracking', 'btn-sudah-tiba', 'input-area-wo', 'btn-personal-sos', 'btn-bersihkan-jejak', 'btn-tandai-zona', 'btn-send-chat', 'btn-attach-photo', 'btn-start-call', 'chat-text-input'];
+    const isAdminAtauVip = (window.__userRole === 'admin' || window.__userRole === 'vip');
+    const idFiturInti = ['btn-toggle-tracking', 'btn-sudah-tiba', 'input-area-wo', 'btn-personal-sos', 'btn-bersihkan-jejak', 'btn-tandai-zona', 'btn-send-chat', 'btn-attach-photo', 'btn-attach-video', 'btn-start-call', 'chat-text-input'];
     idFiturInti.forEach(id=>{
       const el = document.getElementById(id);
       if (!el) return;
@@ -802,14 +804,14 @@
       dash.insertBefore(note, dash.firstChild);
     }
 
-    // Zona Markas & Zona Aman (evakuasi darurat) khusus role admin -- BUKAN sekadar "bukan guest"
+    // Zona Markas & Zona Aman (evakuasi darurat) khusus role admin/VIP -- BUKAN sekadar "bukan guest"
     ['btn-tandai-markas', 'btn-tandai-aman'].forEach(id=>{
       const el = document.getElementById(id);
       if (!el) return;
-      el.disabled = !isAdmin;
-      el.style.opacity = isAdmin ? '1' : '0.4';
-      el.style.cursor = isAdmin ? 'pointer' : 'not-allowed';
-      el.title = isAdmin ? '' : 'Hanya Admin yang dapat menandai/memindahkan Zona Markas & Zona Aman';
+      el.disabled = !isAdminAtauVip;
+      el.style.opacity = isAdminAtauVip ? '1' : '0.4';
+      el.style.cursor = isAdminAtauVip ? 'pointer' : 'not-allowed';
+      el.title = isAdminAtauVip ? '' : 'Hanya Admin/VIP yang dapat menandai/memindahkan Zona Markas & Zona Aman';
     });
 
     // Tombol Panel Admin cuma muncul untuk role 'admin'
@@ -835,7 +837,7 @@
   // ==========================================================
   // PANEL ADMIN — lihat semua user, ubah role & status (aktif/suspend)
   // ==========================================================
-  const ROLE_TERSEDIA = ['guest', 'user', 'editor', 'admin'];
+  const ROLE_TERSEDIA = ['guest', 'user', 'editor', 'vip', 'admin'];
 
   document.getElementById('admin-panel-btn').addEventListener('click', ()=>{
     document.getElementById('admin-modal-overlay').classList.remove('hidden');
@@ -1232,6 +1234,7 @@
     }
 
     document.getElementById('btn-tandai-markas').addEventListener('click', ()=>{
+      if (window.__userRole !== 'admin' && window.__userRole !== 'vip') return;
       modeGambarMarkas = true;
       resetGambarMarkas();
       document.getElementById('panel-tandai-markas').classList.remove('hidden');
@@ -1363,7 +1366,7 @@
     }
 
     document.getElementById('btn-tandai-aman').addEventListener('click', ()=>{
-      if (window.__userRole !== 'admin') return;
+      if (window.__userRole !== 'admin' && window.__userRole !== 'vip') return;
       modeGambarAman = true;
       resetGambarAman();
       document.getElementById('panel-tandai-aman').classList.remove('hidden');
@@ -1566,7 +1569,7 @@
           const fitPersen = hitungFitPersen(durasiMs, parseFloat(jarakKm), jumlahJob);
 
           const adalahDiriSendiri = !!(auth.currentUser && p.email === auth.currentUser.email);
-          const bolehLihatFit = adalahDiriSendiri || window.__userRole === 'admin' || window.__userRole === 'editor';
+          const bolehLihatFit = adalahDiriSendiri || window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip';
 
           if (bolehLihatFit){
             const fitWarna = fitPersen >= 70 ? 'var(--green)' : (fitPersen >= 40 ? 'var(--amber)' : 'var(--red)');
@@ -1678,8 +1681,8 @@
       document.getElementById('verifikasi-wo-overlay').classList.add('hidden');
     });
 
-    // Panel Alert Verifikasi WO -- hanya untuk role admin/editor (Supervisor), real-time
-    if (window.__userRole === 'admin' || window.__userRole === 'editor'){
+    // Panel Alert Verifikasi WO -- untuk role admin/editor/vip (Supervisor), real-time
+    if (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip'){
       document.getElementById('panel-alert-supervisor').classList.remove('hidden');
       onSnapshot(query(collection(db, 'alertVerifikasiWO'), orderBy('waktu', 'desc')), (snap)=>{
         const listEl = document.getElementById('daftar-alert-wo');
@@ -1990,7 +1993,17 @@
 
     document.getElementById('chat-photo-input').addEventListener('change', async (e)=>{
       const file = e.target.files[0];
-      if (file) await kirimPesan({ file });
+      if (file) await kirimPesan({ file, tipeFile: 'foto' });
+      e.target.value = '';
+    });
+
+    document.getElementById('btn-attach-video').addEventListener('click', ()=>{
+      document.getElementById('chat-video-input').click();
+    });
+
+    document.getElementById('chat-video-input').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if (file) await kirimPesan({ file, tipeFile: 'video' });
       e.target.value = '';
     });
 
@@ -2053,26 +2066,32 @@
     if (m.photoUrl){
       html += '<img src="' + m.photoUrl + '" onclick="window.open(this.src)">';
     }
+    if (m.videoUrl){
+      html += '<video src="' + m.videoUrl + '" controls style="max-width:100%; margin-top:6px;"></video>';
+    }
     div.innerHTML = html;
     listEl.appendChild(div);
   }
 
-  async function kirimPesan({ text, file }){
+  async function kirimPesan({ text, file, tipeFile }){
     const user = auth.currentUser;
     if (!user) return;
     setStatus2('chat-upload-status', '', '');
 
     let photoUrl = null;
+    let videoUrl = null;
     if (file){
       try{
-        setStatus2('chat-upload-status', 'Mengunggah foto...', 'info');
-        const path = `chat-photos/${currentRoom}/${Date.now()}_${file.name}`;
+        setStatus2('chat-upload-status', tipeFile === 'video' ? 'Mengunggah video...' : 'Mengunggah foto...', 'info');
+        const folder = tipeFile === 'video' ? 'chat-videos' : 'chat-photos';
+        const path = `${folder}/${currentRoom}/${Date.now()}_${file.name}`;
         const storageRef = ref(storage, path);
         await uploadBytes(storageRef, file);
-        photoUrl = await getDownloadURL(storageRef);
+        const url = await getDownloadURL(storageRef);
+        if (tipeFile === 'video') videoUrl = url; else photoUrl = url;
         setStatus2('chat-upload-status', '', '');
       }catch(err){
-        setStatus2('chat-upload-status', 'Gagal unggah foto: ' + err.message, 'err');
+        setStatus2('chat-upload-status', 'Gagal unggah ' + (tipeFile === 'video' ? 'video' : 'foto') + ': ' + err.message, 'err');
         return;
       }
     }
@@ -2083,6 +2102,7 @@
       namaPengirim: user.email,
       text: text || null,
       photoUrl: photoUrl || null,
+      videoUrl: videoUrl || null,
       reportTag: pendingReportTag || null,
       source: 'web',
       waktu: serverTimestamp()
