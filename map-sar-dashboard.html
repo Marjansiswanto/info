@@ -251,6 +251,18 @@
     font-family:var(--mono); padding:3px 8px; cursor:pointer; font-size:11px;
   }
   .titik-zona-sementara{ background:#fff; border:2px solid var(--red); border-radius:50%; }
+  .zona-markas-label{
+    background:rgba(95,214,138,0.92) !important; color:#0a0c0d !important; border:1px solid #fff !important;
+    font-family:var(--mono); font-weight:700; font-size:11px; padding:3px 8px !important;
+    box-shadow:none !important;
+  }
+  .zona-markas-label::before{ display:none !important; }
+  .zona-aman-label{
+    background:rgba(74,163,255,0.92) !important; color:#fff !important; border:1px solid #fff !important;
+    font-family:var(--mono); font-weight:700; font-size:11px; padding:3px 8px !important;
+    box-shadow:none !important;
+  }
+  .zona-aman-label::before{ display:none !important; }
 </style>
 </head>
 <body>
@@ -279,6 +291,26 @@
     </div>
     <div id="admin-user-status" style="font-size:11.5px; margin-bottom:10px;"></div>
     <div id="admin-user-list"></div>
+
+    <hr style="border-color:var(--line-bright); margin:18px 0;">
+    <h3 style="margin:0 0 10px 0; font-size:15px; color:var(--orange);">🚨 Kelola Zona Darurat</h3>
+    <p style="font-size:11px; color:var(--text-dim); margin:0 0 12px 0; line-height:1.6;">
+      Rujukan cepat untuk situasi darurat (bencana, kebakaran, kecelakaan kerja). Untuk menambah/memindahkan titik, gunakan tombol "TANDAI ZONA..." di panel Status Personel pada peta utama (klik titik di peta), lalu daftar di sini otomatis ter-update.
+    </p>
+    <div style="display:grid; grid-template-columns:1fr; gap:10px;">
+      <div style="border:1px solid var(--green); padding:10px;">
+        <div style="font-size:11.5px; font-weight:700; color:var(--green); margin-bottom:6px;">🏠 Nama Markaz</div>
+        <div id="admin-daftar-markas" style="font-size:11px; color:var(--text); line-height:1.8;"></div>
+      </div>
+      <div style="border:1px solid #4aa3ff; padding:10px;">
+        <div style="font-size:11.5px; font-weight:700; color:#4aa3ff; margin-bottom:6px;">🛟 Zona Aman (Titik Evakuasi)</div>
+        <div id="admin-daftar-aman" style="font-size:11px; color:var(--text); line-height:1.8;"></div>
+      </div>
+      <div style="border:1px solid var(--red); padding:10px;">
+        <div style="font-size:11.5px; font-weight:700; color:var(--red); margin-bottom:6px;">⚠️ Zona Bahaya</div>
+        <div id="admin-daftar-bahaya" style="font-size:11px; color:var(--text); line-height:1.8;"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -346,7 +378,9 @@
         <span class="tag" id="personnel-tag">LIVE</span>
       </div>
       <div class="tracking-control">
+        <input type="text" id="input-area-wo" placeholder="Keterangan Area Kerja / WO (mis. MCC KILN) — opsional" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
         <button id="btn-toggle-tracking" class="track-btn">📍 AKTIFKAN TRACKING SAYA</button>
+        <button id="btn-sudah-tiba" class="track-btn hidden" style="background:var(--panel); color:var(--green); border:1px solid var(--green);">🏁 SAYA SUDAH TIBA DI LOKASI WO</button>
         <button id="btn-personal-sos" class="sos-btn">🚨 SOS SAYA</button>
         <button id="btn-bersihkan-jejak" class="track-btn" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);">🗑 BERSIHKAN JEJAK SAYA</button>
         <button id="btn-tandai-zona" class="track-btn" style="background:var(--panel); color:var(--red); border:1px solid var(--red);">✏️ TANDAI ZONA BAHAYA</button>
@@ -370,6 +404,44 @@
           </div>
         </div>
         <div id="daftar-zona-bahaya" style="margin-top:8px;"></div>
+
+        <button id="btn-tandai-markas" class="track-btn" style="background:var(--panel); color:var(--green); border:1px solid var(--green); margin-top:8px;">🏠 TANDAI ZONA MARKAS (Admin)</button>
+        <div id="panel-tandai-markas" class="hidden" style="border:1px solid var(--green); padding:10px; margin-top:8px;">
+          <input type="text" id="input-nama-markas" placeholder="Nama Markas (mis. Pos Komando Utama)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
+          <input type="number" id="input-radius-markas" placeholder="Radius (meter, mis. 50)" value="50" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
+          <button id="btn-markas-posisi-saya" class="icon-btn" style="width:100%; padding:8px; margin-bottom:8px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);">📍 Pakai Posisi Saya Sekarang sebagai Titik Pusat</button>
+          <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
+            Atau klik di peta untuk menandai titik pusat Markas secara manual. Kalau Markas pindah, hapus yang lama lalu tandai titik baru.
+          </div>
+          <div id="status-titik-markas" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;">Belum ada titik pusat dipilih.</div>
+          <div style="display:flex; gap:8px;">
+            <button id="btn-simpan-markas" class="icon-btn" style="width:auto; padding:8px 14px; background:var(--green); color:#0a0c0d;">✅ Simpan Markas</button>
+            <button id="btn-batal-markas" class="icon-btn" style="width:auto; padding:8px 14px;">✖ Batal</button>
+          </div>
+        </div>
+        <div id="daftar-zona-markas" style="margin-top:8px;"></div>
+
+        <button id="btn-tandai-aman" class="track-btn" style="background:var(--panel); color:#4aa3ff; border:1px solid #4aa3ff; margin-top:8px;">🛟 TANDAI ZONA AMAN / EVAKUASI (Admin)</button>
+        <div id="panel-tandai-aman" class="hidden" style="border:1px solid #4aa3ff; padding:10px; margin-top:8px;">
+          <input type="text" id="input-nama-aman" placeholder="Nama Zona Aman (mis. Titik Kumpul Evakuasi 1)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
+          <input type="number" id="input-radius-aman" placeholder="Radius (meter, mis. 30)" value="30" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
+          <button id="btn-aman-posisi-saya" class="icon-btn" style="width:100%; padding:8px; margin-bottom:8px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);">📍 Pakai Posisi Saya Sekarang sebagai Titik Pusat</button>
+          <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
+            Zona Aman = titik kumpul/evakuasi darurat (bencana, kebakaran, kecelakaan kerja) — bisa lebih dari satu, terpisah dari Zona Markas operasional.
+          </div>
+          <div id="status-titik-aman" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;">Belum ada titik pusat dipilih.</div>
+          <div style="display:flex; gap:8px;">
+            <button id="btn-simpan-aman" class="icon-btn" style="width:auto; padding:8px 14px; background:#4aa3ff; color:#0a0c0d;">✅ Simpan Zona Aman</button>
+            <button id="btn-batal-aman" class="icon-btn" style="width:auto; padding:8px 14px;">✖ Batal</button>
+          </div>
+        </div>
+        <div id="daftar-zona-aman" style="margin-top:8px;"></div>
+
+        <div id="panel-alert-supervisor" class="hidden" style="border:1px solid var(--amber); padding:10px; margin-top:8px;">
+          <div style="font-size:12px; font-weight:700; color:var(--amber); margin-bottom:8px;">⚠️ ALERT VERIFIKASI WO (Supervisor/Admin)</div>
+          <div id="daftar-alert-wo" style="font-size:11px; color:var(--text-dim);">Tidak ada alert.</div>
+        </div>
+
         <div id="tracking-status"></div>
       </div>
       <div class="personnel-list" id="personnel-list"></div>
@@ -449,6 +521,25 @@
     </div>
   </div>
 </div>
+
+<!-- ===== MODAL VERIFIKASI WO -- tracking tidak bisa dihentikan sebelum kembali ke Zona Markas ===== -->
+<div id="verifikasi-wo-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--panel); border:1px solid var(--red); max-width:420px; width:100%; padding:20px; box-sizing:border-box;">
+    <h3 style="color:var(--red); margin:0 0 10px 0; font-size:14px;">⚠️ ANDA BELUM KEMBALI KE MARKAS</h3>
+    <p style="font-size:12px; color:var(--text-dim); line-height:1.6; margin-bottom:16px;">
+      Tracking tidak bisa dihentikan sebelum Anda berada di dalam Zona Markas/Aman. Mohon konfirmasi status WO Anda — pesan ini akan langsung dikirim ke dashboard Supervisor/Admin untuk verifikasi.
+    </p>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+      <button id="btn-wo-selesai" class="icon-btn" style="width:100%; padding:10px; background:var(--green); color:#0a0c0d;">✅ WO Selesai</button>
+      <button id="btn-wo-belum" class="icon-btn" style="width:100%; padding:10px; background:var(--amber); color:#0a0c0d;">⏳ WO Belum Selesai</button>
+      <button id="btn-wo-ditunda" class="icon-btn" style="width:100%; padding:10px; background:transparent; border:1px solid var(--line-bright); color:var(--text);">⏸ Ditunda (Perlu Kembali Lagi)</button>
+    </div>
+    <hr style="border-color:var(--line-bright); margin:12px 0;">
+    <button id="btn-force-stop-darurat" class="icon-btn" style="width:100%; padding:10px; background:transparent; border:1px solid var(--red); color:var(--red); margin-bottom:8px;">🚨 FORCE STOP DARURAT (baterai habis, dll)</button>
+    <button id="btn-batal-verifikasi-wo" class="icon-btn" style="width:100%; padding:8px; background:transparent; border:none; color:var(--text-dim);">✖ Batal, Lanjutkan Tracking</button>
+  </div>
+</div>
+
 
 <!-- ====================================================================
      API key Google Maps sudah ditempel (key: Browser key auto-created by Firebase, project scie-tanggap)
@@ -556,7 +647,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, setDoc, getDoc, getDocs, updateDoc,
-    collection, addDoc, onSnapshot, query, orderBy, serverTimestamp,
+    collection, addDoc, onSnapshot, query, orderBy, where, serverTimestamp,
     deleteDoc
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import {
@@ -693,7 +784,8 @@
   // user, editor, admin -> akses penuh ke fitur inti (SOS, tracking, chat).
   function terapkanBatasanRole(){
     const isGuest = (window.__userRole === 'guest' || window.__userRole === 'viewer');
-    const idFiturInti = ['btn-toggle-tracking', 'btn-personal-sos', 'btn-bersihkan-jejak', 'btn-tandai-zona', 'btn-send-chat', 'btn-attach-photo', 'btn-start-call', 'chat-text-input'];
+    const isAdmin = (window.__userRole === 'admin');
+    const idFiturInti = ['btn-toggle-tracking', 'btn-sudah-tiba', 'input-area-wo', 'btn-personal-sos', 'btn-bersihkan-jejak', 'btn-tandai-zona', 'btn-send-chat', 'btn-attach-photo', 'btn-start-call', 'chat-text-input'];
     idFiturInti.forEach(id=>{
       const el = document.getElementById(id);
       if (!el) return;
@@ -709,6 +801,16 @@
       const dash = document.getElementById('dashboard');
       dash.insertBefore(note, dash.firstChild);
     }
+
+    // Zona Markas & Zona Aman (evakuasi darurat) khusus role admin -- BUKAN sekadar "bukan guest"
+    ['btn-tandai-markas', 'btn-tandai-aman'].forEach(id=>{
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.disabled = !isAdmin;
+      el.style.opacity = isAdmin ? '1' : '0.4';
+      el.style.cursor = isAdmin ? 'pointer' : 'not-allowed';
+      el.title = isAdmin ? '' : 'Hanya Admin yang dapat menandai/memindahkan Zona Markas & Zona Aman';
+    });
 
     // Tombol Panel Admin cuma muncul untuk role 'admin'
     document.getElementById('admin-panel-btn').classList.toggle('hidden', window.__userRole !== 'admin');
@@ -738,6 +840,8 @@
   document.getElementById('admin-panel-btn').addEventListener('click', ()=>{
     document.getElementById('admin-modal-overlay').classList.remove('hidden');
     muatDaftarUserAdmin();
+    // Catatan: daftar Kelola Zona Darurat di bawah sudah otomatis ter-update secara real-time
+    // sejak dashboard dimuat (lewat listener onSnapshot di initPersonnelTracking), tidak perlu dipanggil manual di sini.
   });
   document.getElementById('admin-modal-close').addEventListener('click', ()=>{
     document.getElementById('admin-modal-overlay').classList.add('hidden');
@@ -838,6 +942,32 @@
   let personnelPolylines = {}; // uid -> L.polyline
   let trackUnsub = {}; // uid -> fungsi unsubscribe listener trackPoints
   let trackCache = {}; // uid -> array titik {lat, lon, waktuMs} untuk hitung jarak
+  let jobCountUnsub = {}; // uid -> fungsi unsubscribe listener jumlah WO selesai (riwayatRuteWO)
+  let jobCountCache = {}; // uid -> jumlah WO yang sudah "Sudah Tiba" tercatat (indeks pekerjaan)
+
+  // Ambang batas formula FIT% (Ready-to-Work) -- nilai default POC, SESUAIKAN setelah kalibrasi data lapangan asli
+  // di backend fatigueEngine.js SIPATRA-SMART. Formula ini gabungan waktu aktif + jarak tempuh + indeks pekerjaan (jumlah WO selesai).
+  const FIT_MAKS_JARAK_KM = 12; // jarak tempuh "berat" dalam 1 shift kerja E&I, dianggap 100% kontribusi faktor jarak
+  const FIT_MAKS_JOB = 6;       // jumlah WO selesai "berat" dalam 1 shift kerja, dianggap 100% kontribusi faktor pekerjaan
+
+  function hitungFitPersen(durasiMs, jarakKm, jumlahJob){
+    const faktorWaktu = Math.min(durasiMs / JAM_KERJA_STANDAR_MS, 1.5);
+    const faktorJarak = Math.min(jarakKm / FIT_MAKS_JARAK_KM, 1.5);
+    const faktorJob = Math.min(jumlahJob / FIT_MAKS_JOB, 1.5);
+    const kelelahanPersen = (faktorWaktu * 0.4 + faktorJarak * 0.3 + faktorJob * 0.3) * 100;
+    return Math.max(0, Math.min(100, Math.round(100 - kelelahanPersen)));
+  }
+
+  // Langganan real-time jumlah WO yang sudah diselesaikan (klik "Sudah Tiba") oleh seorang personel --
+  // dipakai sebagai "indeks pekerjaan" dalam formula FIT%. Catatan: ini hitungan SEPANJANG WAKTU (all-time),
+  // belum dibatasi per-hari/per-shift -- pembatasan tanggal butuh composite index Firestore tambahan, ditunda ke iterasi berikutnya.
+  function langgananJobCount(uid, email){
+    if (jobCountUnsub[uid] || !email) return;
+    const qJob = query(collection(db, 'riwayatRuteWO'), where('personelEmail', '==', email));
+    jobCountUnsub[uid] = onSnapshot(qJob, (snap)=>{
+      jobCountCache[uid] = snap.size;
+    });
+  }
   let statusPribadi = 'aman';
   let waktuMulaiTrackingSaya = null;
 
@@ -847,6 +977,10 @@
   const AKURASI_MAKS_METER = 50;      // titik dgn radius akurasi lebih besar dari ini dianggap tidak layak masuk jejak rute
   const KECEPATAN_MAKS_MPS = 40;      // ~144 km/jam -- lompatan yang mustahil ditempuh personel (jalan kaki/motor) dalam SAR
   let titikTerakhirValid = null;      // {lat, lon, waktuMs} -- titik terakhir yang lolos filter, dipakai HANYA sebagai acuan (bukan disimpan ke Firestore)
+  let titikAwalSudahDikirim = false;  // flag: titik Markas (awal sesi tracking) sudah tercatat ke Firestore atau belum
+  let titikAwalLokal = null;          // {lat, lon, waktuMs} -- salinan lokal titik Markas, dipakai hitung jarak rute pergi tanpa perlu fetch Firestore
+  let idRuteAktif = null;             // id dokumen riwayatRuteWO yang sedang berjalan (null kalau belum ada rute tercatat sesi ini)
+  let titikTibaLokal = null;          // {lat, lon, waktuMs} -- dicatat saat klik "Saya Sudah Tiba", jadi acuan hitung rute pulang
 
   function titikLayakJadiJejak(coords){
     if (coords.accuracy && coords.accuracy > AKURASI_MAKS_METER) return false; // sinyal GPS terlalu kasar
@@ -1065,12 +1199,302 @@
           delete zonaBahayaLayers[id];
         }
       });
+
+      if (typeof renderKelolaZonaAdmin === 'function') renderKelolaZonaAdmin();
     });
 
-    initPersonnelTrackingLanjutan(map, () => zonaBahayaCache);
+    // ==========================================================
+    // ZONA MARKAS/AMAN (lingkaran sederhana: titik pusat + radius)
+    // Dipakai untuk mengunci tombol "Hentikan Tracking" sampai personel benar-benar kembali
+    // ==========================================================
+    let modeGambarMarkas = false;
+    let titikMarkasSementara = null; // {lat, lon}
+    let lingkaranMarkasSementara = null; // L.circle preview
+    let zonaMarkasLayers = {}; // id -> L.circle tersimpan
+    let zonaMarkasCache = []; // array {id, nama, lat, lon, radiusMeter}
+
+    function gambarPreviewMarkas(){
+      if (!titikMarkasSementara) return;
+      const radius = parseFloat(document.getElementById('input-radius-markas').value) || 50;
+      if (lingkaranMarkasSementara) map.removeLayer(lingkaranMarkasSementara);
+      lingkaranMarkasSementara = L.circle([titikMarkasSementara.lat, titikMarkasSementara.lon], {
+        radius, color: '#5fd68a', weight: 2, fillColor: '#5fd68a', fillOpacity: 0.15
+      }).addTo(map);
+      document.getElementById('status-titik-markas').textContent =
+        'Titik pusat: ' + titikMarkasSementara.lat.toFixed(6) + ', ' + titikMarkasSementara.lon.toFixed(6) + ' · radius ' + radius + 'm';
+    }
+
+    function resetGambarMarkas(){
+      titikMarkasSementara = null;
+      if (lingkaranMarkasSementara){ map.removeLayer(lingkaranMarkasSementara); lingkaranMarkasSementara = null; }
+      document.getElementById('status-titik-markas').textContent = 'Belum ada titik pusat dipilih.';
+      document.getElementById('input-nama-markas').value = '';
+    }
+
+    document.getElementById('btn-tandai-markas').addEventListener('click', ()=>{
+      modeGambarMarkas = true;
+      resetGambarMarkas();
+      document.getElementById('panel-tandai-markas').classList.remove('hidden');
+      document.getElementById('sar-map').style.cursor = 'crosshair';
+    });
+
+    document.getElementById('btn-batal-markas').addEventListener('click', ()=>{
+      modeGambarMarkas = false;
+      resetGambarMarkas();
+      document.getElementById('panel-tandai-markas').classList.add('hidden');
+      document.getElementById('sar-map').style.cursor = '';
+    });
+
+    document.getElementById('btn-markas-posisi-saya').addEventListener('click', ()=>{
+      if (!window.__posisiTerkiniSaya){
+        alert('Posisi Anda belum terdeteksi. Aktifkan tracking dulu, atau klik langsung di peta.');
+        return;
+      }
+      titikMarkasSementara = { lat: window.__posisiTerkiniSaya.lat, lon: window.__posisiTerkiniSaya.lon };
+      gambarPreviewMarkas();
+    });
+
+    document.getElementById('input-radius-markas').addEventListener('input', gambarPreviewMarkas);
+
+    map.on('click', (e)=>{
+      if (!modeGambarMarkas) return;
+      titikMarkasSementara = { lat: e.latlng.lat, lon: e.latlng.lng };
+      gambarPreviewMarkas();
+    });
+
+    document.getElementById('btn-simpan-markas').addEventListener('click', async ()=>{
+      if (!titikMarkasSementara){
+        alert('Tandai titik pusat Markas dulu (klik di peta atau pakai posisi Anda sekarang).');
+        return;
+      }
+      const nama = document.getElementById('input-nama-markas').value.trim() || 'Markas';
+      const radiusMeter = parseFloat(document.getElementById('input-radius-markas').value) || 50;
+      try{
+        await addDoc(collection(db, 'zonaMarkas'), {
+          nama,
+          lat: titikMarkasSementara.lat,
+          lon: titikMarkasSementara.lon,
+          radiusMeter,
+          dibuatOleh: auth.currentUser ? auth.currentUser.email : 'tidak diketahui',
+          waktu: serverTimestamp()
+        });
+        modeGambarMarkas = false;
+        resetGambarMarkas();
+        document.getElementById('panel-tandai-markas').classList.add('hidden');
+        document.getElementById('sar-map').style.cursor = '';
+      }catch(err){
+        alert('Gagal menyimpan Zona Markas: ' + err.message);
+      }
+    });
+
+    onSnapshot(collection(db, 'zonaMarkas'), (snap)=>{
+      const idAktif = new Set();
+      zonaMarkasCache = [];
+      const daftarEl = document.getElementById('daftar-zona-markas');
+      daftarEl.innerHTML = '';
+      snap.forEach(docSnap=>{
+        const z = docSnap.data();
+        const id = docSnap.id;
+        idAktif.add(id);
+        zonaMarkasCache.push({ id, nama: z.nama, lat: z.lat, lon: z.lon, radiusMeter: z.radiusMeter });
+
+        if (zonaMarkasLayers[id]){
+          zonaMarkasLayers[id].setLatLng([z.lat, z.lon]);
+          zonaMarkasLayers[id].setRadius(z.radiusMeter);
+        } else {
+          zonaMarkasLayers[id] = L.circle([z.lat, z.lon], {
+            radius: z.radiusMeter, color: '#5fd68a', weight: 2, fillColor: '#5fd68a', fillOpacity: 0.12
+          }).addTo(map).bindTooltip('🏠 ' + z.nama, { permanent: true, direction: 'center', className: 'zona-markas-label' });
+        }
+
+        const row = document.createElement('div');
+        row.className = 'zona-row';
+        row.style.borderColor = 'var(--green)';
+        row.innerHTML = '<span>🏠 ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">radius ' + z.radiusMeter + 'm</div></span>';
+        const btnHapus = document.createElement('button');
+        btnHapus.textContent = '🗑 Hapus';
+        btnHapus.style.borderColor = 'var(--green)';
+        btnHapus.style.color = 'var(--green)';
+        btnHapus.addEventListener('click', async ()=>{
+          if (!confirm('Hapus Zona Markas "' + z.nama + '"?')) return;
+          try{ await deleteDoc(doc(db, 'zonaMarkas', id)); }
+          catch(err){ alert('Gagal menghapus: ' + err.message); }
+        });
+        row.appendChild(btnHapus);
+        daftarEl.appendChild(row);
+      });
+
+      Object.keys(zonaMarkasLayers).forEach(id=>{
+        if (!idAktif.has(id)){
+          map.removeLayer(zonaMarkasLayers[id]);
+          delete zonaMarkasLayers[id];
+        }
+      });
+
+      if (typeof renderKelolaZonaAdmin === 'function') renderKelolaZonaAdmin();
+    });
+
+    // ==========================================================
+    // ZONA AMAN / EVAKUASI (titik kumpul darurat -- bencana, kebakaran, kecelakaan kerja)
+    // Terpisah dari Zona Markas (operasional); bisa lebih dari satu titik; khusus Admin.
+    // ==========================================================
+    let modeGambarAman = false;
+    let titikAmanSementara = null;
+    let lingkaranAmanSementara = null;
+    let zonaAmanLayers = {};
+    let zonaAmanCache = [];
+
+    function gambarPreviewAman(){
+      if (!titikAmanSementara) return;
+      const radius = parseFloat(document.getElementById('input-radius-aman').value) || 30;
+      if (lingkaranAmanSementara) map.removeLayer(lingkaranAmanSementara);
+      lingkaranAmanSementara = L.circle([titikAmanSementara.lat, titikAmanSementara.lon], {
+        radius, color: '#4aa3ff', weight: 2, fillColor: '#4aa3ff', fillOpacity: 0.15
+      }).addTo(map);
+      document.getElementById('status-titik-aman').textContent =
+        'Titik pusat: ' + titikAmanSementara.lat.toFixed(6) + ', ' + titikAmanSementara.lon.toFixed(6) + ' · radius ' + radius + 'm';
+    }
+
+    function resetGambarAman(){
+      titikAmanSementara = null;
+      if (lingkaranAmanSementara){ map.removeLayer(lingkaranAmanSementara); lingkaranAmanSementara = null; }
+      document.getElementById('status-titik-aman').textContent = 'Belum ada titik pusat dipilih.';
+      document.getElementById('input-nama-aman').value = '';
+    }
+
+    document.getElementById('btn-tandai-aman').addEventListener('click', ()=>{
+      if (window.__userRole !== 'admin') return;
+      modeGambarAman = true;
+      resetGambarAman();
+      document.getElementById('panel-tandai-aman').classList.remove('hidden');
+      document.getElementById('sar-map').style.cursor = 'crosshair';
+    });
+
+    document.getElementById('btn-batal-aman').addEventListener('click', ()=>{
+      modeGambarAman = false;
+      resetGambarAman();
+      document.getElementById('panel-tandai-aman').classList.add('hidden');
+      document.getElementById('sar-map').style.cursor = '';
+    });
+
+    document.getElementById('btn-aman-posisi-saya').addEventListener('click', ()=>{
+      if (!window.__posisiTerkiniSaya){
+        alert('Posisi Anda belum terdeteksi. Aktifkan tracking dulu, atau klik langsung di peta.');
+        return;
+      }
+      titikAmanSementara = { lat: window.__posisiTerkiniSaya.lat, lon: window.__posisiTerkiniSaya.lon };
+      gambarPreviewAman();
+    });
+
+    document.getElementById('input-radius-aman').addEventListener('input', gambarPreviewAman);
+
+    map.on('click', (e)=>{
+      if (!modeGambarAman) return;
+      titikAmanSementara = { lat: e.latlng.lat, lon: e.latlng.lng };
+      gambarPreviewAman();
+    });
+
+    document.getElementById('btn-simpan-aman').addEventListener('click', async ()=>{
+      if (!titikAmanSementara){
+        alert('Tandai titik pusat Zona Aman dulu (klik di peta atau pakai posisi Anda sekarang).');
+        return;
+      }
+      const nama = document.getElementById('input-nama-aman').value.trim() || 'Zona Aman';
+      const radiusMeter = parseFloat(document.getElementById('input-radius-aman').value) || 30;
+      try{
+        await addDoc(collection(db, 'zonaAman'), {
+          nama,
+          lat: titikAmanSementara.lat,
+          lon: titikAmanSementara.lon,
+          radiusMeter,
+          dibuatOleh: auth.currentUser ? auth.currentUser.email : 'tidak diketahui',
+          waktu: serverTimestamp()
+        });
+        modeGambarAman = false;
+        resetGambarAman();
+        document.getElementById('panel-tandai-aman').classList.add('hidden');
+        document.getElementById('sar-map').style.cursor = '';
+      }catch(err){
+        alert('Gagal menyimpan Zona Aman: ' + err.message);
+      }
+    });
+
+    onSnapshot(collection(db, 'zonaAman'), (snap)=>{
+      const idAktif = new Set();
+      zonaAmanCache = [];
+      const daftarEl = document.getElementById('daftar-zona-aman');
+      daftarEl.innerHTML = '';
+      snap.forEach(docSnap=>{
+        const z = docSnap.data();
+        const id = docSnap.id;
+        idAktif.add(id);
+        zonaAmanCache.push({ id, nama: z.nama, lat: z.lat, lon: z.lon, radiusMeter: z.radiusMeter });
+
+        if (zonaAmanLayers[id]){
+          zonaAmanLayers[id].setLatLng([z.lat, z.lon]);
+          zonaAmanLayers[id].setRadius(z.radiusMeter);
+        } else {
+          zonaAmanLayers[id] = L.circle([z.lat, z.lon], {
+            radius: z.radiusMeter, color: '#4aa3ff', weight: 2, fillColor: '#4aa3ff', fillOpacity: 0.12
+          }).addTo(map).bindTooltip('🛟 ' + z.nama, { permanent: true, direction: 'center', className: 'zona-aman-label' });
+        }
+
+        const row = document.createElement('div');
+        row.className = 'zona-row';
+        row.style.borderColor = '#4aa3ff';
+        row.innerHTML = '<span>🛟 ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">radius ' + z.radiusMeter + 'm</div></span>';
+        const btnHapus = document.createElement('button');
+        btnHapus.textContent = '🗑 Hapus';
+        btnHapus.style.borderColor = '#4aa3ff';
+        btnHapus.style.color = '#4aa3ff';
+        btnHapus.addEventListener('click', async ()=>{
+          if (!confirm('Hapus Zona Aman "' + z.nama + '"?')) return;
+          try{ await deleteDoc(doc(db, 'zonaAman', id)); }
+          catch(err){ alert('Gagal menghapus: ' + err.message); }
+        });
+        row.appendChild(btnHapus);
+        daftarEl.appendChild(row);
+      });
+
+      Object.keys(zonaAmanLayers).forEach(id=>{
+        if (!idAktif.has(id)){
+          map.removeLayer(zonaAmanLayers[id]);
+          delete zonaAmanLayers[id];
+        }
+      });
+
+      // Perbarui juga daftar konsolidasi di Panel Admin (kalau sedang terbuka)
+      if (typeof renderKelolaZonaAdmin === 'function') renderKelolaZonaAdmin();
+    });
+
+    // Render daftar konsolidasi Markas/Aman/Bahaya ke dalam Panel Admin (dipanggil ulang tiap ada perubahan data)
+    function renderKelolaZonaAdmin(){
+      const elMarkas = document.getElementById('admin-daftar-markas');
+      const elAman = document.getElementById('admin-daftar-aman');
+      const elBahaya = document.getElementById('admin-daftar-bahaya');
+      if (!elMarkas || !elAman || !elBahaya) return; // panel admin belum dibuka/di-render sekali pun
+
+      function isiDaftar(el, data, kosongTeks){
+        if (data.length === 0){ el.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">' + kosongTeks + '</div>'; return; }
+        el.innerHTML = data.map((z, i) => (i + 1) + '. ' + z.nama).join('<br>');
+      }
+      isiDaftar(elMarkas, zonaMarkasCache, 'Belum ada Zona Markas ditandai.');
+      isiDaftar(elAman, zonaAmanCache, 'Belum ada Zona Aman/Evakuasi ditandai.');
+      isiDaftar(elBahaya, zonaBahayaCache, 'Belum ada Zona Bahaya ditandai.');
+    }
+
+    // Cek apakah suatu posisi berada di dalam salah satu Zona Markas/Aman.
+    // Kalau belum ada Zona Markas yang didefinisikan sama sekali, jangan mengunci siapa pun --
+    // anggap boleh berhenti seperti biasa (supaya tidak menjebak semua personel gara-gara admin belum sempat menandai Markas).
+    function bolehHentikanTracking(lat, lon){
+      if (zonaMarkasCache.length === 0) return true;
+      return zonaMarkasCache.some(z => hitungJarakMeter(z.lat, z.lon, lat, lon) <= z.radiusMeter);
+    }
+
+    initPersonnelTrackingLanjutan(map, () => zonaBahayaCache, bolehHentikanTracking);
   }
 
-  function initPersonnelTrackingLanjutan(map, ambilZonaBahaya){
+  function initPersonnelTrackingLanjutan(map, ambilZonaBahaya, bolehHentikanTracking){
     // Render real-time dari Firestore -> peta + daftar, untuk SEMUA user yang aktif tracking
     const q = collection(db, 'personnel');
     onSnapshot(q, (snap)=>{
@@ -1118,6 +1542,7 @@
           // Update warna polyline mengikuti status terkini
           if (personnelPolylines[uid]) personnelPolylines[uid].setStyle({ color });
         }
+        langgananJobCount(uid, p.email); // aman dipanggil berulang -- fungsi ini sendiri cek kalau sudah ada listener
 
         // Hitung jarak & durasi dari cache titik yang sudah terkumpul
         const titik = trackCache[uid] || [];
@@ -1125,16 +1550,33 @@
         for (let i = 1; i < titik.length; i++){
           jarakMeter += hitungJarakMeter(titik[i-1].lat, titik[i-1].lon, titik[i].lat, titik[i].lon);
         }
-        const jarakKm = (jarakMeter / 1000).toFixed(2);
+        const jarakKm = (jarakMeter / 1000).toFixed(2); // jarak tempuh TOTAL mengikuti rute jalan (akumulasi semua segmen)
 
-        let infoDurasiWla = '';
+        // Jarak LURUS dari titik Markas (awal sesi tracking aktif) ke posisi personel sekarang -- beda dari jarak tempuh di atas
+        let infoJarakMarkas = '';
+        if (typeof p.titikAwalLat === 'number' && typeof p.titikAwalLon === 'number' && typeof p.lat === 'number'){
+          const jarakDariMarkasKm = (hitungJarakMeter(p.titikAwalLat, p.titikAwalLon, p.lat, p.lon) / 1000).toFixed(2);
+          infoJarakMarkas = '<div style="font-size:10px; color:var(--text-dim);">📍 Jarak dari Markas: ' + jarakDariMarkasKm + ' km (garis lurus)</div>';
+        }
+
+        let infoFit = '';
         if (p.mulaiTracking){
           const durasiMs = Date.now() - p.mulaiTracking;
-          const wlaPersen = ((durasiMs / JAM_KERJA_STANDAR_MS) * 100).toFixed(0);
-          const wlaWarna = wlaPersen >= 100 ? 'color:var(--red);' : (wlaPersen >= 80 ? 'color:var(--amber);' : 'color:var(--text-dim);');
-          infoDurasiWla = '<div style="font-size:10px; color:var(--text-dim);">'
-            + formatDurasi(durasiMs) + ' aktif · ' + jarakKm + ' km · '
-            + '<span style="' + wlaWarna + '">WLA ' + wlaPersen + '%</span></div>';
+          const jumlahJob = jobCountCache[uid] || 0;
+          const fitPersen = hitungFitPersen(durasiMs, parseFloat(jarakKm), jumlahJob);
+
+          const adalahDiriSendiri = !!(auth.currentUser && p.email === auth.currentUser.email);
+          const bolehLihatFit = adalahDiriSendiri || window.__userRole === 'admin' || window.__userRole === 'editor';
+
+          if (bolehLihatFit){
+            const fitWarna = fitPersen >= 70 ? 'var(--green)' : (fitPersen >= 40 ? 'var(--amber)' : 'var(--red)');
+            infoFit = '<div style="font-size:10px; color:var(--text-dim);">'
+              + formatDurasi(durasiMs) + ' total aktif · ' + jarakKm + ' km jarak tempuh (rute) · ' + jumlahJob + ' WO selesai</div>'
+              + '<div style="font-size:12.5px; font-weight:700; margin-top:2px; color:' + fitWarna + ';">💪 FIT ' + fitPersen + '%' + (adalahDiriSendiri ? ' (Anda)' : '') + '</div>'
+              + infoJarakMarkas;
+          } else {
+            infoFit = '<div style="font-size:10px; color:var(--text-dim);">' + formatDurasi(durasiMs) + ' total aktif</div>';
+          }
         }
 
         // Cek apakah posisi personel ini berada di dalam salah satu zona bahaya yang tersimpan
@@ -1151,7 +1593,7 @@
         row.innerHTML = '<div style="display:flex; justify-content:space-between; width:100%;">'
           + '<span><span class="status-dot status-' + p.status + '"></span>' + (p.nama || p.email) + '</span>'
           + '<span>' + p.status.toUpperCase() + '</span></div>'
-          + infoDurasiWla
+          + infoFit
           + badgeZonaBahaya;
         listEl.appendChild(row);
       });
@@ -1163,7 +1605,9 @@
           delete personnelMarkers[uid];
           if (personnelPolylines[uid]){ map.removeLayer(personnelPolylines[uid]); delete personnelPolylines[uid]; }
           if (trackUnsub[uid]){ trackUnsub[uid](); delete trackUnsub[uid]; }
+          if (jobCountUnsub[uid]){ jobCountUnsub[uid](); delete jobCountUnsub[uid]; }
           delete trackCache[uid];
+          delete jobCountCache[uid];
         }
       });
 
@@ -1178,8 +1622,139 @@
     document.getElementById('btn-toggle-tracking').addEventListener('click', ()=>{
       if (watchId === null){
         mulaiTrackingSaya();
-      } else {
+        return;
+      }
+      // Mau berhenti tracking -- cek dulu apakah personel sudah berada di Zona Markas/Aman
+      const posisi = window.__posisiTerkiniSaya;
+      if (!posisi || bolehHentikanTracking(posisi.lat, posisi.lon)){
         hentikanTrackingSaya();
+      } else {
+        document.getElementById('verifikasi-wo-overlay').classList.remove('hidden');
+      }
+    });
+
+    // Modal verifikasi WO -- muncul kalau personel coba berhenti sebelum kembali ke Markas
+    async function kirimAlertVerifikasiWO(statusWO, anomali){
+      const user = auth.currentUser;
+      const posisi = window.__posisiTerkiniSaya;
+      try{
+        await addDoc(collection(db, 'alertVerifikasiWO'), {
+          personelEmail: user ? user.email : 'tidak diketahui',
+          statusWO,
+          anomali: !!anomali,
+          lat: posisi ? posisi.lat : null,
+          lon: posisi ? posisi.lon : null,
+          areaWO: document.getElementById('input-area-wo').value.trim() || null,
+          disetujuiSupervisor: false,
+          waktu: serverTimestamp()
+        });
+      }catch(err){
+        alert('Gagal mengirim alert verifikasi ke Supervisor: ' + err.message);
+      }
+    }
+
+    document.getElementById('btn-wo-selesai').addEventListener('click', async ()=>{
+      await kirimAlertVerifikasiWO('selesai', false);
+      document.getElementById('verifikasi-wo-overlay').classList.add('hidden');
+      setTrackingStatus('Status WO "Selesai" terkirim ke Supervisor. Tracking tetap berjalan sampai Anda kembali ke Zona Markas.');
+    });
+    document.getElementById('btn-wo-belum').addEventListener('click', async ()=>{
+      await kirimAlertVerifikasiWO('belum_selesai', false);
+      document.getElementById('verifikasi-wo-overlay').classList.add('hidden');
+      setTrackingStatus('Status WO "Belum Selesai" terkirim ke Supervisor. Tracking tetap berjalan sampai Anda kembali ke Zona Markas.');
+    });
+    document.getElementById('btn-wo-ditunda').addEventListener('click', async ()=>{
+      await kirimAlertVerifikasiWO('ditunda', false);
+      document.getElementById('verifikasi-wo-overlay').classList.add('hidden');
+      setTrackingStatus('Status WO "Ditunda" terkirim ke Supervisor. Tracking tetap berjalan sampai Anda kembali ke Zona Markas.');
+    });
+    document.getElementById('btn-force-stop-darurat').addEventListener('click', async ()=>{
+      if (!confirm('Yakin mau Force Stop Darurat? Ini akan tercatat sebagai anomali dan Supervisor akan diberi tahu.')) return;
+      await kirimAlertVerifikasiWO('force_stop_darurat', true);
+      document.getElementById('verifikasi-wo-overlay').classList.add('hidden');
+      hentikanTrackingSaya();
+    });
+    document.getElementById('btn-batal-verifikasi-wo').addEventListener('click', ()=>{
+      document.getElementById('verifikasi-wo-overlay').classList.add('hidden');
+    });
+
+    // Panel Alert Verifikasi WO -- hanya untuk role admin/editor (Supervisor), real-time
+    if (window.__userRole === 'admin' || window.__userRole === 'editor'){
+      document.getElementById('panel-alert-supervisor').classList.remove('hidden');
+      onSnapshot(query(collection(db, 'alertVerifikasiWO'), orderBy('waktu', 'desc')), (snap)=>{
+        const listEl = document.getElementById('daftar-alert-wo');
+        listEl.innerHTML = '';
+        let ada = false;
+        snap.forEach(docSnap=>{
+          const a = docSnap.data();
+          if (a.disetujuiSupervisor) return; // yang sudah dikonfirmasi tidak perlu ditampilkan lagi
+          ada = true;
+          const id = docSnap.id;
+          const warnaAnomali = a.anomali ? 'var(--red)' : 'var(--amber)';
+          const row = document.createElement('div');
+          row.className = 'zona-row';
+          row.style.borderColor = warnaAnomali;
+          row.innerHTML = '<span>' + (a.anomali ? '🚨 ' : '⏳ ') + a.personelEmail
+            + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">Status WO: ' + a.statusWO
+            + (a.areaWO ? ' · Area: ' + a.areaWO : '') + '</div></span>';
+          const btnOk = document.createElement('button');
+          btnOk.textContent = '✅ Sudah Dikonfirmasi';
+          btnOk.style.borderColor = warnaAnomali;
+          btnOk.style.color = warnaAnomali;
+          btnOk.addEventListener('click', async ()=>{
+            try{ await updateDoc(doc(db, 'alertVerifikasiWO', id), { disetujuiSupervisor: true }); }
+            catch(err){ alert('Gagal menandai konfirmasi: ' + err.message); }
+          });
+          row.appendChild(btnOk);
+          listEl.appendChild(row);
+        });
+        if (!ada) listEl.innerHTML = '<div style="color:var(--text-dim);">Tidak ada alert yang menunggu konfirmasi.</div>';
+      });
+    }
+
+    // Tombol "Saya Sudah Tiba di Lokasi WO" -- menutup catatan rute PERGI (Markas -> lokasi WO),
+    // hasilnya jadi cikal-bakal Master Data Lokasi Kerja untuk WO dengan keterangan area yang sama di masa depan
+    document.getElementById('btn-sudah-tiba').addEventListener('click', async ()=>{
+      const user = auth.currentUser;
+      if (!user) return;
+      if (!titikAwalLokal || !window.__posisiTerkiniSaya){
+        alert('GPS belum mendapat posisi yang valid. Tunggu sebentar lalu coba lagi.');
+        return;
+      }
+      if (idRuteAktif){
+        alert('Kedatangan sudah tercatat sebelumnya untuk sesi tracking ini.');
+        return;
+      }
+      const namaAreaWO = document.getElementById('input-area-wo').value.trim() || 'Tanpa keterangan area';
+      const btn = document.getElementById('btn-sudah-tiba');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan catatan rute...';
+      try{
+        const jarakPergiKm = (hitungJarakMeter(
+          titikAwalLokal.lat, titikAwalLokal.lon,
+          window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon
+        ) / 1000);
+        const waktuTibaSekarang = Date.now();
+        const refDoc = await addDoc(collection(db, 'riwayatRuteWO'), {
+          namaAreaWO,
+          personelEmail: user.email,
+          titikAwalLat: titikAwalLokal.lat,
+          titikAwalLon: titikAwalLokal.lon,
+          waktuBerangkat: titikAwalLokal.waktuMs,
+          titikTibaLat: window.__posisiTerkiniSaya.lat,
+          titikTibaLon: window.__posisiTerkiniSaya.lon,
+          waktuTiba: waktuTibaSekarang,
+          jarakPergiKm: Number(jarakPergiKm.toFixed(2)),
+          durasiPergiMs: waktuTibaSekarang - titikAwalLokal.waktuMs,
+          waktu: serverTimestamp()
+        });
+        idRuteAktif = refDoc.id;
+        titikTibaLokal = { lat: window.__posisiTerkiniSaya.lat, lon: window.__posisiTerkiniSaya.lon, waktuMs: waktuTibaSekarang };
+        btn.textContent = '✅ Kedatangan tercatat — rute pulang mulai dihitung';
+      }catch(err){
+        alert('Gagal menyimpan catatan kedatangan: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = '🏁 SAYA SUDAH TIBA DI LOKASI WO';
       }
     });
 
@@ -1250,6 +1825,13 @@
     }
     setTrackingStatus('Meminta izin lokasi...');
     waktuMulaiTrackingSaya = Date.now();
+    titikAwalSudahDikirim = false; // titik Markas akan dicatat ulang di fix GPS valid pertama pada sesi ini
+    titikAwalLokal = null;
+    idRuteAktif = null;
+    titikTibaLokal = null;
+    document.getElementById('btn-sudah-tiba').classList.remove('hidden');
+    document.getElementById('btn-sudah-tiba').textContent = '🏁 SAYA SUDAH TIBA DI LOKASI WO';
+    document.getElementById('btn-sudah-tiba').disabled = false;
     mintaWakeLock(); // jaga layar tetap menyala selama tracking -- lihat catatan batasan di dokumen
     watchId = navigator.geolocation.watchPosition(
       (pos)=>{
@@ -1277,7 +1859,30 @@
     lepasWakeLock();
     document.getElementById('btn-toggle-tracking').classList.remove('active');
     document.getElementById('btn-toggle-tracking').textContent = '📍 AKTIFKAN TRACKING SAYA';
+    document.getElementById('btn-sudah-tiba').classList.add('hidden');
     setTrackingStatus('Tracking dihentikan. Menghapus posisi Anda dari peta...');
+
+    // Kalau sebelumnya sudah klik "Saya Sudah Tiba", tutup catatan rute PULANG sekarang
+    // (dari titik tiba WO ke posisi terakhir sebelum tracking dihentikan)
+    if (idRuteAktif && titikTibaLokal && window.__posisiTerkiniSaya){
+      try{
+        const jarakPulangKm = (hitungJarakMeter(
+          titikTibaLokal.lat, titikTibaLokal.lon,
+          window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon
+        ) / 1000);
+        await updateDoc(doc(db, 'riwayatRuteWO', idRuteAktif), {
+          titikPulangLat: window.__posisiTerkiniSaya.lat,
+          titikPulangLon: window.__posisiTerkiniSaya.lon,
+          waktuPulang: Date.now(),
+          jarakPulangKm: Number(jarakPulangKm.toFixed(2)),
+          durasiPulangMs: Date.now() - titikTibaLokal.waktuMs
+        });
+      }catch(e){ /* jangan blokir proses stop tracking kalau update rute gagal */ }
+    }
+    idRuteAktif = null;
+    titikAwalLokal = null;
+    titikTibaLokal = null;
+
     try{
       await deleteDoc(doc(db, 'personnel', auth.currentUser.uid));
       // Catatan: subcollection trackPoints TIDAK otomatis terhapus saat dokumen induk dihapus
@@ -1305,6 +1910,14 @@
       dataUpdate.akurasi = coords.accuracy || null;
       dataUpdate.heading = (typeof coords.heading === 'number' && !isNaN(coords.heading)) ? coords.heading : null;
       window.__posisiTerkiniSaya = { lat: coords.latitude, lon: coords.longitude };
+
+      // Catat titik Markas (awal sesi tracking) sekali saja per sesi -- dasar hitung "jarak dari Markas"
+      if (!titikAwalSudahDikirim){
+        dataUpdate.titikAwalLat = coords.latitude;
+        dataUpdate.titikAwalLon = coords.longitude;
+        titikAwalSudahDikirim = true;
+        titikAwalLokal = { lat: coords.latitude, lon: coords.longitude, waktuMs: waktuMulaiTrackingSaya || Date.now() };
+      }
     }
     try{
       await setDoc(doc(db, 'personnel', user.uid), dataUpdate, { merge: true });
