@@ -234,6 +234,23 @@
     70%  { transform:translate(-50%,-50%) scale(2.4); opacity:0; }
     100% { transform:translate(-50%,-50%) scale(2.4); opacity:0; }
   }
+
+  /* ---- Zona Bahaya (geofence poligon) ---- */
+  .zona-bahaya-label{
+    background:rgba(224,95,95,0.92) !important; color:#fff !important; border:1px solid #fff !important;
+    font-family:var(--mono); font-weight:700; font-size:11px; padding:3px 8px !important;
+    box-shadow:none !important;
+  }
+  .zona-bahaya-label::before{ display:none !important; }
+  .zona-row{
+    display:flex; justify-content:space-between; align-items:center;
+    border:1px solid var(--line-bright); padding:6px 10px; margin-bottom:6px; font-size:11.5px;
+  }
+  .zona-row button{
+    background:transparent; border:1px solid var(--red); color:var(--red);
+    font-family:var(--mono); padding:3px 8px; cursor:pointer; font-size:11px;
+  }
+  .titik-zona-sementara{ background:#fff; border:2px solid var(--red); border-radius:50%; }
 </style>
 </head>
 <body>
@@ -332,6 +349,27 @@
         <button id="btn-toggle-tracking" class="track-btn">📍 AKTIFKAN TRACKING SAYA</button>
         <button id="btn-personal-sos" class="sos-btn">🚨 SOS SAYA</button>
         <button id="btn-bersihkan-jejak" class="track-btn" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);">🗑 BERSIHKAN JEJAK SAYA</button>
+        <button id="btn-tandai-zona" class="track-btn" style="background:var(--panel); color:var(--red); border:1px solid var(--red);">✏️ TANDAI ZONA BAHAYA</button>
+        <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
+          <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <input type="number" id="input-lantai-zona" placeholder="Lantai (mis. 1, 5)" style="flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
+            <input type="number" id="input-ketinggian-zona" placeholder="Ketinggian dari ground (meter)" style="flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
+          </div>
+          <div style="font-size:10px; color:var(--text-dim); margin-bottom:8px;">
+            Lantai/ketinggian diisi manual (bukan dari GPS) — akurasi ketinggian GPS terlalu kasar untuk membedakan antar-lantai bangunan industri.
+          </div>
+          <button id="btn-pindai-ble" class="icon-btn" style="width:100%; padding:8px; margin-bottom:8px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);">📶 Pindai BLE Beacon Lantai Ini (opsional)</button>
+          <div id="hasil-ble-zona" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;"></div>
+          <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
+            Klik di peta untuk menandai titik batas zona (minimal 3 titik). Titik akan otomatis tersambung membentuk area.
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button id="btn-selesai-zona" class="icon-btn" style="width:auto; padding:8px 14px; background:var(--green); color:#0a0c0d;">✅ Selesai (<span id="jumlah-titik-zona">0</span> titik)</button>
+            <button id="btn-batal-zona" class="icon-btn" style="width:auto; padding:8px 14px;">✖ Batal</button>
+          </div>
+        </div>
+        <div id="daftar-zona-bahaya" style="margin-top:8px;"></div>
         <div id="tracking-status"></div>
       </div>
       <div class="personnel-list" id="personnel-list"></div>
@@ -423,7 +461,7 @@
     const defaultPos = { lat: -4.793, lng: 119.616 }; // default: Pabrik PT Semen Tonasa
 
     const gmap = new google.maps.Map(document.getElementById('gmap-panel'), {
-      center: defaultPos, zoom: 16, mapTypeId: 'satellite'
+      center: defaultPos, zoom: 16, mapTypeId: 'hybrid' // hybrid = satelit + label jalan, persis tampilan aplikasi Google Maps
     });
 
     const panorama = new google.maps.StreetViewPanorama(document.getElementById('streetview-panel'), {
@@ -435,9 +473,35 @@
 
     const svService = new google.maps.StreetViewService();
 
-    function pindahKeLokasi(lat, lon){
+    let markerLokasi = null; // pin merah klasik -- untuk lokasi yang dicari manual
+    let markerPosisiSaya = null; // titik biru -- untuk posisi tracking pribadi ("Lokasi Anda")
+
+    function pindahKeLokasi(lat, lon, sumberPosisiSaya){
       const pos = { lat, lng: lon };
       gmap.setCenter(pos);
+
+      if (sumberPosisiSaya){
+        // Titik biru "Lokasi Anda" -- persis gaya aplikasi Google Maps native
+        if (markerPosisiSaya) markerPosisiSaya.setPosition(pos);
+        else {
+          markerPosisiSaya = new google.maps.Marker({
+            position: pos, map: gmap, title: 'Lokasi Anda',
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 9, fillColor: '#4285F4', fillOpacity: 1,
+              strokeColor: '#ffffff', strokeWeight: 3
+            },
+            zIndex: 999
+          });
+        }
+        if (markerLokasi){ markerLokasi.setMap(null); markerLokasi = null; }
+      } else {
+        // Pin merah klasik -- untuk lokasi yang dicari manual via input lat/lon
+        if (markerLokasi) markerLokasi.setPosition(pos);
+        else markerLokasi = new google.maps.Marker({ position: pos, map: gmap, title: 'Lokasi dicari' });
+        if (markerPosisiSaya){ markerPosisiSaya.setMap(null); markerPosisiSaya = null; }
+      }
+
       svService.getPanorama({ location: pos, radius: 100 }, (data, status) => {
         const statusEl = document.getElementById('sv-status');
         if (status === 'OK'){
@@ -458,7 +522,7 @@
         document.getElementById('sv-status').textContent = 'Masukkan latitude & longitude yang valid.';
         return;
       }
-      pindahKeLokasi(lat, lon);
+      pindahKeLokasi(lat, lon, false);
     });
 
     document.getElementById('btn-sv-dari-personel').addEventListener('click', ()=>{
@@ -466,7 +530,7 @@
       if (window.__posisiTerkiniSaya){
         document.getElementById('sv-lat').value = window.__posisiTerkiniSaya.lat;
         document.getElementById('sv-lon').value = window.__posisiTerkiniSaya.lon;
-        pindahKeLokasi(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon);
+        pindahKeLokasi(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon, true);
       } else {
         document.getElementById('sv-status').textContent = 'Aktifkan tracking Anda dulu di panel atas untuk pakai posisi terkini.';
       }
@@ -629,7 +693,7 @@
   // user, editor, admin -> akses penuh ke fitur inti (SOS, tracking, chat).
   function terapkanBatasanRole(){
     const isGuest = (window.__userRole === 'guest' || window.__userRole === 'viewer');
-    const idFiturInti = ['btn-toggle-tracking', 'btn-personal-sos', 'btn-bersihkan-jejak', 'btn-send-chat', 'btn-attach-photo', 'btn-start-call', 'chat-text-input'];
+    const idFiturInti = ['btn-toggle-tracking', 'btn-personal-sos', 'btn-bersihkan-jejak', 'btn-tandai-zona', 'btn-send-chat', 'btn-attach-photo', 'btn-start-call', 'chat-text-input'];
     idFiturInti.forEach(id=>{
       const el = document.getElementById(id);
       if (!el) return;
@@ -813,6 +877,19 @@
     return jam + ' jam ' + menit + ' menit';
   }
 
+  // Cek apakah suatu titik (lat, lon) berada di dalam poligon zona bahaya (algoritma ray-casting)
+  function titikDalamPoligon(lat, lon, titikPoligon){
+    let dalam = false;
+    for (let i = 0, j = titikPoligon.length - 1; i < titikPoligon.length; j = i++){
+      const xi = titikPoligon[i].lat, yi = titikPoligon[i].lon;
+      const xj = titikPoligon[j].lat, yj = titikPoligon[j].lon;
+      const kena = ((yi > lon) !== (yj > lon)) &&
+        (lat < (xj - xi) * (lon - yi) / (yj - yi) + xi);
+      if (kena) dalam = !dalam;
+    }
+    return dalam;
+  }
+
   // Marker personel bergaya Google Maps: dot bercahaya + halo pulse + kerucut arah gerak + label nama/ID
   function labelSingkatPersonel(teks){
     if (!teks) return '?';
@@ -837,6 +914,163 @@
   }
 
   function initPersonnelTracking(map){
+
+    // ==========================================================
+    // ZONA BAHAYA (Geofence Poligon) — tandai area berbahaya di peta
+    // dengan menghubungkan beberapa titik yang diklik menjadi batas area
+    // ==========================================================
+    let modeGambarZona = false;
+    let titikZonaSementara = []; // array {lat, lon} selama proses menandai
+    let markerZonaSementara = []; // L.circleMarker sementara per titik yang diklik
+    let garisZonaSementara = null; // L.polyline preview yang menyambungkan titik-titik
+    let zonaBahayaLayers = {}; // id -> L.polygon yang sudah tersimpan
+    let zonaBahayaCache = []; // array {id, nama, titik, lantai, ketinggian} untuk cek personel masuk zona
+    let bleTerdeteksiSementara = null; // nama device BLE yang terakhir dipindai (opsional, best-effort)
+
+    function resetGambarZona(){
+      titikZonaSementara = [];
+      markerZonaSementara.forEach(m => map.removeLayer(m));
+      markerZonaSementara = [];
+      if (garisZonaSementara){ map.removeLayer(garisZonaSementara); garisZonaSementara = null; }
+      document.getElementById('jumlah-titik-zona').textContent = '0';
+      document.getElementById('input-lantai-zona').value = '';
+      document.getElementById('input-ketinggian-zona').value = '';
+      document.getElementById('hasil-ble-zona').textContent = '';
+      bleTerdeteksiSementara = null;
+    }
+
+    // Pindai BLE Beacon terdekat (best-effort) -- keterbatasan Web Bluetooth browser:
+    // hanya jalan di Chrome/Edge (Android & desktop), TIDAK jalan di Safari iOS,
+    // dan wajib dipicu klik manual pengguna (tidak bisa memindai otomatis di latar belakang).
+    document.getElementById('btn-pindai-ble').addEventListener('click', async ()=>{
+      const hasilEl = document.getElementById('hasil-ble-zona');
+      if (!navigator.bluetooth){
+        hasilEl.textContent = '⚠️ Browser ini tidak mendukung Web Bluetooth (coba Chrome di Android/desktop, bukan Safari iOS).';
+        hasilEl.style.color = 'var(--red)';
+        return;
+      }
+      try{
+        hasilEl.textContent = 'Memindai perangkat BLE terdekat...';
+        hasilEl.style.color = 'var(--text-dim)';
+        const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
+        bleTerdeteksiSementara = device.name || device.id;
+        hasilEl.textContent = '✅ Beacon terdeteksi: ' + bleTerdeteksiSementara + ' -- akan disimpan sebagai referensi lantai ini.';
+        hasilEl.style.color = 'var(--green)';
+      }catch(err){
+        // Pengguna membatalkan dialog pemilihan, atau tidak ada device ditemukan -- bukan error fatal
+        hasilEl.textContent = 'Pemindaian dibatalkan/tidak ada beacon terdeteksi. Lantai/ketinggian manual tetap bisa dipakai.';
+        hasilEl.style.color = 'var(--text-dim)';
+      }
+    });
+
+    document.getElementById('btn-tandai-zona').addEventListener('click', ()=>{
+      modeGambarZona = true;
+      resetGambarZona();
+      document.getElementById('panel-gambar-zona').classList.remove('hidden');
+      document.getElementById('sar-map').style.cursor = 'crosshair';
+    });
+
+    document.getElementById('btn-batal-zona').addEventListener('click', ()=>{
+      modeGambarZona = false;
+      resetGambarZona();
+      document.getElementById('panel-gambar-zona').classList.add('hidden');
+      document.getElementById('sar-map').style.cursor = '';
+    });
+
+    document.getElementById('btn-selesai-zona').addEventListener('click', async ()=>{
+      if (titikZonaSementara.length < 3){
+        alert('Minimal 3 titik diperlukan untuk membentuk area zona bahaya.');
+        return;
+      }
+      const nama = document.getElementById('input-nama-zona').value.trim() || 'Zona Bahaya';
+      const lantaiRaw = document.getElementById('input-lantai-zona').value.trim();
+      const ketinggianRaw = document.getElementById('input-ketinggian-zona').value.trim();
+      try{
+        await addDoc(collection(db, 'zonaBahaya'), {
+          nama,
+          titik: titikZonaSementara,
+          lantai: lantaiRaw !== '' ? Number(lantaiRaw) : null,           // input manual, BUKAN dari GPS altitude
+          ketinggianMeter: ketinggianRaw !== '' ? Number(ketinggianRaw) : null, // input manual, BUKAN dari GPS altitude
+          bleBeacon: bleTerdeteksiSementara,                              // referensi tambahan, best-effort
+          dibuatOleh: auth.currentUser ? auth.currentUser.email : 'tidak diketahui',
+          waktu: serverTimestamp()
+        });
+        document.getElementById('input-nama-zona').value = '';
+        modeGambarZona = false;
+        resetGambarZona();
+        document.getElementById('panel-gambar-zona').classList.add('hidden');
+        document.getElementById('sar-map').style.cursor = '';
+      }catch(err){
+        alert('Gagal menyimpan zona bahaya: ' + err.message);
+      }
+    });
+
+
+    map.on('click', (e)=>{
+      if (!modeGambarZona) return;
+      titikZonaSementara.push({ lat: e.latlng.lat, lon: e.latlng.lng });
+      const m = L.circleMarker(e.latlng, { radius: 7, className: 'titik-zona-sementara' }).addTo(map);
+      markerZonaSementara.push(m);
+      if (garisZonaSementara) map.removeLayer(garisZonaSementara);
+      garisZonaSementara = L.polygon(titikZonaSementara.map(t => [t.lat, t.lon]), {
+        color: '#e05f5f', weight: 2, dashArray: '6,4', fillOpacity: 0.1
+      }).addTo(map);
+      document.getElementById('jumlah-titik-zona').textContent = String(titikZonaSementara.length);
+    });
+
+    // Render semua zona bahaya tersimpan secara real-time (untuk semua user yang login)
+    onSnapshot(collection(db, 'zonaBahaya'), (snap)=>{
+      const idAktif = new Set();
+      zonaBahayaCache = [];
+      const daftarEl = document.getElementById('daftar-zona-bahaya');
+      daftarEl.innerHTML = '';
+      snap.forEach(docSnap=>{
+        const z = docSnap.data();
+        const id = docSnap.id;
+        idAktif.add(id);
+        zonaBahayaCache.push({ id, nama: z.nama, titik: z.titik, lantai: z.lantai, ketinggianMeter: z.ketinggianMeter });
+
+        const labelLantai = z.lantai !== null && z.lantai !== undefined ? (' · Lt.' + z.lantai) : '';
+        if (zonaBahayaLayers[id]){
+          zonaBahayaLayers[id].setLatLngs(z.titik.map(t => [t.lat, t.lon]));
+        } else {
+          zonaBahayaLayers[id] = L.polygon(z.titik.map(t => [t.lat, t.lon]), {
+            color: '#e05f5f', weight: 2, dashArray: '6,4', fillColor: '#e05f5f', fillOpacity: 0.15
+          }).addTo(map).bindTooltip('⚠️ ' + z.nama + labelLantai, { permanent: true, direction: 'center', className: 'zona-bahaya-label' });
+        }
+
+        let infoTambahan = '';
+        if (z.lantai !== null && z.lantai !== undefined) infoTambahan += ' · Lantai ' + z.lantai;
+        if (z.ketinggianMeter !== null && z.ketinggianMeter !== undefined) infoTambahan += ' · ' + z.ketinggianMeter + 'm dari ground';
+        if (z.bleBeacon) infoTambahan += ' · BLE: ' + z.bleBeacon;
+
+        const row = document.createElement('div');
+        row.className = 'zona-row';
+        row.innerHTML = '<span>⚠️ ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">' + (infoTambahan || 'Tanpa data lantai/ketinggian') + '</div></span>';
+        const btnHapus = document.createElement('button');
+        btnHapus.textContent = '🗑 Hapus';
+        btnHapus.addEventListener('click', async ()=>{
+          if (!confirm('Hapus zona bahaya "' + z.nama + '"?')) return;
+          try{ await deleteDoc(doc(db, 'zonaBahaya', id)); }
+          catch(err){ alert('Gagal menghapus: ' + err.message); }
+        });
+        row.appendChild(btnHapus);
+        daftarEl.appendChild(row);
+      });
+
+      // Bersihkan layer poligon untuk zona yang sudah dihapus
+      Object.keys(zonaBahayaLayers).forEach(id=>{
+        if (!idAktif.has(id)){
+          map.removeLayer(zonaBahayaLayers[id]);
+          delete zonaBahayaLayers[id];
+        }
+      });
+    });
+
+    initPersonnelTrackingLanjutan(map, () => zonaBahayaCache);
+  }
+
+  function initPersonnelTrackingLanjutan(map, ambilZonaBahaya){
     // Render real-time dari Firestore -> peta + daftar, untuk SEMUA user yang aktif tracking
     const q = collection(db, 'personnel');
     onSnapshot(q, (snap)=>{
@@ -864,9 +1098,15 @@
             .bindPopup('<b>' + (p.nama || p.email) + '</b><br>Status: ' + p.status.toUpperCase());
         }
 
-        // Auto-zoom: begitu personel baru terlihat aktif tracking, peta otomatis fokus ke posisinya
-        if (personelBaruMuncul){
+        // Auto-zoom: begitu personel baru terlihat aktif tracking, peta otomatis fokus ke posisinya --
+        // TAPI hanya kalau akurasi GPS-nya cukup baik (radius <= 100m). Kalau device tanpa GPS (laptop/PC)
+        // memakai fallback IP/jaringan yang kasar (akurasi bisa ribuan meter -- bahkan salah kota),
+        // auto-zoom DILEWATI supaya peta tidak "ditarik" ke lokasi yang salah.
+        const akurasiLayakZoom = (typeof p.akurasi !== 'number') || p.akurasi <= 100;
+        if (personelBaruMuncul && akurasiLayakZoom){
           map.flyTo([p.lat, p.lon], 17, { duration: 1.2 });
+        } else if (personelBaruMuncul && !akurasiLayakZoom){
+          console.warn('Auto-zoom dilewati untuk ' + (p.nama || p.email) + ': akurasi GPS terlalu kasar (' + Math.round(p.akurasi) + 'm) -- kemungkinan device tanpa GPS/fallback IP.');
         }
 
         if (p.status === 'sos') adaSos = true;
@@ -897,6 +1137,13 @@
             + '<span style="' + wlaWarna + '">WLA ' + wlaPersen + '%</span></div>';
         }
 
+        // Cek apakah posisi personel ini berada di dalam salah satu zona bahaya yang tersimpan
+        const zonaAktif = ambilZonaBahaya();
+        const zonaDitempati = zonaAktif.find(z => titikDalamPoligon(p.lat, p.lon, z.titik));
+        const badgeZonaBahaya = zonaDitempati
+          ? '<div style="font-size:10.5px; color:#fff; background:var(--red); padding:2px 6px; margin-top:4px; display:inline-block; font-weight:700;">⚠️ DALAM ZONA BAHAYA: ' + zonaDitempati.nama + (zonaDitempati.lantai !== null && zonaDitempati.lantai !== undefined ? ' (Lt.' + zonaDitempati.lantai + ')' : '') + '</div>'
+          : '';
+
         const row = document.createElement('div');
         row.className = 'personnel-row';
         row.style.flexDirection = 'column';
@@ -904,7 +1151,8 @@
         row.innerHTML = '<div style="display:flex; justify-content:space-between; width:100%;">'
           + '<span><span class="status-dot status-' + p.status + '"></span>' + (p.nama || p.email) + '</span>'
           + '<span>' + p.status.toUpperCase() + '</span></div>'
-          + infoDurasiWla;
+          + infoDurasiWla
+          + badgeZonaBahaya;
         listEl.appendChild(row);
       });
 
