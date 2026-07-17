@@ -653,7 +653,7 @@
     deleteDoc
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
   import {
-    getStorage, ref, uploadBytes, getDownloadURL
+    getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
   // ====================================================================
@@ -1988,6 +1988,7 @@
     });
 
     document.getElementById('btn-attach-photo').addEventListener('click', ()=>{
+      if (sedangUpload) return;
       document.getElementById('chat-photo-input').click();
     });
 
@@ -1998,6 +1999,7 @@
     });
 
     document.getElementById('btn-attach-video').addEventListener('click', ()=>{
+      if (sedangUpload) return;
       document.getElementById('chat-video-input').click();
     });
 
@@ -2073,6 +2075,57 @@
     listEl.appendChild(div);
   }
 
+  /**
+   * Kompres foto sebelum upload -- persis prinsip yang dipakai WA/Telegram/TikTok
+   * supaya kirim foto terasa cepat, bukan upload file mentah 3-12MB dari kamera HP.
+   * Resize ke lebar maksimum 1280px + kompresi JPEG kualitas 70% -- biasanya
+   * menyusutkan ukuran file 80-95% tanpa terlihat jelas bedanya di layar HP.
+   */
+  function kompresGambar(file, lebarMaks = 1280, kualitas = 0.7){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width > lebarMaks){
+          height = Math.round(height * (lebarMaks / width));
+          width = lebarMaks;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('Gagal kompres gambar')),
+          'image/jpeg',
+          kualitas
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Gagal memuat gambar')); };
+      img.src = url;
+    });
+  }
+
+  /** Upload dengan progres nyata (persen) -- supaya tidak terasa "hang" diam-diam */
+  function uploadDenganProgres(storageRef, fileAtauBlob, tipeFile){
+    return new Promise((resolve, reject) => {
+      const task = uploadBytesResumable(storageRef, fileAtauBlob);
+      task.on('state_changed',
+        (snapshot) => {
+          const persen = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          setStatus2('chat-upload-status',
+            (tipeFile === 'video' ? 'Mengunggah video... ' : 'Mengunggah foto... ') + persen + '%',
+            'info');
+        },
+        (err) => reject(err),
+        () => resolve()
+      );
+    });
+  }
+
+  let sedangUpload = false; // cegah klik ganda tombol foto/video selagi upload berjalan
+
   async function kirimPesan({ text, file, tipeFile }){
     const user = auth.currentUser;
     if (!user) return;
@@ -2081,18 +2134,40 @@
     let photoUrl = null;
     let videoUrl = null;
     if (file){
+      if (sedangUpload){
+        setStatus2('chat-upload-status', 'Masih ada upload berjalan, tunggu sebentar...', 'err');
+        return;
+      }
+      sedangUpload = true;
+      document.getElementById('btn-attach-photo').style.opacity = '0.4';
+      document.getElementById('btn-attach-video').style.opacity = '0.4';
       try{
-        setStatus2('chat-upload-status', tipeFile === 'video' ? 'Mengunggah video...' : 'Mengunggah foto...', 'info');
+        let fileUntukUpload = file;
+
+        // Kompresi HANYA untuk foto -- video butuh library terpisah (ffmpeg.wasm dkk.)
+        // yang berat untuk browser, jadi video tetap diunggah apa adanya untuk saat
+        // ini (durasi singkat dari kamera HP biasanya sudah cukup wajar ukurannya).
+        if (tipeFile !== 'video'){
+          setStatus2('chat-upload-status', 'Mengompres foto...', 'info');
+          fileUntukUpload = await kompresGambar(file);
+        }
+
         const folder = tipeFile === 'video' ? 'chat-videos' : 'chat-photos';
-        const path = `${folder}/${currentRoom}/${Date.now()}_${file.name}`;
+        const ekstensi = tipeFile === 'video' ? (file.name.split('.').pop() || 'mp4') : 'jpg';
+        const path = `${folder}/${currentRoom}/${Date.now()}.${ekstensi}`;
         const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, file);
+
+        await uploadDenganProgres(storageRef, fileUntukUpload, tipeFile);
         const url = await getDownloadURL(storageRef);
         if (tipeFile === 'video') videoUrl = url; else photoUrl = url;
         setStatus2('chat-upload-status', '', '');
       }catch(err){
         setStatus2('chat-upload-status', 'Gagal unggah ' + (tipeFile === 'video' ? 'video' : 'foto') + ': ' + err.message, 'err');
         return;
+      }finally{
+        sedangUpload = false;
+        document.getElementById('btn-attach-photo').style.opacity = '1';
+        document.getElementById('btn-attach-video').style.opacity = '1';
       }
     }
 
