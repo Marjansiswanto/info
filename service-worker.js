@@ -1,5 +1,5 @@
 // service-worker.js — SCIE Tanggap Map SAR Dashboard
-const CACHE_NAME = 'scie-tanggap-v1';
+const CACHE_NAME = 'scie-tanggap-v2';
 const URLS_TO_CACHE = [
   '/map-sar-dashboard.html',
   '/manifest.json',
@@ -7,10 +7,19 @@ const URLS_TO_CACHE = [
   '/icon-512.png'
 ];
 
-// Install: cache shell dasar
+// Install: cache shell dasar -- pakai allSettled supaya 1 file gagal (mis. ikon belum ada)
+// tidak menggagalkan seluruh proses install service worker
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
+    caches.open(CACHE_NAME).then((cache) => {
+      return Promise.allSettled(
+        URLS_TO_CACHE.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('Gagal cache (dilewati, tidak fatal):', url, err.message);
+          })
+        )
+      );
+    })
   );
   self.skipWaiting();
 });
