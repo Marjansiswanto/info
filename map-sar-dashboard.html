@@ -170,17 +170,31 @@
   }
   .quick-report-row button:hover{ border-color:var(--amber); color:var(--amber); }
 
-  .composer-row{ display:flex; gap:6px; align-items:center; }
+  .composer-row{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
   .composer-row input[type=text]{
-    flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text);
+    flex:1 1 120px; min-width:0; background:#000; border:1px solid var(--line-bright); color:var(--text);
     font-family:var(--mono); padding:9px 10px; font-size:12px;
   }
   .icon-btn{
     background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);
-    font-family:var(--mono); padding:8px 10px; cursor:pointer; font-size:13px;
+    font-family:var(--mono); padding:8px 10px; cursor:pointer; font-size:13px; flex-shrink:0;
   }
   .icon-btn:hover{ color:var(--orange); border-color:var(--orange); }
-  #chat-photo-input, #chat-video-input{ display:none; }
+  #chat-photo-input, #chat-video-input, #chat-galeri-input, #chat-file-input{ display:none; }
+  .attach-menu-wrap{ position:relative; flex-shrink:0; }
+  #attach-menu-popup{
+    position:absolute; bottom:calc(100% + 6px); left:0; z-index:50;
+    background:var(--panel); border:1px solid var(--line-bright);
+    display:flex; flex-direction:column; min-width:190px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.5);
+  }
+  .attach-menu-item{
+    background:transparent; border:none; border-bottom:1px solid var(--line-bright);
+    color:var(--text); font-family:var(--mono); font-size:12px; text-align:left;
+    padding:10px 12px; cursor:pointer;
+  }
+  .attach-menu-item:last-child{ border-bottom:none; }
+  .attach-menu-item:hover{ background:#1a1006; color:var(--orange); }
   #chat-upload-status{ font-size:10.5px; color:var(--amber); padding:4px 14px 0; min-height:14px; }
 
   /* ===== Modal Video Call ===== */
@@ -473,10 +487,19 @@
         <button data-report="Laporan Longsor">🚨 Longsor</button>
       </div>
       <div class="composer-row">
-        <button class="icon-btn" id="btn-attach-photo" title="Ambil/lampirkan foto">📷</button>
+        <div class="attach-menu-wrap">
+          <button class="icon-btn" id="btn-attach-menu" title="Lampirkan">📎</button>
+          <div id="attach-menu-popup" class="hidden">
+            <button class="attach-menu-item" id="menu-foto-kamera">📷 Foto (Kamera)</button>
+            <button class="attach-menu-item" id="menu-video-kamera">🎬 Video (Kamera)</button>
+            <button class="attach-menu-item" id="menu-galeri">🖼️ Pilih dari Galeri</button>
+            <button class="attach-menu-item" id="menu-file">📄 Pilih File (Dokumen)</button>
+          </div>
+        </div>
         <input type="file" id="chat-photo-input" accept="image/*" capture="environment">
-        <button class="icon-btn" id="btn-attach-video" title="Rekam/lampirkan video">🎬</button>
         <input type="file" id="chat-video-input" accept="video/*" capture="environment">
+        <input type="file" id="chat-galeri-input" accept="image/*,video/*">
+        <input type="file" id="chat-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv">
         <input type="text" id="chat-text-input" placeholder="Tulis pesan...">
         <button class="icon-btn" id="btn-send-chat" title="Kirim">➤</button>
         <button class="icon-btn" id="btn-start-call" title="Video call">🎥</button>
@@ -787,7 +810,7 @@
   function terapkanBatasanRole(){
     const isGuest = (window.__userRole === 'guest' || window.__userRole === 'viewer');
     const isAdminAtauVip = (window.__userRole === 'admin' || window.__userRole === 'vip');
-    const idFiturInti = ['btn-toggle-tracking', 'btn-sudah-tiba', 'input-area-wo', 'btn-personal-sos', 'btn-bersihkan-jejak', 'btn-tandai-zona', 'btn-send-chat', 'btn-attach-photo', 'btn-attach-video', 'btn-start-call', 'chat-text-input'];
+    const idFiturInti = ['btn-toggle-tracking', 'btn-sudah-tiba', 'input-area-wo', 'btn-personal-sos', 'btn-bersihkan-jejak', 'btn-tandai-zona', 'btn-send-chat', 'btn-attach-menu', 'btn-start-call', 'chat-text-input'];
     idFiturInti.forEach(id=>{
       const el = document.getElementById(id);
       if (!el) return;
@@ -1987,9 +2010,40 @@
       });
     });
 
-    document.getElementById('btn-attach-photo').addEventListener('click', ()=>{
+    document.getElementById('btn-attach-menu').addEventListener('click', (e)=>{
+      e.stopPropagation();
       if (sedangUpload) return;
+      document.getElementById('attach-menu-popup').classList.toggle('hidden');
+    });
+
+    // Tutup menu kalau klik di luar area menu
+    document.addEventListener('click', (e)=>{
+      const popup = document.getElementById('attach-menu-popup');
+      const wrap = document.querySelector('.attach-menu-wrap');
+      if (!popup.classList.contains('hidden') && !wrap.contains(e.target)){
+        popup.classList.add('hidden');
+      }
+    });
+
+    function tutupMenuLampiran(){
+      document.getElementById('attach-menu-popup').classList.add('hidden');
+    }
+
+    document.getElementById('menu-foto-kamera').addEventListener('click', ()=>{
+      tutupMenuLampiran();
       document.getElementById('chat-photo-input').click();
+    });
+    document.getElementById('menu-video-kamera').addEventListener('click', ()=>{
+      tutupMenuLampiran();
+      document.getElementById('chat-video-input').click();
+    });
+    document.getElementById('menu-galeri').addEventListener('click', ()=>{
+      tutupMenuLampiran();
+      document.getElementById('chat-galeri-input').click();
+    });
+    document.getElementById('menu-file').addEventListener('click', ()=>{
+      tutupMenuLampiran();
+      document.getElementById('chat-file-input').click();
     });
 
     document.getElementById('chat-photo-input').addEventListener('change', async (e)=>{
@@ -1998,14 +2052,23 @@
       e.target.value = '';
     });
 
-    document.getElementById('btn-attach-video').addEventListener('click', ()=>{
-      if (sedangUpload) return;
-      document.getElementById('chat-video-input').click();
-    });
-
     document.getElementById('chat-video-input').addEventListener('change', async (e)=>{
       const file = e.target.files[0];
       if (file) await kirimPesan({ file, tipeFile: 'video' });
+      e.target.value = '';
+    });
+
+    document.getElementById('chat-galeri-input').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if (!file) return;
+      const tipeFile = file.type.startsWith('video/') ? 'video' : 'foto';
+      await kirimPesan({ file, tipeFile });
+      e.target.value = '';
+    });
+
+    document.getElementById('chat-file-input').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if (file) await kirimPesan({ file, tipeFile: 'dokumen' });
       e.target.value = '';
     });
 
@@ -2071,6 +2134,13 @@
     if (m.videoUrl){
       html += '<video src="' + m.videoUrl + '" controls style="max-width:100%; margin-top:6px;"></video>';
     }
+    if (m.fileUrl){
+      const namaFile = (m.fileName || 'File').replace(/</g,'&lt;');
+      const ukuranTeks = m.fileSizeKb ? ' (' + m.fileSizeKb + ' KB)' : '';
+      html += '<a href="' + m.fileUrl + '" target="_blank" style="display:flex; align-items:center; gap:8px; margin-top:6px; padding:8px 10px; border:1px solid var(--line-bright); color:var(--text); text-decoration:none; background:#000;">'
+        + '<span style="font-size:20px;">📄</span>'
+        + '<span style="font-size:11.5px; word-break:break-all;">' + namaFile + ukuranTeks + '</span></a>';
+    }
     div.innerHTML = html;
     listEl.appendChild(div);
   }
@@ -2081,7 +2151,7 @@
    * Resize ke lebar maksimum 1280px + kompresi JPEG kualitas 70% -- biasanya
    * menyusutkan ukuran file 80-95% tanpa terlihat jelas bedanya di layar HP.
    */
-  function kompresGambar(file, lebarMaks = 1280, kualitas = 0.7){
+  function kompresGambar(file, lebarMaks = 1000, kualitas = 0.6){
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -2096,11 +2166,20 @@
         canvas.width = width;
         canvas.height = height;
         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => blob ? resolve(blob) : reject(new Error('Gagal kompres gambar')),
-          'image/jpeg',
-          kualitas
-        );
+
+        // Coba WebP dulu (biasanya 25-35% lebih kecil dari JPEG di kualitas sama) --
+        // kalau browser tidak dukung WebP encode, otomatis jatuh ke JPEG
+        canvas.toBlob((blobWebp) => {
+          if (blobWebp && blobWebp.size > 100){ // WebP encode berhasil (bukan fallback kosong)
+            resolve(blobWebp);
+          } else {
+            canvas.toBlob(
+              (blobJpeg) => blobJpeg ? resolve(blobJpeg) : reject(new Error('Gagal kompres gambar')),
+              'image/jpeg',
+              kualitas
+            );
+          }
+        }, 'image/webp', kualitas);
       };
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Gagal memuat gambar')); };
       img.src = url;
@@ -2109,14 +2188,15 @@
 
   /** Upload dengan progres nyata (persen) -- supaya tidak terasa "hang" diam-diam */
   function uploadDenganProgres(storageRef, fileAtauBlob, tipeFile){
+    const label = tipeFile === 'video' ? 'Mengunggah video... '
+      : tipeFile === 'dokumen' ? 'Mengunggah file... '
+      : 'Mengunggah foto... ';
     return new Promise((resolve, reject) => {
       const task = uploadBytesResumable(storageRef, fileAtauBlob);
       task.on('state_changed',
         (snapshot) => {
           const persen = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-          setStatus2('chat-upload-status',
-            (tipeFile === 'video' ? 'Mengunggah video... ' : 'Mengunggah foto... ') + persen + '%',
-            'info');
+          setStatus2('chat-upload-status', label + persen + '%', 'info');
         },
         (err) => reject(err),
         () => resolve()
@@ -2133,41 +2213,60 @@
 
     let photoUrl = null;
     let videoUrl = null;
+    let fileUrl = null;
+    let fileNameTersimpan = null;
+    let fileSizeKb = null;
     if (file){
       if (sedangUpload){
         setStatus2('chat-upload-status', 'Masih ada upload berjalan, tunggu sebentar...', 'err');
         return;
       }
       sedangUpload = true;
-      document.getElementById('btn-attach-photo').style.opacity = '0.4';
-      document.getElementById('btn-attach-video').style.opacity = '0.4';
+      document.getElementById('btn-attach-menu').style.opacity = '0.4';
       try{
         let fileUntukUpload = file;
 
-        // Kompresi HANYA untuk foto -- video butuh library terpisah (ffmpeg.wasm dkk.)
-        // yang berat untuk browser, jadi video tetap diunggah apa adanya untuk saat
-        // ini (durasi singkat dari kamera HP biasanya sudah cukup wajar ukurannya).
-        if (tipeFile !== 'video'){
+        // Kompresi HANYA untuk foto -- video & dokumen dikirim apa adanya.
+        // Video butuh library terpisah (ffmpeg.wasm dkk.) yang berat untuk browser;
+        // dokumen (PDF/Word/dll.) tidak boleh dikompres seperti gambar, akan rusak.
+        if (tipeFile === 'foto'){
           setStatus2('chat-upload-status', 'Mengompres foto...', 'info');
           fileUntukUpload = await kompresGambar(file);
+          const ukuranAsliKb = Math.round(file.size / 1024);
+          const ukuranBaruKb = Math.round(fileUntukUpload.size / 1024);
+          setStatus2('chat-upload-status', `Terkompresi: ${ukuranAsliKb}KB → ${ukuranBaruKb}KB`, 'info');
         }
 
-        const folder = tipeFile === 'video' ? 'chat-videos' : 'chat-photos';
-        const ekstensi = tipeFile === 'video' ? (file.name.split('.').pop() || 'mp4') : 'jpg';
+        let folder, ekstensi;
+        if (tipeFile === 'video'){
+          folder = 'chat-videos';
+          ekstensi = file.name.split('.').pop() || 'mp4';
+        } else if (tipeFile === 'dokumen'){
+          folder = 'chat-files';
+          ekstensi = file.name.split('.').pop() || 'bin';
+        } else {
+          folder = 'chat-photos';
+          ekstensi = fileUntukUpload.type === 'image/webp' ? 'webp' : 'jpg';
+        }
         const path = `${folder}/${currentRoom}/${Date.now()}.${ekstensi}`;
         const storageRef = ref(storage, path);
 
         await uploadDenganProgres(storageRef, fileUntukUpload, tipeFile);
         const url = await getDownloadURL(storageRef);
-        if (tipeFile === 'video') videoUrl = url; else photoUrl = url;
+        if (tipeFile === 'video') videoUrl = url;
+        else if (tipeFile === 'dokumen'){
+          fileUrl = url;
+          fileNameTersimpan = file.name;
+          fileSizeKb = Math.round(file.size / 1024);
+        }
+        else photoUrl = url;
         setStatus2('chat-upload-status', '', '');
       }catch(err){
-        setStatus2('chat-upload-status', 'Gagal unggah ' + (tipeFile === 'video' ? 'video' : 'foto') + ': ' + err.message, 'err');
+        setStatus2('chat-upload-status', 'Gagal unggah ' + tipeFile + ': ' + err.message, 'err');
         return;
       }finally{
         sedangUpload = false;
-        document.getElementById('btn-attach-photo').style.opacity = '1';
-        document.getElementById('btn-attach-video').style.opacity = '1';
+        document.getElementById('btn-attach-menu').style.opacity = '1';
       }
     }
 
@@ -2178,6 +2277,9 @@
       text: text || null,
       photoUrl: photoUrl || null,
       videoUrl: videoUrl || null,
+      fileUrl: fileUrl || null,
+      fileName: fileNameTersimpan || null,
+      fileSizeKb: fileSizeKb || null,
       reportTag: pendingReportTag || null,
       source: 'web',
       waktu: serverTimestamp()
