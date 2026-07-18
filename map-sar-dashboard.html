@@ -127,6 +127,14 @@
   }
   #tracking-status{ font-size:10.5px; color:var(--text-dim); flex-basis:100%; }
 
+  /* Baris tombol ikon kompak -- pengganti tombol kotak panjang bertuliskan penuh */
+  .baris-ikon-aksi{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+  .icon-square-btn{
+    width:46px; height:46px; flex-shrink:0; font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); border-radius:2px;
+  }
+
   .sos-banner{
     background:#2a0808; border:1px solid var(--red); color:#ffb3b3; padding:12px 16px;
     font-size:12.5px; margin-bottom:16px; display:none;
@@ -398,11 +406,13 @@
       </div>
       <div class="tracking-control">
         <input type="text" id="input-area-wo" placeholder="Keterangan Area Kerja / WO (mis. MCC KILN) — opsional" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
-        <button id="btn-toggle-tracking" class="track-btn">📍 AKTIFKAN TRACKING SAYA</button>
-        <button id="btn-sudah-tiba" class="track-btn hidden" style="background:var(--panel); color:var(--green); border:1px solid var(--green);">🏁 SAYA SUDAH TIBA DI LOKASI WO</button>
-        <button id="btn-personal-sos" class="sos-btn">🚨 SOS SAYA</button>
-        <button id="btn-bersihkan-jejak" class="track-btn" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);">🗑 BERSIHKAN JEJAK SAYA</button>
-        <button id="btn-tandai-zona" class="track-btn" style="background:var(--panel); color:var(--red); border:1px solid var(--red);">✏️ TANDAI ZONA BAHAYA</button>
+        <div class="baris-ikon-aksi">
+          <button id="btn-toggle-tracking" class="track-btn icon-square-btn" title="Aktifkan Tracking Saya">📍</button>
+          <button id="btn-sudah-tiba" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--green); border:1px solid var(--green);" title="Saya Sudah Tiba di Lokasi WO">🏁</button>
+          <button id="btn-personal-sos" class="sos-btn icon-square-btn" title="SOS Saya">🚨</button>
+          <button id="btn-bersihkan-jejak" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);" title="Bersihkan Jejak Saya">🗑</button>
+          <button id="btn-tandai-zona" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Tandai Zona Bahaya">✏️</button>
+        </div>
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
           <div style="display:flex; gap:8px; margin-bottom:8px;">
@@ -424,7 +434,7 @@
         </div>
         <div id="daftar-zona-bahaya" style="margin-top:8px;"></div>
 
-        <button id="btn-tandai-markas" class="track-btn" style="background:var(--panel); color:var(--green); border:1px solid var(--green); margin-top:8px;">🏠 TANDAI ZONA MARKAS (Admin)</button>
+        <button id="btn-tandai-markas" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--green); border:1px solid var(--green); margin-top:8px;" title="Tandai Zona Markas (Admin)">🏠</button>
         <div id="panel-tandai-markas" class="hidden" style="border:1px solid var(--green); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-markas" placeholder="Nama Markas (mis. Pos Komando Utama)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
           <input type="number" id="input-radius-markas" placeholder="Radius (meter, mis. 50)" value="50" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -440,7 +450,7 @@
         </div>
         <div id="daftar-zona-markas" style="margin-top:8px;"></div>
 
-        <button id="btn-tandai-aman" class="track-btn" style="background:var(--panel); color:#4aa3ff; border:1px solid #4aa3ff; margin-top:8px;">🛟 TANDAI ZONA AMAN / EVAKUASI (Admin)</button>
+        <button id="btn-tandai-aman" class="track-btn icon-square-btn" style="background:var(--panel); color:#4aa3ff; border:1px solid #4aa3ff; margin-top:8px;" title="Tandai Zona Aman / Evakuasi (Admin)">🛟</button>
         <div id="panel-tandai-aman" class="hidden" style="border:1px solid #4aa3ff; padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-aman" placeholder="Nama Zona Aman (mis. Titik Kumpul Evakuasi 1)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
           <input type="number" id="input-radius-aman" placeholder="Radius (meter, mis. 30)" value="30" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -1846,7 +1856,8 @@
     document.getElementById('btn-personal-sos').addEventListener('click', async ()=>{
       statusPribadi = (statusPribadi === 'sos') ? 'aman' : 'sos';
       const btn = document.getElementById('btn-personal-sos');
-      btn.textContent = statusPribadi === 'sos' ? '✅ BATALKAN SOS' : '🚨 SOS SAYA';
+      btn.textContent = statusPribadi === 'sos' ? '✅' : '🚨';
+      btn.title = statusPribadi === 'sos' ? 'Batalkan SOS' : 'SOS Saya';
       if (watchId !== null){
         await updatePosisiKeFirestore(null); // update status tanpa perlu posisi baru
       } else {
@@ -1911,7 +1922,7 @@
     idRuteAktif = null;
     titikTibaLokal = null;
     document.getElementById('btn-sudah-tiba').classList.remove('hidden');
-    document.getElementById('btn-sudah-tiba').textContent = '🏁 SAYA SUDAH TIBA DI LOKASI WO';
+    document.getElementById('btn-sudah-tiba').textContent = '🏁';
     document.getElementById('btn-sudah-tiba').disabled = false;
     mintaWakeLock(); // jaga layar tetap menyala selama tracking -- lihat catatan batasan di dokumen
     watchId = navigator.geolocation.watchPosition(
@@ -1924,12 +1935,14 @@
         watchId = null;
         lepasWakeLock();
         document.getElementById('btn-toggle-tracking').classList.remove('active');
-        document.getElementById('btn-toggle-tracking').textContent = '📍 AKTIFKAN TRACKING SAYA';
+        document.getElementById('btn-toggle-tracking').textContent = '📍';
+        document.getElementById('btn-toggle-tracking').title = 'Aktifkan Tracking Saya';
       },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
     );
     document.getElementById('btn-toggle-tracking').classList.add('active');
-    document.getElementById('btn-toggle-tracking').textContent = '⏸ HENTIKAN TRACKING';
+    document.getElementById('btn-toggle-tracking').textContent = '⏸';
+    document.getElementById('btn-toggle-tracking').title = 'Hentikan Tracking';
   }
 
   async function hentikanTrackingSaya(){
@@ -1939,7 +1952,8 @@
     }
     lepasWakeLock();
     document.getElementById('btn-toggle-tracking').classList.remove('active');
-    document.getElementById('btn-toggle-tracking').textContent = '📍 AKTIFKAN TRACKING SAYA';
+    document.getElementById('btn-toggle-tracking').textContent = '📍';
+    document.getElementById('btn-toggle-tracking').title = 'Aktifkan Tracking Saya';
     document.getElementById('btn-sudah-tiba').classList.add('hidden');
     setTrackingStatus('Tracking dihentikan. Menghapus posisi Anda dari peta...');
 
