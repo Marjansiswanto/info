@@ -98,8 +98,8 @@
   .panel-head .tag{ color:var(--bg); background:var(--amber); padding:2px 8px; font-size:10px; font-weight:600; }
   #sar-map{ width:100%; height:480px; }
   @media(min-width:921px){
-    #sar-map{ height:min(65vh, 720px); }
-    #gmap-panel, #streetview-panel{ height:min(45vh, 480px) !important; }
+    #sar-map{ height:700px; }
+    #gmap-panel, #streetview-panel{ height:450px !important; }
   }
   .leaflet-container{ background:#0a0c0d; }
 
@@ -957,6 +957,13 @@
     dashboardInited = true;
 
     const map = L.map('sar-map').setView([-4.793, 119.616], 14);
+
+    // Pastikan Leaflet menyesuaikan ulang tampilan tile-nya dengan ukuran
+    // kontainer sesungguhnya -- perlu karena Leaflet "mengunci" ukuran dari
+    // saat pertama dimuat, jadi kalau ada jeda font/layout atau window
+    // di-resize/maximize, tile peta bisa tidak pas mengisi kotaknya.
+    setTimeout(() => map.invalidateSize(), 300);
+    window.addEventListener('resize', () => map.invalidateSize());
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors', maxZoom: 19
     }).addTo(map);
