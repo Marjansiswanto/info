@@ -658,6 +658,17 @@
         document.getElementById('sv-status').textContent = 'Aktifkan tracking Anda dulu di panel atas untuk pakai posisi terkini.';
       }
     });
+
+    // Dipanggil dari tombol "📍 Pakai koordinat ini" di dalam popup marker personel manapun di peta --
+    // supaya bisa ambil koordinat PERSONEL LAIN yang sedang dipantau, bukan cuma posisi diri sendiri.
+    window.pakaiKoordinatPersonel = function(lat, lon){
+      document.getElementById('sv-lat').value = lat;
+      document.getElementById('sv-lon').value = lon;
+      pindahKeLokasi(lat, lon, true);
+      document.getElementById('sv-status').textContent = 'Koordinat personel dimuat ke Street View.';
+      // Scroll otomatis ke panel Street View supaya hasilnya langsung terlihat
+      document.getElementById('sv-lat').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
   }
 
   function gmapsLoadError(){
@@ -1551,15 +1562,19 @@
 
         const color = p.status === 'sos' ? '#e05f5f' : (p.status === 'hilang' ? '#e0b73a' : '#5fd68a');
 
+        const isiPopupPersonel = '<b>' + (p.nama || p.email) + '</b><br>Status: ' + p.status.toUpperCase()
+          + '<br><button onclick="window.pakaiKoordinatPersonel(' + p.lat + ',' + p.lon + ')" '
+          + 'style="margin-top:6px; padding:4px 8px; cursor:pointer;">📍 Pakai koordinat ini</button>';
+
         const personelBaruMuncul = !personnelMarkers[uid];
         if (personnelMarkers[uid]){
           personnelMarkers[uid].setLatLng([p.lat, p.lon]);
           personnelMarkers[uid].setIcon(buatIconPersonel(color, p.heading, p.nama || p.email));
-          personnelMarkers[uid].setPopupContent('<b>' + (p.nama || p.email) + '</b><br>Status: ' + p.status.toUpperCase());
+          personnelMarkers[uid].setPopupContent(isiPopupPersonel);
         } else {
           personnelMarkers[uid] = L.marker([p.lat, p.lon], { icon: buatIconPersonel(color, p.heading, p.nama || p.email) })
             .addTo(map)
-            .bindPopup('<b>' + (p.nama || p.email) + '</b><br>Status: ' + p.status.toUpperCase());
+            .bindPopup(isiPopupPersonel);
         }
 
         // Auto-zoom: begitu personel baru terlihat aktif tracking, peta otomatis fokus ke posisinya --
