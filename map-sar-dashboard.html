@@ -295,6 +295,7 @@
     <div class="title">Dashboard Personnel Tracking</div>
   </div>
   <div style="display:flex; gap:8px;">
+    <button id="btn-aktifkan-notif" class="hidden" style="background:transparent; border:1px solid var(--line-bright); color:var(--text-dim); font-family:var(--mono); padding:8px 12px; cursor:pointer; font-size:12px;">🔔 Aktifkan Notifikasi</button>
     <button id="admin-panel-btn" class="hidden">👤 PANEL ADMIN</button>
     <button id="logout-btn" class="hidden">KELUAR</button>
   </div>
@@ -820,6 +821,14 @@
     document.getElementById('dashboard').classList.remove('hidden');
     document.getElementById('logout-btn').classList.remove('hidden');
 
+    // Tampilkan tombol "Aktifkan Notifikasi" HANYA kalau browser dukung & izin
+    // belum pernah diputuskan (default) -- kalau sudah granted/denied sebelumnya,
+    // tombol tetap disembunyikan (denied = percuma tampil, browser tidak akan
+    // tanya lagi; granted = sudah aktif, tidak perlu tombol lagi)
+    if ('Notification' in window && Notification.permission === 'default'){
+      document.getElementById('btn-aktifkan-notif').classList.remove('hidden');
+    }
+
     // Ambil role user dari Firestore (users/{uid}) untuk menentukan hak akses fitur inti
     try{
       const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
@@ -874,7 +883,10 @@
   onAuthStateChanged(auth, (user)=>{
     if (user){
       tampilkanDashboard();
-      setupPushNotification(); // minta izin & simpan token notifikasi -- aman dipanggil berkali-kali
+      // CATATAN: setupPushNotification() TIDAK dipanggil otomatis di sini lagi --
+      // Chrome sering diam-diam menyembunyikan pop-up izin notifikasi kalau
+      // diminta otomatis tanpa klik langsung dari pengguna. Sekarang dipicu
+      // manual lewat tombol "🔔 Aktifkan Notifikasi" (lihat handler di bawah).
     } else {
       document.getElementById('auth-gate').classList.remove('hidden');
       document.getElementById('dashboard').classList.add('hidden');
@@ -2294,12 +2306,16 @@
 
   /** Minta izin notifikasi & simpan token FCM milik user ke Firestore -- dipanggil sekali setelah login */
   async function setupPushNotification(){
+    const tombol = document.getElementById('btn-aktifkan-notif');
     try{
-      if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+      if (!('Notification' in window) || !('serviceWorker' in navigator)){
+        alert('Browser ini tidak mendukung notifikasi push.');
+        return;
+      }
 
       const izin = await Notification.requestPermission();
       if (izin !== 'granted'){
-        console.log('Izin notifikasi ditolak/belum diberikan');
+        alert('Izin notifikasi tidak diberikan. Tombol ini bisa dicoba lagi nanti dari pengaturan browser.');
         return;
       }
 
@@ -2318,11 +2334,18 @@
           email: auth.currentUser.email,
           updatedAt: serverTimestamp()
         });
+        tombol.classList.add('hidden'); // sembunyikan tombol -- sudah aktif
+        alert('Notifikasi berhasil diaktifkan!');
+      } else {
+        alert('Gagal dapat token notifikasi. Coba lagi.');
       }
     }catch(err){
       console.error('Gagal setup push notification:', err);
+      alert('Gagal aktifkan notifikasi: ' + err.message);
     }
   }
+
+  document.getElementById('btn-aktifkan-notif').addEventListener('click', setupPushNotification);
 
   /** Kirim notifikasi ke semua user LAIN (bukan pengirim) yang punya token tersimpan */
   async function kirimNotifikasiChatBaru(namaPengirim, isiPesanSingkat){
