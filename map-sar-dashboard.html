@@ -1024,7 +1024,10 @@
   const JAM_KERJA_STANDAR_MS = 8 * 60 * 60 * 1000; // 8 jam, sesuai UU Ketenagakerjaan No.13/2003 -- SESUAIKAN kalau standar SIPATRA-SMART berbeda
 
   // Filter kualitas GPS -- supaya jejak rute tidak berantakan akibat lompatan sinyal lemah/fallback WiFi
-  const AKURASI_MAKS_METER = 50;      // titik dgn radius akurasi lebih besar dari ini dianggap tidak layak masuk jejak rute
+  const AKURASI_MAKS_METER = 100;     // titik dgn radius akurasi lebih besar dari ini dianggap tidak layak masuk jejak rute --
+                                       // dinaikkan dari 50m ke 100m (konsisten dgn ambang auto-zoom) karena GPS HP di
+                                       // area pabrik (banyak struktur beton/baja) sering akurasinya lebih kasar dari 50m,
+                                       // menyebabkan hampir semua titik terbuang & jarak tempuh rute macet di 0.00 km
   const KECEPATAN_MAKS_MPS = 40;      // ~144 km/jam -- lompatan yang mustahil ditempuh personel (jalan kaki/motor) dalam SAR
   let titikTerakhirValid = null;      // {lat, lon, waktuMs} -- titik terakhir yang lolos filter, dipakai HANYA sebagai acuan (bukan disimpan ke Firestore)
   let titikAwalSudahDikirim = false;  // flag: titik Markas (awal sesi tracking) sudah tercatat ke Firestore atau belum
