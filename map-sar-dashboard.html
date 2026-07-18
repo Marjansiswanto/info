@@ -310,6 +310,19 @@
 </header>
 
 <!-- ===== MODAL PANEL ADMIN (kelola role & status user) ===== -->
+<div id="checkout-modal-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(4,5,6,0.92); z-index:4500; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--panel); border:1px solid var(--orange); max-width:420px; width:100%; padding:20px;">
+    <h3 style="margin:0 0 8px 0; font-size:15px; color:var(--orange);">⏰ Konfirmasi Check-Out</h3>
+    <div id="checkout-modal-info" style="font-size:11.5px; color:var(--text-dim); margin-bottom:16px; line-height:1.6;"></div>
+    <div id="checkout-modal-status" style="font-size:11px; margin-bottom:10px;"></div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button id="btn-checkout-selesai" class="icon-btn" style="width:100%; padding:10px; background:var(--green); color:#0a0c0d; font-weight:700;">✅ CHECK-OUT (Selesai Kerja)</button>
+      <button id="btn-checkout-tutup-wo" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--amber); color:#0a0c0d; font-weight:700;">📋 TUTUP WO</button>
+      <button id="btn-checkout-lembur" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--panel); border:1px solid var(--orange); color:var(--orange);">🕐 LEMBUR</button>
+    </div>
+  </div>
+</div>
+
 <div id="admin-modal-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(4,5,6,0.92); z-index:4000; display:flex; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--panel); border:1px solid var(--line-bright); max-width:720px; width:100%; max-height:85vh; overflow-y:auto; padding:20px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
@@ -412,6 +425,8 @@
           <button id="btn-personal-sos" class="sos-btn icon-square-btn" title="SOS Saya">🚨</button>
           <button id="btn-bersihkan-jejak" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);" title="Bersihkan Jejak Saya">🗑</button>
           <button id="btn-tandai-zona" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Tandai Zona Bahaya">✏️</button>
+          <button id="btn-checkin-manual" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--green); border:1px solid var(--green);" title="Check-In Manual">✅</button>
+          <button id="btn-checkout-manual" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--amber); border:1px solid var(--amber);" title="Check-Out Manual">⏰</button>
         </div>
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -465,6 +480,42 @@
           </div>
         </div>
         <div id="daftar-zona-aman" style="margin-top:8px;"></div>
+
+        <button id="btn-tandai-wilayah-kerja" class="track-btn icon-square-btn" style="background:var(--panel); color:#ffb84d; border:1px solid #ffb84d; margin-top:8px;" title="Tandai Wilayah Kerja / Gerbang OGS (Admin)">🚧</button>
+        <div id="panel-tandai-wilayah-kerja" class="hidden" style="border:1px solid #ffb84d; padding:10px; margin-top:8px;">
+          <input type="text" id="input-nama-wilayah-kerja" placeholder="Nama (mis. Gerbang OGS Utama)" value="Wilayah Kerja Pabrik-Quarry" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
+
+          <div style="display:flex; gap:14px; margin-bottom:8px; font-size:11.5px;">
+            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+              <input type="radio" name="bentuk-wilayah-kerja" value="lingkaran" checked> ⭕ Lingkaran
+            </label>
+            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+              <input type="radio" name="bentuk-wilayah-kerja" value="poligon"> ⬠ Poligon Bebas
+            </label>
+          </div>
+
+          <div id="wilayah-kerja-mode-lingkaran">
+            <input type="number" id="input-radius-wilayah-kerja" placeholder="Radius (meter, mis. 3000)" value="3000" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
+            <button id="btn-wilayah-kerja-posisi-saya" class="icon-btn" style="width:100%; padding:8px; margin-bottom:8px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);">📍 Pakai Posisi Saya Sekarang sebagai Anchor</button>
+            <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
+              Anchor = titik pusat (mis. gerbang OGS). Klik di peta untuk menandai, atau pakai posisi Anda sekarang.
+            </div>
+          </div>
+
+          <div id="wilayah-kerja-mode-poligon" class="hidden">
+            <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
+              Klik di peta untuk menandai titik batas area (minimal 3 titik, bebas bentuknya) — cocok untuk area tidak beraturan seperti mengikuti jalur pagar pabrik.
+            </div>
+            <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">Titik ditandai: <span id="jumlah-titik-wilayah-kerja">0</span></div>
+          </div>
+
+          <div id="status-titik-wilayah-kerja" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;">Belum ada titik/area dipilih.</div>
+          <div style="display:flex; gap:8px;">
+            <button id="btn-simpan-wilayah-kerja" class="icon-btn" style="width:auto; padding:8px 14px; background:#ffb84d; color:#0a0c0d;">✅ Simpan Wilayah Kerja</button>
+            <button id="btn-batal-wilayah-kerja" class="icon-btn" style="width:auto; padding:8px 14px;">✖ Batal</button>
+          </div>
+        </div>
+        <div id="daftar-wilayah-kerja" style="margin-top:8px;"></div>
 
         <div id="panel-alert-supervisor" class="hidden" style="border:1px solid var(--amber); padding:10px; margin-top:8px;">
           <div style="font-size:12px; font-weight:700; color:var(--amber); margin-bottom:8px;">⚠️ ALERT VERIFIKASI WO (Supervisor/Admin)</div>
@@ -865,6 +916,13 @@
       el.style.opacity = isGuest ? '0.4' : '1';
       el.style.cursor = isGuest ? 'not-allowed' : 'pointer';
     });
+
+    // Tombol check-in/check-out manual HANYA untuk role='user' (sesuai spesifikasi Kategori Kerja)
+    const tampilManualCheckin = (window.__userRole === 'user');
+    document.getElementById('btn-checkin-manual').classList.toggle('hidden', !tampilManualCheckin);
+    document.getElementById('btn-checkout-manual').classList.toggle('hidden', !tampilManualCheckin);
+    document.getElementById('btn-tandai-wilayah-kerja').classList.toggle('hidden', !isAdminAtauVip);
+
     if (isGuest && !document.getElementById('guest-readonly-note')){
       const note = document.createElement('div');
       note.id = 'guest-readonly-note';
@@ -965,6 +1023,34 @@
           statusSelect.appendChild(opt);
         });
 
+        // Kategori Kerja & Pola Shift -- HANYA relevan kalau role = 'user'
+        const kategoriSelect = document.createElement('select');
+        kategoriSelect.style.cssText = roleSelect.style.cssText;
+        kategoriSelect.style.display = (u.role === 'user') ? '' : 'none';
+        [['', '-- kategori --'], ['personil', 'Personil'], ['supervisor', 'Supervisor'], ['manager', 'Manager']].forEach(([val, label])=>{
+          const opt = document.createElement('option');
+          opt.value = val; opt.textContent = label;
+          if ((u.kategoriKerja || '') === val) opt.selected = true;
+          kategoriSelect.appendChild(opt);
+        });
+
+        const polaShiftSelect = document.createElement('select');
+        polaShiftSelect.style.cssText = roleSelect.style.cssText;
+        polaShiftSelect.style.display = (u.role === 'user') ? '' : 'none';
+        [['', '-- pola shift --'], ['dayshift', 'Dayshift'], ['rotasi-3shift', 'Rotasi 3-Shift'], ['rotasi-7-7-pagi', '7/7 Pagi'], ['rotasi-7-7-malam', '7/7 Malam']].forEach(([val, label])=>{
+          const opt = document.createElement('option');
+          opt.value = val; opt.textContent = label;
+          if ((u.polaShiftDasar || '') === val) opt.selected = true;
+          polaShiftSelect.appendChild(opt);
+        });
+
+        // Toggle tampil/sembunyi kategori & pola shift kalau role diganti manual di dropdown
+        roleSelect.addEventListener('change', ()=>{
+          const tampil = roleSelect.value === 'user';
+          kategoriSelect.style.display = tampil ? '' : 'none';
+          polaShiftSelect.style.display = tampil ? '' : 'none';
+        });
+
         const btnSimpan = document.createElement('button');
         btnSimpan.textContent = 'SIMPAN';
         btnSimpan.className = 'icon-btn';
@@ -972,7 +1058,11 @@
         btnSimpan.addEventListener('click', async ()=>{
           btnSimpan.textContent = '...';
           try{
-            await updateDoc(doc(db, 'users', uid), { role: roleSelect.value, status: statusSelect.value });
+            const dataUpdate = { role: roleSelect.value, status: statusSelect.value };
+            // kategoriKerja/polaShiftDasar HARUS null kalau role bukan 'user' (sesuai spesifikasi)
+            dataUpdate.kategoriKerja = (roleSelect.value === 'user') ? (kategoriSelect.value || null) : null;
+            dataUpdate.polaShiftDasar = (roleSelect.value === 'user') ? (polaShiftSelect.value || null) : null;
+            await updateDoc(doc(db, 'users', uid), dataUpdate);
             btnSimpan.textContent = '✓ TERSIMPAN';
             setTimeout(()=>{ btnSimpan.textContent = 'SIMPAN'; }, 1500);
           }catch(err){
@@ -985,6 +1075,8 @@
         row.appendChild(info);
         row.appendChild(roleSelect);
         row.appendChild(statusSelect);
+        row.appendChild(kategoriSelect);
+        row.appendChild(polaShiftSelect);
         row.appendChild(btnSimpan);
         listEl.appendChild(row);
       });
@@ -1096,6 +1188,220 @@
     const menit = totalMenit % 60;
     return jam + ' jam ' + menit + ' menit';
   }
+
+  // ==========================================================
+  // MODUL: Kategori Kerja & Jadwal Kerja (Fase A)
+  // Rujukan: spek-kategori-kerja-multi-dashboard.md
+  // ==========================================================
+  const DAFTAR_SHIFT = {
+    'Shift 1':          { mulaiJam: 7,  mulaiMenit: 30, selesaiJam: 15, selesaiMenit: 30, lintasHari: false },
+    'Shift 2':          { mulaiJam: 15, mulaiMenit: 30, selesaiJam: 22, selesaiMenit: 30, lintasHari: false },
+    'Shift 3':          { mulaiJam: 22, mulaiMenit: 30, selesaiJam: 7,  selesaiMenit: 30, lintasHari: true },
+    'Shift 7/7 Pagi':   { mulaiJam: 7,  mulaiMenit: 30, selesaiJam: 19, selesaiMenit: 30, lintasHari: false },
+    'Shift 7/7 Malam':  { mulaiJam: 19, mulaiMenit: 30, selesaiJam: 7,  selesaiMenit: 30, lintasHari: true },
+  };
+  // Dayshift beda jam Jumat vs Senin-Kamis, ditangani terpisah di hitungJamPulangRencana()
+
+  let wilayahKerjaCache = null; // {id, nama, lat, lon, radiusMeter} -- diasumsikan 1 wilayah aktif
+  let jadwalKerjaHariIniCache = null; // dokumen jadwalKerja hari ini milik user sendiri
+  let dialogCheckoutSudahTampil = false; // cegah dialog muncul berkali-kali di render yang sama
+  let intervalCekCheckout = null;
+
+  function idDokumenJadwalHariIni(uid){
+    const now = new Date();
+    const tgl = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+    return uid + '_' + tgl;
+  }
+
+  // Tentukan shift yang berlaku sekarang untuk suatu polaShiftDasar (khusus rotasi-3shift, cocokkan ke jendela jam)
+  function tentukanShiftDariJam(){
+    const now = new Date();
+    const menitSekarang = now.getHours() * 60 + now.getMinutes();
+    for (const [nama, s] of Object.entries(DAFTAR_SHIFT)){
+      if (nama === 'Shift 7/7 Pagi' || nama === 'Shift 7/7 Malam') continue; // bukan bagian rotasi-3shift
+      const mulai = s.mulaiJam * 60 + s.mulaiMenit;
+      let selesai = s.selesaiJam * 60 + s.selesaiMenit;
+      if (s.lintasHari){
+        if (menitSekarang >= mulai || menitSekarang < selesai) return nama;
+      } else {
+        if (menitSekarang >= mulai && menitSekarang < selesai) return nama;
+      }
+    }
+    return 'Shift 1'; // fallback aman kalau tidak cocok jendela mana pun
+  }
+
+  // Hitung jamPulangRencana (Date object) berdasarkan shiftTerdeteksi & jamMasuk
+  function hitungJamPulangRencana(shiftTerdeteksi, jamMasuk){
+    const hasil = new Date(jamMasuk);
+    if (shiftTerdeteksi === 'Dayshift'){
+      const hariIni = jamMasuk.getDay(); // 0=Minggu, 5=Jumat
+      if (hariIni === 5){ hasil.setHours(17, 0, 0, 0); }
+      else { hasil.setHours(16, 30, 0, 0); }
+      return hasil;
+    }
+    const s = DAFTAR_SHIFT[shiftTerdeteksi];
+    if (!s) { hasil.setHours(hasil.getHours() + 8); return hasil; } // fallback
+    hasil.setHours(s.selesaiJam, s.selesaiMenit, 0, 0);
+    if (s.lintasHari) hasil.setDate(hasil.getDate() + 1);
+    return hasil;
+  }
+
+  // Dipanggil setiap ada update posisi GPS personel sendiri (role='user') -- cek auto check-in
+  // Cek apakah suatu titik berada di dalam Wilayah Kerja, mendukung KEDUA bentuk (lingkaran/poligon)
+  function titikDalamWilayahKerja(lat, lon){
+    if (!wilayahKerjaCache) return false;
+    if (wilayahKerjaCache.tipe === 'poligon'){
+      return titikDalamPoligon(lat, lon, wilayahKerjaCache.titik || []);
+    }
+    const jarak = hitungJarakMeter(lat, lon, wilayahKerjaCache.lat, wilayahKerjaCache.lon);
+    return jarak <= wilayahKerjaCache.radiusMeter;
+  }
+
+  async function cekAutoCheckIn(lat, lon, dipicuManual){
+    if (window.__userRole !== 'user') return; // HANYA role='user' yang tunduk sistem ini
+    if (!wilayahKerjaCache) return; // belum ada Wilayah Kerja ditandai admin
+    if (!auth.currentUser) return;
+
+    if (!titikDalamWilayahKerja(lat, lon)) return; // masih di luar Wilayah Kerja (lingkaran ATAU poligon)
+
+    const idDok = idDokumenJadwalHariIni(auth.currentUser.uid);
+    try{
+      const existing = await getDoc(doc(db, 'jadwalKerja', idDok));
+      if (existing.exists()){
+        if (dipicuManual) alert('Anda sudah check-in hari ini.');
+        return; // sudah check-in hari ini, jangan dobel (prinsip 1x di kemunculan pertama)
+      }
+
+      // Ambil profil sendiri untuk tahu polaShiftDasar & overhaulAktif
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      const dataUser = userDoc.exists() ? userDoc.data() : {};
+      const overhaul = dataUser.overhaulAktif;
+      const sekarang = new Date();
+
+      let shiftTerdeteksi;
+      const overhaulSedangAktif = overhaul && overhaul.mulaiTanggal && overhaul.selesaiTanggal
+        && sekarang >= overhaul.mulaiTanggal.toDate() && sekarang <= overhaul.selesaiTanggal.toDate();
+
+      if (overhaulSedangAktif){
+        shiftTerdeteksi = overhaul.polaSementara === 'rotasi-7-7-pagi' ? 'Shift 7/7 Pagi' : 'Shift 7/7 Malam';
+      } else if (dataUser.polaShiftDasar === 'dayshift'){
+        shiftTerdeteksi = 'Dayshift';
+      } else if (dataUser.polaShiftDasar === 'rotasi-3shift'){
+        shiftTerdeteksi = tentukanShiftDariJam();
+      } else {
+        if (dipicuManual) alert('Pola Shift Anda belum diatur admin. Hubungi admin sebelum check-in.');
+        return; // polaShiftDasar belum diatur admin -- jangan check-in asal-asalan
+      }
+
+      const jamPulangRencana = hitungJamPulangRencana(shiftTerdeteksi, sekarang);
+
+      await setDoc(doc(db, 'jadwalKerja', idDok), {
+        uid: auth.currentUser.uid,
+        tanggal: idDok.split('_')[1],
+        shiftTerdeteksi,
+        jamMasuk: serverTimestamp(),
+        caraCheckIn: dipicuManual ? 'manual' : 'otomatis-geofence',
+        jamPulangRencana,
+        jamPulangAktual: null,
+        statusHariIni: 'aktif',
+        lembur: false,
+        lemburSampai: null
+      });
+
+      const labelCara = dipicuManual ? 'manual' : 'otomatis';
+      setTrackingStatus('✅ Check-in ' + labelCara + ': ' + shiftTerdeteksi + ', pukul ' + sekarang.toLocaleTimeString('id-ID'));
+      if (dipicuManual) alert('Check-in berhasil: ' + shiftTerdeteksi);
+    }catch(err){
+      console.error('Gagal check-in:', err);
+      if (dipicuManual) alert('Gagal check-in: ' + err.message);
+    }
+  }
+
+  // Dipanggil berkala (setInterval) untuk cek apakah waktunya tampilkan dialog check-out
+  async function cekWaktuCheckout(){
+    if (window.__userRole !== 'user') return;
+    if (!auth.currentUser) return;
+    if (dialogCheckoutSudahTampil) return; // jangan tumpuk dialog
+
+    const idDok = idDokumenJadwalHariIni(auth.currentUser.uid);
+    try{
+      const snap = await getDoc(doc(db, 'jadwalKerja', idDok));
+      if (!snap.exists()) return;
+      const data = snap.data();
+      jadwalKerjaHariIniCache = { id: idDok, ...data };
+      if (data.statusHariIni !== 'aktif') return;
+      if (!data.jamPulangRencana) return;
+
+      const jamPulang = data.jamPulangRencana.toDate ? data.jamPulangRencana.toDate() : new Date(data.jamPulangRencana);
+      if (new Date() >= jamPulang){
+        tampilkanDialogCheckout(data);
+      }
+    }catch(err){
+      console.error('Gagal cek waktu checkout:', err);
+    }
+  }
+
+  function tampilkanDialogCheckout(dataJadwal){
+    dialogCheckoutSudahTampil = true;
+    const overlay = document.getElementById('checkout-modal-overlay');
+    const info = document.getElementById('checkout-modal-info');
+    const btnTutupWO = document.getElementById('btn-checkout-tutup-wo');
+    const btnLembur = document.getElementById('btn-checkout-lembur');
+
+    info.textContent = 'Shift ' + dataJadwal.shiftTerdeteksi + ' Anda sudah selesai. Silakan pilih tindakan:';
+
+    // Tutup WO -- HANYA tampil kalau ada WO aktif tercatat di sesi tracking berjalan
+    const adaWoAktif = !!idRuteAktif;
+    btnTutupWO.classList.toggle('hidden', !adaWoAktif);
+
+    // Lembur -- HANYA untuk Shift 1 & Shift 2, dan HANYA kalau belum pernah lembur hari ini
+    const bolehLembur = (dataJadwal.shiftTerdeteksi === 'Shift 1' || dataJadwal.shiftTerdeteksi === 'Shift 2') && !dataJadwal.lembur;
+    btnLembur.classList.toggle('hidden', !bolehLembur);
+    btnLembur.textContent = dataJadwal.shiftTerdeteksi === 'Shift 1' ? '🕐 LEMBUR s/d 7/7 Pagi (19:30)' : '🕐 LEMBUR s/d 7/7 Malam (07:30)';
+
+    overlay.classList.remove('hidden');
+  }
+
+  function tutupDialogCheckout(){
+    document.getElementById('checkout-modal-overlay').classList.add('hidden');
+    dialogCheckoutSudahTampil = false;
+  }
+
+  document.getElementById('btn-checkout-selesai').addEventListener('click', async ()=>{
+    if (!jadwalKerjaHariIniCache) return;
+    try{
+      await updateDoc(doc(db, 'jadwalKerja', jadwalKerjaHariIniCache.id), {
+        jamPulangAktual: serverTimestamp(),
+        statusHariIni: 'selesai'
+      });
+      tutupDialogCheckout();
+    }catch(err){
+      document.getElementById('checkout-modal-status').textContent = 'Gagal: ' + err.message;
+    }
+  });
+
+  document.getElementById('btn-checkout-tutup-wo').addEventListener('click', ()=>{
+    // Sambungkan ke alur verifikasi WO yang SUDAH ADA (tombol "SAYA SUDAH TIBA DI LOKASI WO" / hentikan tracking)
+    tutupDialogCheckout();
+    document.getElementById('btn-sudah-tiba').click();
+  });
+
+  document.getElementById('btn-checkout-lembur').addEventListener('click', async ()=>{
+    if (!jadwalKerjaHariIniCache) return;
+    try{
+      const shiftLemburTarget = jadwalKerjaHariIniCache.shiftTerdeteksi === 'Shift 1' ? 'Shift 7/7 Pagi' : 'Shift 7/7 Malam';
+      const jamPulangBaru = hitungJamPulangRencana(shiftLemburTarget, new Date());
+      await updateDoc(doc(db, 'jadwalKerja', jadwalKerjaHariIniCache.id), {
+        jamPulangRencana: jamPulangBaru,
+        lembur: true,
+        lemburSampai: jamPulangBaru
+      });
+      tutupDialogCheckout();
+      setTrackingStatus('🕐 Lembur dikonfirmasi, sampai ' + jamPulangBaru.toLocaleTimeString('id-ID'));
+    }catch(err){
+      document.getElementById('checkout-modal-status').textContent = 'Gagal: ' + err.message;
+    }
+  });
 
   // Cek apakah suatu titik (lat, lon) berada di dalam poligon zona bahaya (algoritma ray-casting)
   function titikDalamPoligon(lat, lon, titikPoligon){
@@ -1422,6 +1728,226 @@
     });
 
     // ==========================================================
+    // Wilayah Kerja (Fase A) -- dukung 2 bentuk: lingkaran (anchor+radius) ATAU poligon bebas
+    // ==========================================================
+    let modeGambarWilayahKerja = false;
+    let titikWilayahKerjaSementara = null;   // {lat, lon} -- mode lingkaran
+    let titikPoligonWilayahKerjaSementara = []; // array {lat, lon} -- mode poligon
+    let lingkaranWilayahKerjaSementara = null;
+    let markerPoligonWKSementara = [];
+    let garisPoligonWKSementara = null;
+    const wilayahKerjaLayers = {};
+
+    function bentukWilayahKerjaTerpilih(){
+      const radio = document.querySelector('input[name="bentuk-wilayah-kerja"]:checked');
+      return radio ? radio.value : 'lingkaran';
+    }
+
+    function tampilkanModeWilayahKerja(){
+      const poligon = bentukWilayahKerjaTerpilih() === 'poligon';
+      document.getElementById('wilayah-kerja-mode-lingkaran').classList.toggle('hidden', poligon);
+      document.getElementById('wilayah-kerja-mode-poligon').classList.toggle('hidden', !poligon);
+    }
+    document.querySelectorAll('input[name="bentuk-wilayah-kerja"]').forEach(r=>{
+      r.addEventListener('change', ()=>{ tampilkanModeWilayahKerja(); resetGambarWilayahKerja(); });
+    });
+
+    function gambarPreviewWilayahKerja(){
+      if (!titikWilayahKerjaSementara) return;
+      const radius = parseFloat(document.getElementById('input-radius-wilayah-kerja').value) || 3000;
+      if (lingkaranWilayahKerjaSementara) map.removeLayer(lingkaranWilayahKerjaSementara);
+      lingkaranWilayahKerjaSementara = L.circle([titikWilayahKerjaSementara.lat, titikWilayahKerjaSementara.lon], {
+        radius, color: '#ffb84d', weight: 2, fillColor: '#ffb84d', fillOpacity: 0.08, dashArray: '6,6'
+      }).addTo(map);
+      document.getElementById('status-titik-wilayah-kerja').textContent =
+        'Anchor: ' + titikWilayahKerjaSementara.lat.toFixed(6) + ', ' + titikWilayahKerjaSementara.lon.toFixed(6) + ' · radius ' + radius + 'm';
+    }
+
+    function resetGambarWilayahKerja(){
+      titikWilayahKerjaSementara = null;
+      if (lingkaranWilayahKerjaSementara){ map.removeLayer(lingkaranWilayahKerjaSementara); lingkaranWilayahKerjaSementara = null; }
+      titikPoligonWilayahKerjaSementara = [];
+      markerPoligonWKSementara.forEach(m => map.removeLayer(m));
+      markerPoligonWKSementara = [];
+      if (garisPoligonWKSementara){ map.removeLayer(garisPoligonWKSementara); garisPoligonWKSementara = null; }
+      document.getElementById('jumlah-titik-wilayah-kerja').textContent = '0';
+      document.getElementById('status-titik-wilayah-kerja').textContent = 'Belum ada titik/area dipilih.';
+    }
+
+    document.getElementById('btn-tandai-wilayah-kerja').addEventListener('click', ()=>{
+      if (window.__userRole !== 'admin' && window.__userRole !== 'vip') return;
+      modeGambarWilayahKerja = true;
+      resetGambarWilayahKerja();
+      tampilkanModeWilayahKerja();
+      document.getElementById('panel-tandai-wilayah-kerja').classList.remove('hidden');
+      document.getElementById('sar-map').style.cursor = 'crosshair';
+    });
+
+    document.getElementById('btn-batal-wilayah-kerja').addEventListener('click', ()=>{
+      modeGambarWilayahKerja = false;
+      resetGambarWilayahKerja();
+      document.getElementById('panel-tandai-wilayah-kerja').classList.add('hidden');
+      document.getElementById('sar-map').style.cursor = '';
+    });
+
+    document.getElementById('btn-wilayah-kerja-posisi-saya').addEventListener('click', ()=>{
+      if (!window.__posisiTerkiniSaya){
+        alert('Posisi Anda belum terdeteksi. Aktifkan tracking dulu, atau klik langsung di peta.');
+        return;
+      }
+      titikWilayahKerjaSementara = { lat: window.__posisiTerkiniSaya.lat, lon: window.__posisiTerkiniSaya.lon };
+      gambarPreviewWilayahKerja();
+    });
+
+    document.getElementById('input-radius-wilayah-kerja').addEventListener('input', gambarPreviewWilayahKerja);
+
+    map.on('click', (e)=>{
+      if (!modeGambarWilayahKerja) return;
+      if (bentukWilayahKerjaTerpilih() === 'lingkaran'){
+        titikWilayahKerjaSementara = { lat: e.latlng.lat, lon: e.latlng.lng };
+        gambarPreviewWilayahKerja();
+      } else {
+        titikPoligonWilayahKerjaSementara.push({ lat: e.latlng.lat, lon: e.latlng.lng });
+        const m = L.circleMarker(e.latlng, { radius: 6, color: '#ffb84d' }).addTo(map);
+        markerPoligonWKSementara.push(m);
+        if (garisPoligonWKSementara) map.removeLayer(garisPoligonWKSementara);
+        garisPoligonWKSementara = L.polygon(titikPoligonWilayahKerjaSementara.map(t => [t.lat, t.lon]), {
+          color: '#ffb84d', weight: 2, dashArray: '6,4', fillOpacity: 0.08
+        }).addTo(map);
+        document.getElementById('jumlah-titik-wilayah-kerja').textContent = String(titikPoligonWilayahKerjaSementara.length);
+        document.getElementById('status-titik-wilayah-kerja').textContent = titikPoligonWilayahKerjaSementara.length + ' titik ditandai.';
+      }
+    });
+
+    document.getElementById('btn-simpan-wilayah-kerja').addEventListener('click', async ()=>{
+      const nama = document.getElementById('input-nama-wilayah-kerja').value.trim() || 'Wilayah Kerja';
+      const bentuk = bentukWilayahKerjaTerpilih();
+      try{
+        if (bentuk === 'lingkaran'){
+          if (!titikWilayahKerjaSementara){
+            alert('Tandai titik anchor dulu (klik di peta atau pakai posisi Anda sekarang).');
+            return;
+          }
+          const radiusMeter = parseFloat(document.getElementById('input-radius-wilayah-kerja').value) || 3000;
+          await addDoc(collection(db, 'wilayahKerja'), {
+            nama, tipe: 'lingkaran',
+            lat: titikWilayahKerjaSementara.lat, lon: titikWilayahKerjaSementara.lon, radiusMeter,
+            dibuatOleh: auth.currentUser ? auth.currentUser.email : 'tidak diketahui',
+            waktu: serverTimestamp()
+          });
+        } else {
+          if (titikPoligonWilayahKerjaSementara.length < 3){
+            alert('Minimal 3 titik diperlukan untuk membentuk area poligon.');
+            return;
+          }
+          await addDoc(collection(db, 'wilayahKerja'), {
+            nama, tipe: 'poligon',
+            titik: titikPoligonWilayahKerjaSementara,
+            dibuatOleh: auth.currentUser ? auth.currentUser.email : 'tidak diketahui',
+            waktu: serverTimestamp()
+          });
+        }
+        modeGambarWilayahKerja = false;
+        resetGambarWilayahKerja();
+        document.getElementById('panel-tandai-wilayah-kerja').classList.add('hidden');
+        document.getElementById('sar-map').style.cursor = '';
+      }catch(err){
+        alert('Gagal menyimpan Wilayah Kerja: ' + err.message);
+      }
+    });
+
+    onSnapshot(collection(db, 'wilayahKerja'), (snap)=>{
+      const idAktif = new Set();
+      const daftarEl = document.getElementById('daftar-wilayah-kerja');
+      daftarEl.innerHTML = '';
+      let entriPertama = null;
+      snap.forEach(docSnap=>{
+        const z = docSnap.data();
+        const id = docSnap.id;
+        idAktif.add(id);
+        const tipe = z.tipe || 'lingkaran'; // data lama tanpa field tipe dianggap lingkaran
+        if (!entriPertama) entriPertama = { id, ...z, tipe };
+
+        if (wilayahKerjaLayers[id]) { map.removeLayer(wilayahKerjaLayers[id]); delete wilayahKerjaLayers[id]; }
+        if (tipe === 'lingkaran'){
+          wilayahKerjaLayers[id] = L.circle([z.lat, z.lon], {
+            radius: z.radiusMeter, color: '#ffb84d', weight: 2, fillColor: '#ffb84d', fillOpacity: 0.05, dashArray: '6,6'
+          }).addTo(map).bindTooltip('🚧 ' + z.nama, { permanent: false, direction: 'center' });
+        } else {
+          wilayahKerjaLayers[id] = L.polygon((z.titik || []).map(t => [t.lat, t.lon]), {
+            color: '#ffb84d', weight: 2, fillColor: '#ffb84d', fillOpacity: 0.05, dashArray: '6,6'
+          }).addTo(map).bindTooltip('🚧 ' + z.nama, { permanent: false, direction: 'center' });
+        }
+
+        const row = document.createElement('div');
+        row.className = 'zona-row';
+        row.style.borderColor = '#ffb84d';
+        const labelBentuk = tipe === 'lingkaran' ? ('radius ' + z.radiusMeter + 'm') : (( z.titik||[]).length + ' titik poligon');
+        row.innerHTML = '<span>🚧 ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">' + labelBentuk + '</div></span>';
+        const btnHapus = document.createElement('button');
+        btnHapus.textContent = '🗑 Hapus';
+        btnHapus.style.borderColor = '#ffb84d';
+        btnHapus.style.color = '#ffb84d';
+        btnHapus.addEventListener('click', async ()=>{
+          if (!confirm('Hapus Wilayah Kerja "' + z.nama + '"?')) return;
+          try{ await deleteDoc(doc(db, 'wilayahKerja', id)); }
+          catch(err){ alert('Gagal menghapus: ' + err.message); }
+        });
+        row.appendChild(btnHapus);
+        daftarEl.appendChild(row);
+      });
+
+      Object.keys(wilayahKerjaLayers).forEach(id=>{
+        if (!idAktif.has(id)){
+          map.removeLayer(wilayahKerjaLayers[id]);
+          delete wilayahKerjaLayers[id];
+        }
+      });
+
+      // Cache dipakai auto/manual check-in -- ambil entri PERTAMA yang ditemukan
+      wilayahKerjaCache = entriPertama;
+    });
+
+    // ---------- Check-in / Check-out MANUAL (tombol ✅ / ⏰ di baris ikon aksi) ----------
+    document.getElementById('btn-checkin-manual').addEventListener('click', async ()=>{
+      if (!window.__posisiTerkiniSaya){
+        alert('Posisi Anda belum terdeteksi. Aktifkan tracking dulu supaya posisi bisa dicek terhadap Wilayah Kerja.');
+        return;
+      }
+      if (!wilayahKerjaCache){
+        alert('Wilayah Kerja belum ditandai admin. Check-in manual belum bisa dipakai.');
+        return;
+      }
+      const dalamArea = titikDalamWilayahKerja(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon);
+      if (!dalamArea){
+        alert('Anda berada di LUAR batas Wilayah Kerja. Check-in cuma bisa dilakukan di dalam area yang ditandai.');
+        return;
+      }
+      await cekAutoCheckIn(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon, true);
+    });
+
+    document.getElementById('btn-checkout-manual').addEventListener('click', async ()=>{
+      if (!auth.currentUser) return;
+      const idDok = idDokumenJadwalHariIni(auth.currentUser.uid);
+      try{
+        const snap = await getDoc(doc(db, 'jadwalKerja', idDok));
+        if (!snap.exists() || snap.data().statusHariIni !== 'aktif'){
+          alert('Belum ada sesi check-in aktif hari ini.');
+          return;
+        }
+        jadwalKerjaHariIniCache = { id: idDok, ...snap.data() };
+        tampilkanDialogCheckout(snap.data());
+      }catch(err){
+        alert('Gagal membuka dialog check-out: ' + err.message);
+      }
+    });
+
+    // Cek dialog check-out setiap 30 detik
+    if (intervalCekCheckout) clearInterval(intervalCekCheckout);
+    intervalCekCheckout = setInterval(cekWaktuCheckout, 30000);
+    cekWaktuCheckout();
+
+    // ==========================================================
     // ZONA AMAN / EVAKUASI (titik kumpul darurat -- bencana, kebakaran, kecelakaan kerja)
     // Terpisah dari Zona Markas (operasional); bisa lebih dari satu titik; khusus Admin.
     // ==========================================================
@@ -1715,6 +2241,12 @@
         mulaiTrackingSaya();
         return;
       }
+      // Verifikasi WO HANYA berlaku untuk role='user' (Personil/Supervisor/Manager) --
+      // sesuai spesifikasi Kategori Kerja: editor/admin/vip/guest TIDAK terikat sistem jadwal kerja ini.
+      if (window.__userRole !== 'user'){
+        hentikanTrackingSaya();
+        return;
+      }
       // Mau berhenti tracking -- cek dulu apakah personel sudah berada di Zona Markas/Aman
       const posisi = window.__posisiTerkiniSaya;
       if (!posisi || bolehHentikanTracking(posisi.lat, posisi.lon)){
@@ -2005,6 +2537,8 @@
       dataUpdate.akurasi = coords.accuracy || null;
       dataUpdate.heading = (typeof coords.heading === 'number' && !isNaN(coords.heading)) ? coords.heading : null;
       window.__posisiTerkiniSaya = { lat: coords.latitude, lon: coords.longitude };
+
+      cekAutoCheckIn(coords.latitude, coords.longitude); // tidak di-await -- jangan tunda update posisi utama
 
       // Catat titik Markas (awal sesi tracking) sekali saja per sesi -- dasar hitung "jarak dari Markas"
       if (!titikAwalSudahDikirim){
