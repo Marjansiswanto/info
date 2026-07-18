@@ -97,6 +97,10 @@
   }
   .panel-head .tag{ color:var(--bg); background:var(--amber); padding:2px 8px; font-size:10px; font-weight:600; }
   #sar-map{ width:100%; height:480px; }
+  @media(min-width:921px){
+    #sar-map{ height:min(65vh, 720px); }
+    #gmap-panel, #streetview-panel{ height:min(45vh, 480px) !important; }
+  }
   .leaflet-container{ background:#0a0c0d; }
 
   .personnel-list{ max-height:480px; overflow-y:auto; }
@@ -479,7 +483,10 @@
       <button data-room="vip">VIP — Command Channel</button>
     </div>
     <div class="chat-messages" id="chat-messages"></div>
-    <div id="chat-upload-status"></div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div id="chat-upload-status"></div>
+      <button id="btn-coba-lagi-upload" class="icon-btn hidden" style="padding:2px 8px; font-size:10.5px;">🔄 Coba Lagi</button>
+    </div>
     <div class="chat-composer">
       <div class="quick-report-row">
         <button data-report="Ketinggian Air Bendungan">💧 Ketinggian Air</button>
@@ -2205,6 +2212,13 @@
   }
 
   let sedangUpload = false; // cegah klik ganda tombol foto/video selagi upload berjalan
+  let fileTerakhirGagal = null; // {file, tipeFile} -- disimpan untuk tombol "Coba Lagi"
+
+  document.getElementById('btn-coba-lagi-upload').addEventListener('click', async ()=>{
+    if (!fileTerakhirGagal) return;
+    document.getElementById('btn-coba-lagi-upload').classList.add('hidden');
+    await kirimPesan(fileTerakhirGagal);
+  });
 
   async function kirimPesan({ text, file, tipeFile }){
     const user = auth.currentUser;
@@ -2261,8 +2275,12 @@
         }
         else photoUrl = url;
         setStatus2('chat-upload-status', '', '');
+        fileTerakhirGagal = null;
+        document.getElementById('btn-coba-lagi-upload').classList.add('hidden');
       }catch(err){
         setStatus2('chat-upload-status', 'Gagal unggah ' + tipeFile + ': ' + err.message, 'err');
+        fileTerakhirGagal = { file, tipeFile };
+        document.getElementById('btn-coba-lagi-upload').classList.remove('hidden');
         return;
       }finally{
         sedangUpload = false;
