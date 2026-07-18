@@ -2201,6 +2201,50 @@
   }
 
   /** Upload dengan progres nyata (persen) -- supaya tidak terasa "hang" diam-diam */
+  // ==========================================================
+  // KONFIGURASI UPLOAD FILE -- via Cloudflare R2 (SEMENTARA, selama
+  // Firebase Storage masih terhalang upgrade Blaze). Semua bagian LAIN
+  // (tracking, chat teks, Zona Bahaya, dll.) TETAP pakai Firestore seperti
+  // biasa, TIDAK berubah. Setelah Blaze berhasil aktif nanti, tinggal ubah
+  // PAKAI_R2 jadi false untuk kembali pakai Firebase Storage tanpa perlu
+  // ubah kode lain sama sekali.
+  // ==========================================================
+  const PAKAI_R2 = true;
+  const R2_WORKER_URL = 'https://odd-wood-3d08.manggala2008.workers.dev';
+  const R2_KUNCI_RAHASIA = 'g9RETwbD9DfxtDwyt40iLBoZZN08TNIjLP9zDlEPKME'; // HARUS SAMA persis dengan di kode Worker
+
+  function uploadKeR2DenganProgres(fileAtauBlob, tipeFile, namaFileAsli){
+    const label = tipeFile === 'video' ? 'Mengunggah video... '
+      : tipeFile === 'dokumen' ? 'Mengunggah file... '
+      : 'Mengunggah foto... ';
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', R2_WORKER_URL);
+      xhr.setRequestHeader('X-Kunci-Rahasia', R2_KUNCI_RAHASIA);
+      xhr.setRequestHeader('X-Nama-File', encodeURIComponent(namaFileAsli));
+      xhr.setRequestHeader('Content-Type', fileAtauBlob.type || 'application/octet-stream');
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable){
+          const persen = Math.round((e.loaded / e.total) * 100);
+          setStatus2('chat-upload-status', label + persen + '%', 'info');
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status === 200){
+          try{
+            const hasil = JSON.parse(xhr.responseText);
+            if (hasil.url) resolve(hasil.url);
+            else reject(new Error(hasil.error || 'Respons Worker tidak berisi URL'));
+          }catch(e){ reject(new Error('Respons Worker tidak valid')); }
+        } else {
+          reject(new Error('Upload gagal (status ' + xhr.status + ')'));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Gagal terhubung ke server upload R2'));
+      xhr.send(fileAtauBlob);
+    });
+  }
+
   function uploadDenganProgres(storageRef, fileAtauBlob, tipeFile){
     const label = tipeFile === 'video' ? 'Mengunggah video... '
       : tipeFile === 'dokumen' ? 'Mengunggah file... '
@@ -2269,11 +2313,18 @@
           folder = 'chat-photos';
           ekstensi = fileUntukUpload.type === 'image/webp' ? 'webp' : 'jpg';
         }
-        const path = `${folder}/${currentRoom}/${Date.now()}.${ekstensi}`;
-        const storageRef = ref(storage, path);
 
-        await uploadDenganProgres(storageRef, fileUntukUpload, tipeFile);
-        const url = await getDownloadURL(storageRef);
+        let url;
+        if (PAKAI_R2){
+          const namaUntukUpload = tipeFile === 'foto' ? ('foto.' + ekstensi) : file.name;
+          url = await uploadKeR2DenganProgres(fileUntukUpload, tipeFile, namaUntukUpload);
+        } else {
+          const path = `${folder}/${currentRoom}/${Date.now()}.${ekstensi}`;
+          const storageRef = ref(storage, path);
+          await uploadDenganProgres(storageRef, fileUntukUpload, tipeFile);
+          url = await getDownloadURL(storageRef);
+        }
+
         if (tipeFile === 'video') videoUrl = url;
         else if (tipeFile === 'dokumen'){
           fileUrl = url;
