@@ -686,7 +686,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-    sendPasswordResetEmail, onAuthStateChanged
+    sendPasswordResetEmail, onAuthStateChanged, setPersistence, browserSessionPersistence
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, setDoc, getDoc, getDocs, updateDoc,
@@ -713,6 +713,16 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
+
+  // KEAMANAN: default Firebase Auth menyimpan sesi login PERMANEN di browser,
+  // artinya kalau HP berpindah tangan (hilang/dijual/dipinjam) siapa pun yang
+  // buka browser tetap otomatis login tanpa perlu password lagi. Diubah jadi
+  // browserSessionPersistence -- sesi cuma bertahan selama browser/tab benar-
+  // benar terbuka; begitu browser DITUTUP TOTAL (bukan sekadar diminimize/
+  // pindah app), wajib login ulang lain kali.
+  setPersistence(auth, browserSessionPersistence).catch((err) => {
+    console.error('Gagal set persistence:', err);
+  });
 
   // ---------- Helper UI ----------
   function showForm(id){
@@ -864,6 +874,7 @@
   onAuthStateChanged(auth, (user)=>{
     if (user){
       tampilkanDashboard();
+      setupPushNotification(); // minta izin & simpan token notifikasi -- aman dipanggil berkali-kali
     } else {
       document.getElementById('auth-gate').classList.remove('hidden');
       document.getElementById('dashboard').classList.add('hidden');
@@ -2130,12 +2141,51 @@
     const q = query(collection(db, 'chatRooms', roomId, 'messages'), orderBy('waktu', 'asc'));
     unsubscribeChat = onSnapshot(q, (snap)=>{
       listEl.innerHTML = '';
+      let tanggalTerakhirDitampilkan = null; // reset tiap kali render ulang penuh
       snap.forEach(docSnap=>{
         const m = docSnap.data();
+
+        // Pesan yang baru saja dikirim (belum sempat di-sync serverTimestamp dari
+        // server) sementara punya waktu = null -- anggap "hari ini" untuk divider
+        const tanggalPesan = m.waktu && m.waktu.toDate ? m.waktu.toDate() : new Date();
+        const kunciTanggal = tanggalPesan.toDateString(); // "Sat Jul 18 2026" -- dipakai buat pembanding
+
+        if (kunciTanggal !== tanggalTerakhirDitampilkan){
+          tambahkanDividerTanggal(tanggalPesan);
+          tanggalTerakhirDitampilkan = kunciTanggal;
+        }
+
         renderPesan(m);
       });
       listEl.scrollTop = listEl.scrollHeight;
     });
+  }
+
+  /** Bikin & tampilkan pembatas tanggal di ruang chat -- "Hari Ini" / "Kemarin" / tanggal lengkap */
+  function tambahkanDividerTanggal(tanggalPesan){
+    const listEl = document.getElementById('chat-messages');
+    const hariIni = new Date();
+    const kemarin = new Date();
+    kemarin.setDate(hariIni.getDate() - 1);
+
+    let teksLabel;
+    if (tanggalPesan.toDateString() === hariIni.toDateString()){
+      teksLabel = 'Hari Ini';
+    } else if (tanggalPesan.toDateString() === kemarin.toDateString()){
+      teksLabel = 'Kemarin';
+    } else {
+      teksLabel = tanggalPesan.toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
+    }
+
+    const divider = document.createElement('div');
+    divider.style.cssText = 'display:flex; align-items:center; gap:10px; margin:14px 0; opacity:0.7;';
+    divider.innerHTML =
+      '<div style="flex:1; height:1px; background:var(--line-bright);"></div>'
+      + '<div style="font-size:10.5px; color:var(--text-dim); font-family:var(--mono); white-space:nowrap;">' + teksLabel + '</div>'
+      + '<div style="flex:1; height:1px; background:var(--line-bright);"></div>';
+    listEl.appendChild(divider);
   }
 
   function renderPesan(m){
@@ -2230,6 +2280,73 @@
   const PAKAI_R2 = true;
   const R2_WORKER_URL = 'https://odd-wood-3d08.manggala2008.workers.dev';
   const R2_KUNCI_RAHASIA = 'g9RETwbD9DfxtDwyt40iLBoZZN08TNIjLP9zDlEPKME'; // HARUS SAMA persis dengan di kode Worker
+
+  // ==========================================================
+  // KONFIGURASI PUSH NOTIFICATION -- via Firebase Cloud Messaging (FCM,
+  // GRATIS, tidak butuh Blaze) + Cloudflare Worker sebagai perantara aman.
+  // GANTI 3 nilai ini setelah setup selesai (lihat README notifikasi).
+  // ==========================================================
+  const NOTIF_WORKER_URL = 'https://withered-king-1a2e.manggala2008.workers.dev';
+  const NOTIF_KUNCI_RAHASIA = 'jBuLEtiiovKMe9rwBQtZeicXgFJ6gEieaY-_Dwd_BGE';
+  const FCM_VAPID_KEY = 'Zr_zb4MNZe02vhtXDrgb55r6L1mCkXajdyqga-Tz7xQ';
+
+  let fcmMessaging = null;
+
+  /** Minta izin notifikasi & simpan token FCM milik user ke Firestore -- dipanggil sekali setelah login */
+  async function setupPushNotification(){
+    try{
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+
+      const izin = await Notification.requestPermission();
+      if (izin !== 'granted'){
+        console.log('Izin notifikasi ditolak/belum diberikan');
+        return;
+      }
+
+      const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js');
+      fcmMessaging = getMessaging(app);
+
+      const registrasiSW = await navigator.serviceWorker.getRegistration();
+      const token = await getToken(fcmMessaging, {
+        vapidKey: FCM_VAPID_KEY,
+        serviceWorkerRegistration: registrasiSW
+      });
+
+      if (token && auth.currentUser){
+        await setDoc(doc(db, 'pushSubscriptions', auth.currentUser.uid), {
+          token,
+          email: auth.currentUser.email,
+          updatedAt: serverTimestamp()
+        });
+      }
+    }catch(err){
+      console.error('Gagal setup push notification:', err);
+    }
+  }
+
+  /** Kirim notifikasi ke semua user LAIN (bukan pengirim) yang punya token tersimpan */
+  async function kirimNotifikasiChatBaru(namaPengirim, isiPesanSingkat){
+    try{
+      const snapSubs = await getDocs(collection(db, 'pushSubscriptions'));
+      const tokens = [];
+      snapSubs.forEach(d => {
+        if (d.id !== auth.currentUser.uid && d.data().token) tokens.push(d.data().token);
+      });
+      if (tokens.length === 0) return;
+
+      await fetch(NOTIF_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Kunci-Rahasia': NOTIF_KUNCI_RAHASIA },
+        body: JSON.stringify({
+          tokens,
+          judul: 'Pesan baru dari ' + namaPengirim,
+          isi: isiPesanSingkat
+        })
+      });
+    }catch(err){
+      console.error('Gagal kirim notifikasi:', err); // gagal kirim notif TIDAK boleh menggagalkan pengiriman chat itu sendiri
+    }
+  }
 
   function uploadKeR2DenganProgres(fileAtauBlob, tipeFile, namaFileAsli){
     const label = tipeFile === 'video' ? 'Mengunggah video... '
@@ -2384,6 +2501,11 @@
       document.getElementById('chat-text-input').value = '';
       document.getElementById('chat-text-input').placeholder = 'Tulis pesan...';
       pendingReportTag = null;
+
+      // Kirim push notification ke user lain -- tidak menunggu (tidak pakai await)
+      // supaya tidak memperlambat pengiriman chat itu sendiri
+      const ringkasan = text ? text.slice(0, 60) : (photoUrl ? '📷 Foto' : videoUrl ? '🎬 Video' : fileUrl ? '📄 Dokumen' : 'Pesan baru');
+      kirimNotifikasiChatBaru(user.email, ringkasan);
     }catch(err){
       setStatus2('chat-upload-status', 'Gagal kirim pesan: ' + err.message, 'err');
     }
