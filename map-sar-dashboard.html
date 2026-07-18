@@ -825,7 +825,7 @@
     // belum pernah diputuskan (default) -- kalau sudah granted/denied sebelumnya,
     // tombol tetap disembunyikan (denied = percuma tampil, browser tidak akan
     // tanya lagi; granted = sudah aktif, tidak perlu tombol lagi)
-    if ('Notification' in window && Notification.permission === 'default'){
+    if ('Notification' in window && Notification.permission !== 'granted'){
       document.getElementById('btn-aktifkan-notif').classList.remove('hidden');
     }
 
@@ -2167,7 +2167,7 @@
           tanggalTerakhirDitampilkan = kunciTanggal;
         }
 
-        renderPesan(m);
+        renderPesan(m, docSnap.id);
       });
       listEl.scrollTop = listEl.scrollHeight;
     });
@@ -2200,7 +2200,7 @@
     listEl.appendChild(divider);
   }
 
-  function renderPesan(m){
+  function renderPesan(m, msgId){
     const listEl = document.getElementById('chat-messages');
     const isAi = m.source === 'ai';
     const mine = m.uid === auth.currentUser?.uid;
@@ -2222,6 +2222,9 @@
     if (m.text){
       html += '<div>' + m.text.replace(/</g,'&lt;').replace(/\n/g,'<br>') + '</div>';
     }
+    if (m.editedAt){
+      html += '<div style="font-size:9.5px; color:var(--text-dim); opacity:0.7;">(diedit)</div>';
+    }
     if (m.photoUrl){
       html += '<img src="' + m.photoUrl + '" onclick="window.open(this.src)">';
     }
@@ -2235,9 +2238,54 @@
         + '<span style="font-size:20px;">📄</span>'
         + '<span style="font-size:11.5px; word-break:break-all;">' + namaFile + ukuranTeks + '</span></a>';
     }
+
+    // Tombol Hapus & Edit -- TIDAK untuk pesan AI, TIDAK untuk pesan yang belum tersimpan (tanpa msgId)
+    if (!isAi && msgId){
+      const rolePenuh = window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip';
+      const bolehHapus = mine || rolePenuh; // pesan sendiri SELALU boleh dihapus; moderator boleh hapus siapa saja
+      const bolehEdit = mine && !!m.text && !m.photoUrl && !m.videoUrl && !m.fileUrl; // edit HANYA pesan teks milik sendiri
+
+      if (bolehHapus || bolehEdit){
+        html += '<div style="display:flex; gap:8px; margin-top:6px; font-size:10px;">';
+        if (bolehEdit){
+          html += '<span onclick="window.editPesanChat(\'' + msgId + '\', this)" style="cursor:pointer; color:var(--text-dim); text-decoration:underline;">✏️ Edit</span>';
+        }
+        if (bolehHapus){
+          html += '<span onclick="window.hapusPesanChat(\'' + msgId + '\')" style="cursor:pointer; color:var(--red); text-decoration:underline;">🗑️ Hapus</span>';
+        }
+        html += '</div>';
+      }
+    }
+
     div.innerHTML = html;
     listEl.appendChild(div);
   }
+
+  /** Hapus 1 pesan chat -- dipanggil dari tombol "🗑️ Hapus" di bubble pesan */
+  window.hapusPesanChat = async function(msgId){
+    if (!confirm('Hapus pesan ini? Tindakan ini tidak bisa dibatalkan.')) return;
+    try{
+      await deleteDoc(doc(db, 'chatRooms', currentRoom, 'messages', msgId));
+    }catch(err){
+      alert('Gagal hapus pesan: ' + err.message);
+    }
+  };
+
+  /** Edit 1 pesan teks chat -- dipanggil dari tombol "✏️ Edit" di bubble pesan */
+  window.editPesanChat = async function(msgId, elemenKlik){
+    const bubbleDiv = elemenKlik.closest('.msg');
+    const teksLama = bubbleDiv ? bubbleDiv.querySelector('div:nth-child(2)')?.textContent : '';
+    const teksBaru = prompt('Edit pesan:', teksLama || '');
+    if (teksBaru === null || teksBaru.trim() === '' || teksBaru === teksLama) return; // batal / kosong / tidak berubah
+    try{
+      await updateDoc(doc(db, 'chatRooms', currentRoom, 'messages', msgId), {
+        text: teksBaru,
+        editedAt: serverTimestamp()
+      });
+    }catch(err){
+      alert('Gagal edit pesan: ' + err.message);
+    }
+  };
 
   /**
    * Kompres foto sebelum upload -- persis prinsip yang dipakai WA/Telegram/TikTok
@@ -2313,9 +2361,22 @@
         return;
       }
 
+      // Kalau status SUDAH "denied" sebelumnya, Chrome TIDAK akan tampilkan
+      // pop-up izin lagi meski diminta ulang -- wajib diaktifkan manual dulu
+      // lewat pengaturan situs di browser sebelum tombol ini bisa berhasil
+      if (Notification.permission === 'denied'){
+        alert('Notifikasi pernah ditolak sebelumnya. Chrome tidak akan tanya lagi otomatis.\n\n'
+          + 'Cara aktifkan manual:\n'
+          + '1. Ketuk ikon 🔒/ⓘ di sebelah kiri alamat situs (di address bar)\n'
+          + '2. Cari "Permissions" atau "Izin"\n'
+          + '3. Cari "Notifications", ubah jadi "Allow"\n'
+          + '4. Refresh halaman ini, lalu klik tombol 🔔 lagi');
+        return;
+      }
+
       const izin = await Notification.requestPermission();
       if (izin !== 'granted'){
-        alert('Izin notifikasi tidak diberikan. Tombol ini bisa dicoba lagi nanti dari pengaturan browser.');
+        alert('Izin notifikasi tidak diberikan.');
         return;
       }
 
