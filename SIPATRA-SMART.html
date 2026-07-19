@@ -318,9 +318,9 @@
   /* Hilangkan pola grid ala HUD -- gaya Gojek pakai background polos abu muda */
   body{ background-image:none; }
 
-  /* Disclaimer banner: versi terang, tetap oranye/merah supaya tidak hilang urgensinya */
-  .disclaimer-banner{ background:#FFF4E5; color:#92400E; border-bottom:2px solid var(--amber); }
-  .disclaimer-banner b{ color:var(--orange); }
+  /* Banner atas: sekarang berisi judul SIPATRA-SMART, latar cerah */
+  .disclaimer-banner{ background:var(--primary-light,#E3F3EC); color:var(--orange-dim); border-bottom:2px solid var(--orange); font-size:16px; font-weight:800; letter-spacing:0.5px; padding:12px 20px; }
+  .disclaimer-banner b{ color:var(--orange-dim); }
 
   /* Kartu & panel: radius 12dp + shadow halus (standar spesifikasi), bukan sudut tajam HUD */
   .panel, #auth-card, #admin-modal-overlay > div, #dm-modal-overlay > div,
@@ -335,7 +335,7 @@
 
   /* Tombol: radius 12dp standar spesifikasi */
   button{ border-radius:12px !important; }
-  .icon-square-btn{ border-radius:12px !important; }
+  .icon-square-btn{ border-radius:12px !important; width:34px !important; height:34px !important; font-size:15px !important; }
 
   /* Input form & select: latar putih dengan border tipis (bukan hitam pekat ala terminal) */
   input, select, textarea{
@@ -413,6 +413,53 @@
     .main-content{ margin-left:0; }
     .app-header .hamburger{ display:block; }
   }
+
+  /* ================================================================
+     STATS GRID (4 kotak ringkasan di atas peta, sesuai referensi) —
+     angka diisi JS dari data real Firestore, bukan dummy.
+     ================================================================ */
+  .stats-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:16px 0 20px;
+  }
+  @media(max-width:768px){ .stats-grid{ grid-template-columns:repeat(2,1fr); gap:8px; } }
+  .stat-card{
+    background:var(--panel); border-radius:12px; padding:16px 18px;
+    box-shadow:var(--shadow-sm,0 1px 3px rgba(16,24,40,0.08)); border:1px solid var(--line-bright);
+    position:relative; overflow:hidden;
+  }
+  .stat-card .stat-icon{ position:absolute; top:14px; right:14px; font-size:24px; opacity:0.25; }
+  .stat-card .stat-label{
+    font-size:11px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px;
+  }
+  .stat-card .stat-value{
+    font-size:26px; font-weight:800; letter-spacing:-1px; margin:4px 0 6px; color:var(--text);
+    font-family:var(--mono);
+  }
+  .stat-card .stat-change{
+    font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;
+    padding:2px 10px; border-radius:20px; background:var(--primary-light,#E3F3EC); color:var(--orange-dim);
+  }
+  .stat-card .stat-change.down{ color:#B3363A; background:#FDECEC; }
+
+  /* ---- Tombol bergaya PILL/kapsul (sesuai referensi) untuk track-btn/sos-btn/room-tabs ---- */
+  .track-btn, .sos-btn{
+    border-radius:999px !important; padding:10px 20px !important; font-weight:700 !important;
+  }
+  .track-btn{ background:var(--primary-light,#E3F3EC) !important; color:var(--orange-dim) !important; border:1.5px solid transparent !important; }
+  .track-btn:hover{ background:var(--orange) !important; color:#fff !important; }
+  .track-btn.active{ background:var(--orange) !important; color:#fff !important; }
+  .sos-btn{ background:var(--red) !important; color:#fff !important; }
+  .sos-btn:hover{ background:#c0392b !important; }
+
+  .room-tabs{ gap:8px !important; }
+  .room-tabs button{
+    width:auto !important; height:auto !important; border-radius:999px !important;
+    padding:8px 16px !important; font-size:12.5px !important; font-weight:600 !important;
+    display:inline-flex !important; align-items:center; gap:6px;
+  }
+  .room-tabs button.active{ background:var(--primary-light,#E3F3EC) !important; }
+
+  .quick-report-row button{ border-radius:999px !important; padding:6px 14px !important; }
 
   /* ================================================================
      EFEK GLOSSY (sesuai referensi) — shadow lembut ber-glow warna primary,
@@ -573,7 +620,7 @@ MAIN CONTENT
   </div>
 
 <div class="disclaimer-banner">
-  ⚠ <b>MATERI POC / UJI LAPANGAN</b> — bukan sistem/prosedur resmi. <b>BASARNAS</b> tetap otoritas dan rujukan utama untuk seluruh operasi SAR resmi di Indonesia. Data di halaman ini tidak boleh jadi dasar tunggal keputusan penyelamatan.
+  <b>SIPATRA-SMART</b>
 </div>
 
 <!-- Banner pasang shortcut ke layar HP -- muncul otomatis begitu browser siap (Chrome/Android),
@@ -665,7 +712,7 @@ MAIN CONTENT
 
     <!-- Form: Login -->
     <div id="form-login">
-      <h2>Masuk — Map SAR</h2>
+      <h2>Masuk</h2>
       <p class="sub">Portal ini dilindungi login password. Hanya petugas terdaftar yang dapat mengakses dashboard. (POC — verifikasi 2 langkah akan diaktifkan setelah upgrade Firebase.)</p>
       <div id="auth-status"></div>
       <input type="email" id="login-email" placeholder="Email">
@@ -704,6 +751,34 @@ MAIN CONTENT
 <div id="dashboard" class="hidden">
   <div class="eyebrow">Modul Tracking POC</div>
   <h1>Peta Posisi Personel & Status SAR</h1>
+
+  <!-- ===== QUICK STATS (data real dari Firestore, bukan dummy) ===== -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-icon">📡</span>
+      <div class="stat-label">Total Personel</div>
+      <div class="stat-value" id="stat-total">0</div>
+      <span class="stat-change up">● Terdaftar</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">📍</span>
+      <div class="stat-label">Sedang Bertugas</div>
+      <div class="stat-value" id="stat-active">0</div>
+      <span class="stat-change up">● Online</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">🆘</span>
+      <div class="stat-label">Status SOS</div>
+      <div class="stat-value" id="stat-sos">0</div>
+      <span class="stat-change up" id="stat-sos-label">● Aman</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">⚠️</span>
+      <div class="stat-label">Zona Bahaya Aktif</div>
+      <div class="stat-value" id="stat-zona">0</div>
+      <span class="stat-change up" id="stat-zona-label">● Terpantau</span>
+    </div>
+  </div>
 
   <div class="sos-banner" id="sos-banner">🚨 SINYAL SOS DITERIMA — lihat daftar personel untuk detail titik.</div>
 
@@ -845,9 +920,9 @@ MAIN CONTENT
       <span class="tag">LIVE</span>
     </div>
     <div class="room-tabs">
-      <button class="active" id="tab-room-sos" data-room="sos" title="SOS — Pos Komando">🆘</button>
-      <button id="tab-room-vip" data-room="vip" title="VIP — Command Channel">👑</button>
-      <button id="btn-buka-dm" title="Pesan Pribadi (DM)">💬</button>
+      <button class="active" id="tab-room-sos" data-room="sos" title="SOS — Pos Komando">🆘 SOS</button>
+      <button id="tab-room-vip" data-room="vip" title="VIP — Command Channel">👑 VIP</button>
+      <button id="btn-buka-dm" title="Pesan Pribadi (DM)">💬 DM</button>
     </div>
     <div class="chat-messages" id="chat-messages"></div>
     <div style="display:flex; align-items:center; gap:8px;">
@@ -1406,6 +1481,29 @@ MAIN CONTENT
     }
   }
 
+  // ---------- Kartu Statistik (data REAL, bukan dummy) ----------
+  window.__statTotalDariUsersBerhasil = false;
+  function updateStatCard(id, value){
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  // Coba ambil TOTAL personel terdaftar (role='user') secara real-time --
+  // ini HANYA berhasil kalau akun yang login role admin/vip (sesuai Firestore
+  // Security Rules yang membatasi listing collection 'users'). Kalau gagal
+  // (permission-denied untuk role lain), diam-diam pakai jumlah personel
+  // yang SEDANG AKTIF tracking sebagai perkiraan (lihat listener personnel).
+  try{
+    onSnapshot(
+      query(collection(db, 'users'), where('role', '==', 'user')),
+      (snap)=>{
+        window.__statTotalDariUsersBerhasil = true;
+        updateStatCard('stat-total', snap.size);
+      },
+      ()=>{ window.__statTotalDariUsersBerhasil = false; }
+    );
+  }catch(e){ window.__statTotalDariUsersBerhasil = false; }
+
   // ---------- Dashboard (data simulasi/dummy untuk POC) ----------
   let dashboardInited = false;
   function initDashboard(){
@@ -1917,6 +2015,9 @@ MAIN CONTENT
       });
 
       if (typeof renderKelolaZonaAdmin === 'function') renderKelolaZonaAdmin();
+      updateStatCard('stat-zona', zonaBahayaCache.length);
+      const labelZona = document.getElementById('stat-zona-label');
+      if (labelZona) labelZona.textContent = zonaBahayaCache.length > 0 ? '● Waspada' : '● Terpantau';
     });
 
     // ==========================================================
@@ -2556,6 +2657,16 @@ MAIN CONTENT
       });
 
       document.getElementById('sos-banner').classList.toggle('show', adaSos);
+
+      // ---- Update kartu statistik (data REAL dari listener ini, bukan dummy) ----
+      let sosCountNow = 0;
+      snap.forEach(d=>{ if (d.data().status === 'sos') sosCountNow++; });
+      updateStatCard('stat-active', idsAktif.size);
+      updateStatCard('stat-sos', sosCountNow);
+      const labelSos = document.getElementById('stat-sos-label');
+      if (labelSos) labelSos.textContent = sosCountNow > 0 ? '● Perhatian' : '● Aman';
+      // Kalau total personel terdaftar gagal diambil (bukan admin/vip), pakai jumlah aktif sebagai perkiraan
+      if (!window.__statTotalDariUsersBerhasil) updateStatCard('stat-total', idsAktif.size);
 
       if (snap.empty){
         listEl.innerHTML = '<div class="personnel-row" style="color:var(--text-dim);">Belum ada personel yang mengaktifkan tracking.</div>';
