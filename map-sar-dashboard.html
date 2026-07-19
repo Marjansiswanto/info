@@ -146,7 +146,8 @@
   .room-tabs{ display:flex; gap:6px; padding:10px 14px; border-bottom:1px solid var(--line); }
   .room-tabs button{
     background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);
-    font-family:var(--mono); padding:6px 12px; font-size:11px; cursor:pointer; letter-spacing:.05em;
+    font-family:var(--mono); cursor:pointer;
+    width:38px; height:38px; font-size:17px; display:flex; align-items:center; justify-content:center;
   }
   .room-tabs button.active{ border-color:var(--orange); color:var(--orange); }
 
@@ -319,6 +320,33 @@
       <button id="btn-checkout-selesai" class="icon-btn" style="width:100%; padding:10px; background:var(--green); color:#0a0c0d; font-weight:700;">✅ CHECK-OUT (Selesai Kerja)</button>
       <button id="btn-checkout-tutup-wo" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--amber); color:#0a0c0d; font-weight:700;">📋 TUTUP WO</button>
       <button id="btn-checkout-lembur" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--panel); border:1px solid var(--orange); color:var(--orange);">🕐 LEMBUR</button>
+    </div>
+  </div>
+</div>
+
+<div id="dm-modal-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(4,5,6,0.92); z-index:4600; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--panel); border:1px solid var(--line-bright); max-width:520px; width:100%; max-height:85vh; overflow-y:auto; padding:20px; display:flex; flex-direction:column;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 id="dm-modal-judul" style="margin:0; font-size:15px; color:var(--orange);">💬 Pesan Pribadi</h3>
+      <button id="dm-modal-close" class="icon-btn icon-square-btn" title="Tutup">✕</button>
+    </div>
+
+    <!-- Tampilan 1: daftar percakapan + pencarian user (default) -->
+    <div id="dm-tampilan-daftar">
+      <input type="text" id="dm-input-cari-user" placeholder="🔍 Cari nama/email user untuk mulai DM baru..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+      <div id="dm-hasil-pencarian" style="margin-bottom:14px;"></div>
+      <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px; letter-spacing:.05em;">PERCAKAPAN AKTIF</div>
+      <div id="dm-daftar-percakapan"></div>
+    </div>
+
+    <!-- Tampilan 2: jendela chat 1-on-1 (muncul setelah pilih user/percakapan) -->
+    <div id="dm-tampilan-chat" class="hidden">
+      <button id="dm-btn-kembali" class="icon-btn icon-square-btn" title="Kembali ke daftar" style="margin-bottom:10px;">←</button>
+      <div id="dm-chat-messages" style="height:320px; overflow-y:auto; border:1px solid var(--line-bright); padding:10px; margin-bottom:10px; background:#000;"></div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="dm-chat-text-input" placeholder="Tulis pesan pribadi..." style="flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
+        <button id="dm-btn-kirim" class="icon-btn icon-square-btn" style="background:var(--orange); color:#0a0c0d;" title="Kirim">➤</button>
+      </div>
     </div>
   </div>
 </div>
@@ -541,8 +569,9 @@
       <span class="tag">LIVE</span>
     </div>
     <div class="room-tabs">
-      <button class="active" data-room="sos">SOS — Pos Komando</button>
-      <button data-room="vip">VIP — Command Channel</button>
+      <button class="active" id="tab-room-sos" data-room="sos" title="SOS — Pos Komando">🆘</button>
+      <button id="tab-room-vip" data-room="vip" title="VIP — Command Channel">👑</button>
+      <button id="btn-buka-dm" title="Pesan Pribadi (DM)">💬</button>
     </div>
     <div class="chat-messages" id="chat-messages"></div>
     <div style="display:flex; align-items:center; gap:8px;">
@@ -923,6 +952,18 @@
     document.getElementById('btn-checkout-manual').classList.toggle('hidden', !tampilManualCheckin);
     document.getElementById('btn-tandai-wilayah-kerja').classList.toggle('hidden', !isAdminAtauVip);
 
+    // Tab room "VIP -- Command Channel" HANYA untuk admin/editor/vip -- BUKAN untuk 'user'/'guest'
+    const bolehLihatRoomVip = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+    const tabVip = document.getElementById('tab-room-vip');
+    tabVip.classList.toggle('hidden', !bolehLihatRoomVip);
+    // Kalau sedang di room VIP tapi role tidak berhak (mis. baru diturunkan jadi 'user'), paksa balik ke room SOS
+    if (!bolehLihatRoomVip && currentRoom === 'vip'){
+      tabVip.classList.remove('active');
+      document.getElementById('tab-room-sos').classList.add('active');
+      currentRoom = 'sos';
+      subscribeToRoom('sos');
+    }
+
     if (isGuest && !document.getElementById('guest-readonly-note')){
       const note = document.createElement('div');
       note.id = 'guest-readonly-note';
@@ -943,7 +984,9 @@
     });
 
     // Tombol Panel Admin cuma muncul untuk role 'admin'
-    document.getElementById('admin-panel-btn').classList.toggle('hidden', window.__userRole !== 'admin');
+    // ⚠️ SEMENTARA (19 Juli 2026): VIP juga bisa lihat tombol ini, sama seperti perubahan
+    // di Firestore Rules -- kembalikan jadi "!== 'admin'" saja setelah situasi terkunci selesai.
+    document.getElementById('admin-panel-btn').classList.toggle('hidden', window.__userRole !== 'admin' && window.__userRole !== 'vip');
   }
 
   // ---------- Auth State Listener ----------
@@ -1578,7 +1621,7 @@
         row.className = 'zona-row';
         row.innerHTML = '<span>⚠️ ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">' + (infoTambahan || 'Tanpa data lantai/ketinggian') + '</div></span>';
         const btnHapus = document.createElement('button');
-        btnHapus.textContent = '🗑 Hapus';
+        btnHapus.textContent = '🗑'; btnHapus.title = 'Hapus';
         btnHapus.addEventListener('click', async ()=>{
           if (!confirm('Hapus zona bahaya "' + z.nama + '"?')) return;
           try{ await deleteDoc(doc(db, 'zonaBahaya', id)); }
@@ -1709,7 +1752,7 @@
         row.style.borderColor = 'var(--green)';
         row.innerHTML = '<span>🏠 ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">radius ' + z.radiusMeter + 'm</div></span>';
         const btnHapus = document.createElement('button');
-        btnHapus.textContent = '🗑 Hapus';
+        btnHapus.textContent = '🗑'; btnHapus.title = 'Hapus';
         btnHapus.style.borderColor = 'var(--green)';
         btnHapus.style.color = 'var(--green)';
         btnHapus.addEventListener('click', async ()=>{
@@ -1889,7 +1932,7 @@
         const labelBentuk = tipe === 'lingkaran' ? ('radius ' + z.radiusMeter + 'm') : (( z.titik||[]).length + ' titik poligon');
         row.innerHTML = '<span>🚧 ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">' + labelBentuk + '</div></span>';
         const btnHapus = document.createElement('button');
-        btnHapus.textContent = '🗑 Hapus';
+        btnHapus.textContent = '🗑'; btnHapus.title = 'Hapus';
         btnHapus.style.borderColor = '#ffb84d';
         btnHapus.style.color = '#ffb84d';
         btnHapus.addEventListener('click', async ()=>{
@@ -2061,7 +2104,7 @@
         row.style.borderColor = '#4aa3ff';
         row.innerHTML = '<span>🛟 ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">radius ' + z.radiusMeter + 'm</div></span>';
         const btnHapus = document.createElement('button');
-        btnHapus.textContent = '🗑 Hapus';
+        btnHapus.textContent = '🗑'; btnHapus.title = 'Hapus';
         btnHapus.style.borderColor = '#4aa3ff';
         btnHapus.style.color = '#4aa3ff';
         btnHapus.addEventListener('click', async ()=>{
@@ -2128,9 +2171,12 @@
 
         const color = p.status === 'sos' ? '#e05f5f' : (p.status === 'hilang' ? '#e0b73a' : '#5fd68a');
 
+        const bolehMulaiDM = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip') && uid !== (auth.currentUser && auth.currentUser.uid);
         const isiPopupPersonel = '<b>' + (p.nama || p.email) + '</b><br>Status: ' + p.status.toUpperCase()
           + '<br><button onclick="window.pakaiKoordinatPersonel(' + p.lat + ',' + p.lon + ')" '
-          + 'style="margin-top:6px; padding:4px 8px; cursor:pointer;">📍 Pakai koordinat ini</button>';
+          + 'style="margin-top:6px; padding:4px 8px; cursor:pointer;">📍 Pakai koordinat ini</button>'
+          + (bolehMulaiDM ? ('<br><button onclick="window.mulaiDMKe(\'' + uid + '\',\'' + (p.nama || p.email).replace(/'/g,"") + '\')" '
+          + 'style="margin-top:6px; padding:4px 8px; cursor:pointer;">💬 DM</button>') : '');
 
         const personelBaruMuncul = !personnelMarkers[uid];
         if (personnelMarkers[uid]){
@@ -2696,6 +2742,192 @@
     document.getElementById('btn-hangup').addEventListener('click', tutupVideoCall);
 
     subscribeToRoom(currentRoom);
+    initDM();
+  }
+
+  // ==========================================================
+  // MODUL: Direct Message (DM) / Chat Pribadi
+  // VIP/admin/editor bisa MULAI DM baru ke user mana pun; siapa pun yang SUDAH
+  // jadi partisipan sebuah DM boleh membalas di dalamnya.
+  // ==========================================================
+  let unsubscribeDM = null;
+  let dmRoomAktif = null; // id room DM yang sedang dibuka
+  let semuaUserCache = []; // {uid, nama, email} -- dipakai untuk pencarian
+
+  function idRoomDM(uidA, uidB){
+    return [uidA, uidB].sort().join('__');
+  }
+
+  function bolehMulaiDMBaru(){
+    return window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip';
+  }
+
+  function initDM(){
+    document.getElementById('btn-buka-dm').addEventListener('click', async ()=>{
+      document.getElementById('dm-modal-overlay').classList.remove('hidden');
+      tampilkanDaftarDM();
+      await muatSemuaUserUntukPencarian();
+    });
+    document.getElementById('dm-modal-close').addEventListener('click', ()=>{
+      document.getElementById('dm-modal-overlay').classList.add('hidden');
+      if (unsubscribeDM){ unsubscribeDM(); unsubscribeDM = null; }
+    });
+    document.getElementById('dm-btn-kembali').addEventListener('click', tampilkanDaftarDM);
+
+    document.getElementById('dm-input-cari-user').addEventListener('input', (e)=>{
+      renderHasilPencarianUser(e.target.value.trim().toLowerCase());
+    });
+
+    document.getElementById('dm-btn-kirim').addEventListener('click', kirimPesanDM);
+    document.getElementById('dm-chat-text-input').addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter'){ e.preventDefault(); kirimPesanDM(); }
+    });
+  }
+
+  function tampilkanDaftarDM(){
+    document.getElementById('dm-tampilan-chat').classList.add('hidden');
+    document.getElementById('dm-tampilan-daftar').classList.remove('hidden');
+    document.getElementById('dm-modal-judul').textContent = '💬 Pesan Pribadi';
+    if (unsubscribeDM){ unsubscribeDM(); unsubscribeDM = null; }
+    dmRoomAktif = null;
+    muatDaftarPercakapanDM();
+  }
+
+  async function muatSemuaUserUntukPencarian(){
+    // Pencarian user HANYA berguna untuk yang boleh mulai DM baru -- sembunyikan kolom cari kalau tidak berhak
+    const kolomCari = document.getElementById('dm-input-cari-user');
+    kolomCari.parentElement.querySelector('#dm-input-cari-user').classList.toggle('hidden', !bolehMulaiDMBaru());
+    if (!bolehMulaiDMBaru()) return;
+    try{
+      const snap = await getDocs(collection(db, 'users'));
+      semuaUserCache = [];
+      snap.forEach(docSnap=>{
+        if (docSnap.id === auth.currentUser.uid) return; // jangan tampilkan diri sendiri
+        const u = docSnap.data();
+        semuaUserCache.push({ uid: docSnap.id, nama: u.nama || u.email, email: u.email || '' });
+      });
+    }catch(err){
+      console.error('Gagal muat daftar user untuk DM:', err);
+    }
+  }
+
+  function renderHasilPencarianUser(kataKunci){
+    const hasilEl = document.getElementById('dm-hasil-pencarian');
+    hasilEl.innerHTML = '';
+    if (!kataKunci) return;
+    const cocok = semuaUserCache.filter(u =>
+      (u.nama || '').toLowerCase().includes(kataKunci) || (u.email || '').toLowerCase().includes(kataKunci)
+    ).slice(0, 8);
+    if (cocok.length === 0){
+      hasilEl.innerHTML = '<div style="font-size:11px; color:var(--text-dim);">Tidak ada user cocok.</div>';
+      return;
+    }
+    cocok.forEach(u=>{
+      const row = document.createElement('div');
+      row.style.cssText = 'padding:8px; border:1px solid var(--line-bright); margin-bottom:6px; cursor:pointer; font-size:12px;';
+      row.textContent = '👤 ' + (u.nama || u.email);
+      row.addEventListener('click', ()=> bukaDM(u.uid, u.nama || u.email));
+      hasilEl.appendChild(row);
+    });
+  }
+
+  function muatDaftarPercakapanDM(){
+    const daftarEl = document.getElementById('dm-daftar-percakapan');
+    daftarEl.innerHTML = 'Memuat...';
+    if (!auth.currentUser) return;
+    const q = query(collection(db, 'dmRooms'), where('participants', 'array-contains', auth.currentUser.uid));
+    onSnapshot(q, (snap)=>{
+      daftarEl.innerHTML = '';
+      if (snap.empty){
+        daftarEl.innerHTML = '<div style="font-size:11px; color:var(--text-dim);">Belum ada percakapan pribadi.</div>';
+        return;
+      }
+      snap.forEach(docSnap=>{
+        const r = docSnap.data();
+        const idx = r.participants.indexOf(auth.currentUser.uid) === 0 ? 1 : 0;
+        const namaLawan = (r.participantNama && r.participantNama[idx]) || (r.participantEmail && r.participantEmail[idx]) || 'User';
+        const uidLawan = r.participants[idx];
+        const row = document.createElement('div');
+        row.style.cssText = 'padding:8px; border:1px solid var(--line-bright); margin-bottom:6px; cursor:pointer; font-size:12px;';
+        row.innerHTML = '👤 ' + namaLawan + '<div style="font-size:9.5px; color:var(--text-dim);">' + (r.pesanTerakhir || '') + '</div>';
+        row.addEventListener('click', ()=> bukaDM(uidLawan, namaLawan));
+        daftarEl.appendChild(row);
+      });
+    });
+  }
+
+  window.mulaiDMKe = function(uid, nama){
+    if (!bolehMulaiDMBaru()) return;
+    document.getElementById('dm-modal-overlay').classList.remove('hidden');
+    bukaDM(uid, nama);
+  };
+
+  async function bukaDM(uidLawan, namaLawan){
+    if (!auth.currentUser) return;
+    dmRoomAktif = idRoomDM(auth.currentUser.uid, uidLawan);
+
+    // Pastikan dokumen dmRooms ada (create-if-missing) supaya muncul di daftar kedua belah pihak
+    try{
+      const roomRef = doc(db, 'dmRooms', dmRoomAktif);
+      const roomSnap = await getDoc(roomRef);
+      if (!roomSnap.exists()){
+        const uidUrutan = [auth.currentUser.uid, uidLawan].sort();
+        const namaSaya = auth.currentUser.email;
+        const dataUrutan = uidUrutan[0] === auth.currentUser.uid
+          ? { participantNama: [namaSaya, namaLawan], participantEmail: [auth.currentUser.email, ''] }
+          : { participantNama: [namaLawan, namaSaya], participantEmail: ['', auth.currentUser.email] };
+        await setDoc(roomRef, {
+          participants: uidUrutan,
+          ...dataUrutan,
+          dibuatWaktu: serverTimestamp()
+        });
+      }
+    }catch(err){
+      alert('Gagal membuka percakapan: ' + err.message);
+      return;
+    }
+
+    document.getElementById('dm-tampilan-daftar').classList.add('hidden');
+    document.getElementById('dm-tampilan-chat').classList.remove('hidden');
+    document.getElementById('dm-modal-judul').textContent = '💬 ' + namaLawan;
+
+    if (unsubscribeDM) unsubscribeDM();
+    const listEl = document.getElementById('dm-chat-messages');
+    const q = query(collection(db, 'dmRooms', dmRoomAktif, 'messages'), orderBy('waktu', 'asc'));
+    unsubscribeDM = onSnapshot(q, (snap)=>{
+      listEl.innerHTML = '';
+      snap.forEach(docSnap=>{
+        const m = docSnap.data();
+        const mine = auth.currentUser && m.pengirimUid === auth.currentUser.uid;
+        const bubble = document.createElement('div');
+        bubble.style.cssText = 'margin-bottom:8px; padding:8px; border:1px solid ' + (mine ? 'var(--orange)' : 'var(--line-bright)') + '; max-width:80%;'
+          + (mine ? ' margin-left:auto;' : '');
+        bubble.textContent = m.text || '';
+        listEl.appendChild(bubble);
+      });
+      listEl.scrollTop = listEl.scrollHeight;
+    });
+  }
+
+  async function kirimPesanDM(){
+    const input = document.getElementById('dm-chat-text-input');
+    const text = input.value.trim();
+    if (!text || !dmRoomAktif || !auth.currentUser) return;
+    try{
+      await addDoc(collection(db, 'dmRooms', dmRoomAktif, 'messages'), {
+        text,
+        pengirimUid: auth.currentUser.uid,
+        pengirimEmail: auth.currentUser.email,
+        waktu: serverTimestamp()
+      });
+      await updateDoc(doc(db, 'dmRooms', dmRoomAktif), {
+        pesanTerakhir: text.slice(0, 60),
+        waktuTerakhir: serverTimestamp()
+      });
+      input.value = '';
+    }catch(err){
+      alert('Gagal kirim pesan: ' + err.message);
+    }
   }
 
   function subscribeToRoom(roomId){
@@ -2798,12 +3030,12 @@
       const bolehEdit = mine && !!m.text && !m.photoUrl && !m.videoUrl && !m.fileUrl; // edit HANYA pesan teks milik sendiri
 
       if (bolehHapus || bolehEdit){
-        html += '<div style="display:flex; gap:8px; margin-top:6px; font-size:10px;">';
+        html += '<div style="display:flex; gap:10px; margin-top:6px; font-size:13px;">';
         if (bolehEdit){
-          html += '<span onclick="window.editPesanChat(\'' + msgId + '\', this)" style="cursor:pointer; color:var(--text-dim); text-decoration:underline;">✏️ Edit</span>';
+          html += '<span onclick="window.editPesanChat(\'' + msgId + '\', this)" title="Edit" style="cursor:pointer; color:var(--text-dim);">✏️</span>';
         }
         if (bolehHapus){
-          html += '<span onclick="window.hapusPesanChat(\'' + msgId + '\')" style="cursor:pointer; color:var(--red); text-decoration:underline;">🗑️ Hapus</span>';
+          html += '<span onclick="window.hapusPesanChat(\'' + msgId + '\')" title="Hapus" style="cursor:pointer; color:var(--red);">🗑️</span>';
         }
         html += '</div>';
       }
