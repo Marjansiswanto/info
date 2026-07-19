@@ -37,13 +37,12 @@
   header .brand{ font-size:13px; letter-spacing:.15em; color:var(--text-dim); }
   header .brand b{ color:var(--orange); }
   header .title{ font-size:15px; }
-  #logout-btn, #admin-panel-btn, #close-app-btn{
+  #logout-btn, #admin-panel-btn{
     background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);
     font-family:var(--mono); padding:6px 12px; font-size:11px; cursor:pointer; letter-spacing:.05em;
   }
   #logout-btn:hover{ color:var(--red); border-color:var(--red); }
   #admin-panel-btn:hover{ color:var(--orange); border-color:var(--orange); }
-  #close-app-btn:hover{ color:var(--red); border-color:var(--red); }
 
   /* ===== Auth Gate ===== */
   #auth-gate{
@@ -259,8 +258,8 @@
   /* Header: putih bersih dengan border bawah tipis, bukan garis HUD tegas */
   header{ background:var(--panel); border-bottom:1px solid var(--line); }
 
-  /* Tombol header (Panel Admin / Keluar / Tutup): outline lembut ala Gojek secondary button */
-  #logout-btn, #admin-panel-btn, #close-app-btn{
+  /* Tombol header (Panel Admin / Keluar): outline lembut ala Gojek secondary button */
+  #logout-btn, #admin-panel-btn{
     border-radius:10px !important; border:1px solid var(--line-bright);
   }
 
@@ -292,7 +291,6 @@
   <div style="display:flex; gap:8px;">
     <button id="admin-panel-btn" class="hidden">👤 PANEL ADMIN</button>
     <button id="logout-btn" class="hidden">KELUAR</button>
-    <button id="close-app-btn">✕ TUTUP</button>
   </div>
 </header>
 
@@ -708,17 +706,6 @@
   });
 
   document.getElementById('logout-btn').addEventListener('click', ()=> signOut(auth));
-
-  // ---------- Tombol Tutup (khusus mode fullscreen/PWA lewat shortcut HP) ----------
-  document.getElementById('close-app-btn').addEventListener('click', ()=>{
-    // window.close() cuma berhasil kalau app berjalan sebagai PWA standalone/fullscreen
-    // (di-buka dari shortcut layar HP). Kalau dibuka lewat tab browser biasa,
-    // browser akan menolak diam-diam -- makanya disiapkan pesan fallback.
-    window.close();
-    setTimeout(()=>{
-      alert('Untuk menutup: tekan tombol Home/Back di HP Anda, atau geser dari bawah layar (gesture navigasi).');
-    }, 300);
-  });
 
   // ==========================================================
   // PANEL ADMIN — lihat semua user, ubah role & status (aktif/suspend)
