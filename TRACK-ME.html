@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- Google Font: Plus Jakarta Sans (gratis, modern) -->
+  <!-- Google Font: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -17,9 +17,9 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- ================================================================
-       SISTEM DESAIN PREMIUM — Terinspirasi Gojek, disempurnakan untuk Web
-       ================================================================ -->
+  <!-- ============================================================== -->
+  <!-- SISTEM DESAIN PREMIUM — Tema Terang "Gojek-style"              -->
+  <!-- ============================================================== -->
   <style>
     /* ===== 1. VARIABEL DESAIN (Color System + Spacing) ===== */
     :root {
@@ -48,7 +48,7 @@
       --divider: #E4E7EB;
       --border: #D8DCE1;
 
-      /* Shadow system — bertingkat */
+      /* Shadow */
       --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
       --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
       --shadow-md: 0 4px 12px rgba(11, 122, 91, 0.08);
@@ -59,14 +59,6 @@
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
-      --radius-xl: 20px;
-
-      /* Spacing (kelipatan 4) */
-      --space-xs: 4px;
-      --space-sm: 8px;
-      --space-md: 16px;
-      --space-lg: 24px;
-      --space-xl: 32px;
 
       /* Font */
       --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -100,7 +92,7 @@
       display: flex;
     }
 
-    /* ===== 3. SCROLLBAR KUSTOM ===== */
+    /* Scrollbar kustom */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -117,7 +109,7 @@
       background: var(--primary-dark);
     }
 
-    /* ===== 4. SIDEBAR (Desktop) ===== */
+    /* ===== 3. SIDEBAR ===== */
     .sidebar {
       position: fixed;
       top: 0;
@@ -125,7 +117,7 @@
       width: var(--sidebar-width);
       height: 100vh;
       background: var(--primary-gradient);
-      padding: var(--space-lg) var(--space-md);
+      padding: 24px 16px;
       display: flex;
       flex-direction: column;
       z-index: 1000;
@@ -136,10 +128,10 @@
     .sidebar-brand {
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
-      padding-bottom: var(--space-lg);
+      gap: 8px;
+      padding-bottom: 20px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-      margin-bottom: var(--space-lg);
+      margin-bottom: 20px;
     }
 
     .sidebar-brand .logo-icon {
@@ -173,7 +165,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: var(--space-xs);
+      gap: 4px;
     }
 
     .sidebar-nav .nav-label {
@@ -182,15 +174,15 @@
       font-weight: 600;
       letter-spacing: 0.8px;
       text-transform: uppercase;
-      padding: var(--space-md) 0 var(--space-xs) var(--space-sm);
+      padding: 16px 0 8px 12px;
     }
 
     .sidebar-nav a,
     .sidebar-nav button {
       display: flex;
       align-items: center;
-      gap: var(--space-md);
-      padding: 10px var(--space-md);
+      gap: 12px;
+      padding: 10px 16px;
       border-radius: var(--radius-md);
       color: rgba(255, 255, 255, 0.7);
       text-decoration: none;
@@ -226,8 +218,7 @@
       flex-shrink: 0;
     }
 
-    .sidebar-nav a .nav-badge,
-    .sidebar-nav button .nav-badge {
+    .sidebar-nav a .nav-badge {
       margin-left: auto;
       background: var(--secondary);
       color: #1A1D1F;
@@ -239,15 +230,15 @@
 
     .sidebar-footer {
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: var(--space-md);
+      padding-top: 16px;
       margin-top: auto;
     }
 
     .sidebar-footer .user-card {
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
-      padding: var(--space-sm) var(--space-sm);
+      gap: 8px;
+      padding: 8px 8px;
       border-radius: var(--radius-md);
       color: rgba(255, 255, 255, 0.8);
     }
@@ -287,7 +278,7 @@
       letter-spacing: 0.3px;
     }
 
-    /* ===== 5. MAIN CONTENT ===== */
+    /* ===== 4. MAIN CONTENT ===== */
     .main-content {
       margin-left: var(--sidebar-width);
       flex: 1;
@@ -296,13 +287,13 @@
       flex-direction: column;
     }
 
-    /* ===== 6. HEADER (Glassmorphism) ===== */
+    /* ===== 5. HEADER (Glassmorphism) ===== */
     .app-header {
       background: rgba(255, 255, 255, 0.75);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--divider);
-      padding: 12px var(--space-lg);
+      padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -315,7 +306,7 @@
     .app-header .header-left {
       display: flex;
       align-items: center;
-      gap: var(--space-md);
+      gap: 16px;
     }
 
     .app-header .header-left .hamburger {
@@ -343,7 +334,7 @@
     .app-header .header-right {
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
+      gap: 8px;
     }
 
     .app-header .header-right .search-box {
@@ -373,10 +364,6 @@
     .app-header .header-right .search-box input::placeholder {
       color: var(--text-muted);
     }
-    .app-header .header-right .search-box .search-icon {
-      color: var(--text-muted);
-      font-size: 16px;
-    }
 
     .header-btn {
       width: 40px;
@@ -393,12 +380,10 @@
       transition: all var(--duration) var(--ease);
       position: relative;
     }
-
     .header-btn:hover {
       background: var(--bg);
       color: var(--primary);
     }
-
     .header-btn .badge-dot {
       position: absolute;
       top: 8px;
@@ -410,31 +395,7 @@
       border: 2px solid #fff;
     }
 
-    .header-btn .badge-num {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      background: var(--error);
-      color: #fff;
-      font-size: 9px;
-      font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 20px;
-      border: 2px solid #fff;
-      min-width: 18px;
-      text-align: center;
-    }
-
-    /* ===== 7. DASHBOARD CONTENT ===== */
-    .dashboard-content {
-      padding: var(--space-lg);
-      flex: 1;
-      max-width: 1280px;
-      width: 100%;
-      margin: 0 auto;
-    }
-
-    /* ===== 8. DISCLAIMER BANNER ===== */
+    /* ===== 6. DISCLAIMER BANNER ===== */
     .disclaimer-banner {
       background: var(--secondary-light);
       border-bottom: 2px solid var(--secondary);
@@ -448,7 +409,7 @@
       color: var(--primary);
     }
 
-    /* ===== 9. INSTALL BANNER (PWA) ===== */
+    /* ===== 7. INSTALL BANNER (PWA) ===== */
     #install-banner {
       background: var(--secondary-light);
       border-bottom: 2px solid var(--secondary);
@@ -498,13 +459,13 @@
       background: var(--bg);
     }
 
-    /* ===== 10. AUTH GATE (Card Login) ===== */
+    /* ===== 8. AUTH GATE ===== */
     #auth-gate {
       min-height: 80vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: var(--space-lg);
+      padding: 24px;
     }
 
     #auth-card {
@@ -515,7 +476,6 @@
       width: 100%;
       padding: 32px 28px;
       border: 1px solid var(--divider);
-      transition: all var(--duration) var(--ease);
     }
 
     #auth-card h2 {
@@ -615,18 +575,27 @@
       display: none !important;
     }
 
-    /* ===== 11. QUICK STATS CARDS ===== */
+    /* ===== 9. DASHBOARD CONTENT ===== */
+    .dashboard-content {
+      padding: 24px;
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ===== 10. QUICK STATS CARDS ===== */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: var(--space-md);
-      margin-bottom: var(--space-lg);
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
     .stat-card {
       background: var(--surface);
       border-radius: var(--radius-md);
-      padding: var(--space-md) var(--space-lg);
+      padding: 16px 20px;
       box-shadow: var(--shadow-sm);
       border: 1px solid var(--divider);
       transition: all var(--duration) var(--ease);
@@ -641,8 +610,8 @@
 
     .stat-card .stat-icon {
       position: absolute;
-      top: var(--space-md);
-      right: var(--space-md);
+      top: 16px;
+      right: 16px;
       font-size: 28px;
       opacity: 0.2;
     }
@@ -681,12 +650,12 @@
       background: var(--error-light);
     }
 
-    /* ===== 12. MAP & PERSONNEL GRID ===== */
+    /* ===== 11. MAP & PERSONNEL GRID ===== */
     .dashboard-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
-      gap: var(--space-lg);
-      margin-bottom: var(--space-lg);
+      gap: 24px;
+      margin-bottom: 24px;
     }
 
     .panel {
@@ -706,7 +675,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px var(--space-md);
+      padding: 14px 16px;
       border-bottom: 1px solid var(--divider);
       font-size: 13px;
       font-weight: 600;
@@ -740,7 +709,7 @@
       background: var(--bg) !important;
     }
 
-    /* ===== 13. PERSONNEL LIST ===== */
+    /* ===== 12. PERSONNEL LIST ===== */
     .personnel-list {
       max-height: 420px;
       overflow-y: auto;
@@ -750,7 +719,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px var(--space-md);
+      padding: 12px 16px;
       border-bottom: 1px solid var(--divider);
       font-size: 13px;
       transition: background var(--duration) var(--ease);
@@ -763,7 +732,7 @@
     .personnel-row .info {
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
+      gap: 8px;
     }
 
     .personnel-row .status-dot {
@@ -809,4 +778,1763 @@
       border-radius: 20px;
     }
 
-    .personnel-row .actio
+    .personnel-row .actions {
+      display: flex;
+      gap: 4px;
+    }
+    .personnel-row .actions button {
+      background: transparent;
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: var(--font);
+      color: var(--text-secondary);
+      transition: all var(--duration) var(--ease);
+    }
+    .personnel-row .actions button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+    .personnel-row .actions button.danger:hover {
+      border-color: var(--error);
+      color: var(--error);
+      background: var(--error-light);
+    }
+
+    /* ===== 13. SOS BANNER ===== */
+    .sos-banner {
+      background: var(--error-light);
+      border: 1px solid var(--error);
+      color: #B3363A;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .sos-banner.show {
+      display: flex;
+    }
+
+    /* ===== 14. TRACKING CONTROL ===== */
+    .tracking-control {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--divider);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .track-btn {
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1.5px solid transparent;
+      font-family: var(--font);
+      font-weight: 600;
+      padding: 8px 16px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--duration) var(--ease);
+    }
+    .track-btn:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .track-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .sos-btn {
+      background: var(--error);
+      color: #fff;
+      border: none;
+      font-family: var(--font);
+      font-weight: 700;
+      padding: 8px 16px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--duration) var(--ease);
+    }
+    .sos-btn:hover {
+      background: #c0392b;
+      transform: scale(1.03);
+    }
+
+    #tracking-status {
+      font-size: 11px;
+      color: var(--text-secondary);
+      flex-basis: 100%;
+      padding: 4px 0;
+    }
+
+    /* ===== 15. CHAT PANEL ===== */
+    .chat-panel {
+      margin-top: 24px;
+    }
+
+    .room-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--divider);
+      flex-wrap: wrap;
+    }
+
+    .room-tabs button {
+      background: transparent;
+      border: 1.5px solid var(--divider);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--duration) var(--ease);
+    }
+    .room-tabs button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .room-tabs button.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .chat-messages {
+      height: 320px;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg);
+    }
+
+    .msg {
+      max-width: 78%;
+      padding: 10px 14px;
+      font-size: 13px;
+      border-radius: var(--radius-md);
+      line-height: 1.5;
+      animation: fadeInUp 0.3s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .msg.mine {
+      align-self: flex-end;
+      background: var(--primary-light);
+      border: 1px solid var(--primary);
+      border-bottom-right-radius: 4px;
+    }
+    .msg.other {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--divider);
+      border-bottom-left-radius: 4px;
+    }
+    .msg.ai {
+      align-self: center;
+      max-width: 90%;
+      background: #EAF2FF;
+      border: 1px solid #2F6FED;
+      border-radius: var(--radius-md);
+    }
+    .msg.ai.kritis {
+      background: var(--error-light);
+      border-color: var(--error);
+    }
+
+    .msg .meta {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .msg .ai-tag {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #2F6FED;
+      border: 1px solid #2F6FED;
+      padding: 1px 8px;
+      border-radius: 20px;
+      margin-bottom: 4px;
+    }
+    .msg.ai.kritis .ai-tag {
+      color: var(--error);
+      border-color: var(--error);
+    }
+    .msg .report-tag {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #92400E;
+      border: 1px solid var(--warning);
+      padding: 1px 8px;
+      border-radius: 20px;
+      margin-bottom: 4px;
+    }
+
+    .msg img {
+      max-width: 100%;
+      margin-top: 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--divider);
+      cursor: pointer;
+    }
+
+    .chat-composer {
+      border-top: 1px solid var(--divider);
+      padding: 10px 16px;
+      background: var(--surface);
+    }
+
+    .quick-report-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .quick-report-row button {
+      background: transparent;
+      border: 1.5px solid var(--divider);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--duration) var(--ease);
+    }
+    .quick-report-row button:hover {
+      border-color: var(--warning);
+      color: #92400E;
+      background: var(--secondary-light);
+    }
+
+    .composer-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .composer-row input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1.5px solid var(--divider);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font);
+      padding: 10px 14px;
+      font-size: 13px;
+      transition: all var(--duration) var(--ease);
+    }
+    .composer-row input[type="text"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(11, 122, 91, 0.1);
+      outline: none;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1.5px solid var(--divider);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all var(--duration) var(--ease);
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    #chat-photo-input {
+      display: none;
+    }
+    #chat-upload-status {
+      font-size: 11px;
+      color: var(--warning);
+      padding: 4px 16px 0;
+      min-height: 16px;
+    }
+
+    /* ===== 16. VIDEO CALL MODAL ===== */
+    #call-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 3000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #call-overlay.show {
+      display: flex;
+    }
+
+    #call-box {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      max-width: 820px;
+      width: 100%;
+      padding: 24px;
+      border: 1px solid var(--divider);
+    }
+
+    #call-box h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .video-grid video {
+      width: 100%;
+      background: #1A1D1F;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--divider);
+    }
+
+    #call-status {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin: 12px 0;
+      font-weight: 500;
+    }
+
+    .call-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .call-controls button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-family: var(--font);
+      font-weight: 600;
+      padding: 10px 20px;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: all var(--duration) var(--ease);
+    }
+    .call-controls button:hover {
+      background: var(--primary-dark);
+      transform: scale(1.02);
+    }
+    .call-controls button.hangup {
+      background: var(--error);
+    }
+    .call-controls button.hangup:hover {
+      background: #c0392b;
+    }
+
+    /* ===== 17. ADMIN MODAL ===== */
+    #admin-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 4000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #admin-modal-overlay.show {
+      display: flex;
+    }
+
+    #admin-modal-overlay>div {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      max-width: 720px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      border: 1px solid var(--divider);
+    }
+
+    #admin-modal-overlay .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    #admin-modal-overlay .modal-header h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    #admin-user-status {
+      font-size: 12px;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    #admin-user-list .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--divider);
+    }
+    #admin-user-list .user-item:last-child {
+      border-bottom: none;
+    }
+    #admin-user-list .user-item .email {
+      font-weight: 500;
+      font-size: 13px;
+    }
+    #admin-user-list .user-item .role-select {
+      font-family: var(--font);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--divider);
+      background: var(--bg);
+      font-size: 12px;
+    }
+    #admin-user-list .user-item .role-select:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    /* ===== 18. GUEST READ-ONLY NOTE ===== */
+    #guest-readonly-note {
+      background: var(--secondary-light);
+      border: 1px solid var(--secondary);
+      color: #92400E;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    #guest-readonly-note.show {
+      display: flex;
+    }
+
+    /* ===== 19. SIDEBAR OVERLAY (mobile) ===== */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 999;
+    }
+    .sidebar-overlay.show {
+      display: block;
+    }
+
+    /* ===== 20. RESPONSIVE ===== */
+    @media (max-width: 1024px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .app-header .header-left .hamburger {
+        display: block;
+      }
+
+      .app-header .header-left .greeting small {
+        display: none;
+      }
+
+      .app-header .header-right .search-box {
+        display: none;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .stat-card .stat-value {
+        font-size: 22px;
+      }
+
+      .dashboard-content {
+        padding: 16px;
+      }
+
+      .dashboard-grid {
+        gap: 16px;
+      }
+
+      #sar-map {
+        height: 300px;
+      }
+
+      .personnel-list {
+        max-height: 300px;
+      }
+
+      .chat-messages {
+        height: 240px;
+      }
+
+      .video-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .disclaimer-banner {
+        font-size: 10px;
+        padding: 6px 12px;
+      }
+
+      #install-banner {
+        font-size: 11px;
+        padding: 8px 12px;
+      }
+      #install-banner .btns {
+        display: flex;
+        gap: 6px;
+        width: 100%;
+      }
+      #install-btn,
+      #install-dismiss-btn {
+        flex: 1;
+        text-align: center;
+        font-size: 11px;
+        padding: 6px 12px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+      }
+      .stat-card {
+        padding: 12px;
+      }
+      .stat-card .stat-value {
+        font-size: 18px;
+      }
+      .stat-card .stat-label {
+        font-size: 10px;
+      }
+
+      .panel-head {
+        font-size: 12px;
+        padding: 10px 12px;
+      }
+
+      .personnel-row {
+        font-size: 12px;
+        padding: 10px 12px;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .personnel-row .actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      #auth-card {
+        padding: 20px 16px;
+      }
+      #auth-card h2 {
+        font-size: 18px;
+      }
+
+      .composer-row input[type="text"] {
+        font-size: 12px;
+        padding: 8px 10px;
+      }
+      .icon-btn {
+        height: 38px;
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+
+      #call-box {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================== -->
+  <!-- SIDEBAR -->
+  <!-- ============================================================== -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon">📍</div>
+      <div class="logo-text">
+        TRACK-ME
+        <small>FIDI-SCIE POC</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Menu Utama</div>
+      <a href="#" class="active" data-page="dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a href="#" data-page="map">
+        <span class="nav-icon">🗺️</span> Peta
+        <span class="nav-badge">LIVE</span>
+      </a>
+      <a href="#" data-page="personnel">
+        <span class="nav-icon">👥</span> Personel
+        <span class="nav-badge" id="personnel-count">0</span>
+      </a>
+      <a href="#" data-page="chat">
+        <span class="nav-icon">💬</span> Ruang Komunikasi
+        <span class="nav-badge" id="chat-badge">●</span>
+      </a>
+      <a href="#" data-page="reports">
+        <span class="nav-icon">📋</span> Laporan
+      </a>
+
+      <div class="nav-label" style="margin-top:24px;">Sistem</div>
+      <button id="admin-panel-btn" class="hidden">
+        <span class="nav-icon">⚙️</span> Panel Admin
+      </button>
+      <button id="logout-btn" class="hidden">
+        <span class="nav-icon">🚪</span> Keluar
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card" id="sidebar-user">
+        <div class="avatar" id="sidebar-avatar">👤</div>
+        <div class="user-info">
+          <div class="name" id="sidebar-name">Petugas</div>
+          <div class="role"><span class="badge-role" id="sidebar-role">guest</span></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================== -->
+  <!-- MAIN CONTENT -->
+  <!-- ============================================================== -->
+  <div class="main-content">
+
+    <!-- DISCLAIMER -->
+    <div class="disclaimer-banner">
+      ⚠ <b>TRACK-ME</b> 2026 · <b>FIDI-SCIE</b> — Sistem Pelacakan Personel & Komunikasi SAR
+    </div>
+
+    <!-- INSTALL BANNER -->
+    <div id="install-banner">
+      <span>📲 Pasang <b>TRACK-ME</b> ke layar utama HP untuk akses lebih cepat & fullscreen.</span>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="install-btn">PASANG SEKARANG</button>
+        <button id="install-dismiss-btn">Nanti Saja</button>
+      </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="app-header" id="app-header">
+      <div class="header-left">
+        <button class="hamburger" id="hamburger">☰</button>
+        <div class="greeting" id="greeting-text">
+          Halo, <span id="greeting-name">Petugas</span>
+          <small id="greeting-role">● guest</small>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Cari personel..." id="search-personnel">
+        </div>
+        <button class="header-btn" id="header-notif" title="Notifikasi">
+          🔔
+          <span class="badge-dot"></span>
+        </button>
+        <button class="header-btn" id="header-profile" title="Profil" style="background:var(--primary-light);color:var(--primary);font-weight:700;font-size:14px;">
+          👤
+        </button>
+      </div>
+    </header>
+
+    <!-- ===== AUTH GATE ===== -->
+    <div id="auth-gate">
+      <div id="auth-card">
+
+        <!-- Form Login -->
+        <div id="form-login">
+          <h2>Masuk ke <span class="accent">TRACK-ME</span></h2>
+          <p class="sub">Portal dilindungi login. Hanya petugas terdaftar yang dapat mengakses dashboard.</p>
+          <div id="auth-status"></div>
+          <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+          <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+          <button class="primary" id="btn-login">MASUK</button>
+          <button class="secondary" id="btn-lupa-password">Lupa Password?</button>
+          <button class="secondary" id="btn-show-signup">Belum punya akun? Daftar</button>
+        </div>
+
+        <!-- Form Lupa Password -->
+        <div id="form-lupa-password" class="hidden">
+          <h2>Reset <span class="accent">Password</span></h2>
+          <p class="sub">Masukkan email Anda. Link reset akan dikirim ke email tersebut.</p>
+          <div id="lupa-password-status"></div>
+          <input type="email" id="lupa-password-email" placeholder="Email">
+          <button class="primary" id="btn-kirim-reset-password">KIRIM LINK RESET</button>
+          <button class="secondary" id="btn-batal-lupa-password">Kembali ke Login</button>
+        </div>
+
+        <!-- Form Signup -->
+        <div id="form-signup" class="hidden">
+          <h2>Daftar <span class="accent">Petugas</span></h2>
+          <p class="sub">Pendaftaran akun untuk keperluan uji coba lapangan.</p>
+          <div id="signup-status"></div>
+          <input type="email" id="signup-email" placeholder="Email" autocomplete="email">
+          <input type="password" id="signup-password" placeholder="Password (min. 6 karakter)" autocomplete="new-password">
+          <input type="tel" id="signup-phone" placeholder="No. HP WhatsApp (contoh: +62812xxxxxxx)">
+          <button class="primary" id="btn-signup">DAFTAR</button>
+          <button class="secondary" id="btn-show-login">Sudah punya akun? Masuk</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="dashboard" class="hidden">
+
+      <div class="dashboard-content">
+
+        <!-- Guest Read-Only Note -->
+        <div id="guest-readonly-note">
+          🔍 <b>Mode Tamu (Read-Only)</b> — Anda dapat melihat data tetapi tidak dapat mengirim pesan atau mengubah status.
+        </div>
+
+        <!-- SOS Banner -->
+        <div class="sos-banner" id="sos-banner">
+          <span style="font-size:22px;">🚨</span>
+          <span id="sos-banner-text">SINYAL SOS DITERIMA — lihat daftar personel untuk detail.</span>
+        </div>
+
+        <!-- ===== QUICK STATS ===== -->
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <span class="stat-icon">📦</span>
+            <div class="stat-label">Total Personel</div>
+            <div class="stat-value" id="stat-total">0</div>
+            <span class="stat-change up">● Aktif</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">📍</span>
+            <div class="stat-label">Sedang Bertugas</div>
+            <div class="stat-value" id="stat-active">0</div>
+            <span class="stat-change up">● Online</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">🆘</span>
+            <div class="stat-label">Status SOS</div>
+            <div class="stat-value" id="stat-sos">0</div>
+            <span class="stat-change down" id="stat-sos-label">● Perhatian</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">⭐</span>
+            <div class="stat-label">Rating Tim</div>
+            <div class="stat-value" id="stat-rating">4.9</div>
+            <span class="stat-change up">★ Excellent</span>
+          </div>
+        </div>
+
+        <!-- ===== MAP & PERSONNEL ===== -->
+        <div class="dashboard-grid">
+          <!-- Map Panel -->
+          <div class="panel">
+            <div class="panel-head">
+              <span>🗺️ Peta Posisi Personel</span>
+              <span class="tag" id="map-tag">● LIVE</span>
+            </div>
+            <div id="sar-map"></div>
+          </div>
+
+          <!-- Personnel Panel -->
+          <div class="panel">
+            <div class="panel-head">
+              <span>👥 Status Personel</span>
+              <span class="tag" id="personnel-tag">● LIVE</span>
+            </div>
+            <div class="tracking-control">
+              <button class="track-btn active" id="btn-track-all">📡 Semua</button>
+              <button class="track-btn" id="btn-track-sos">🆘 SOS</button>
+              <button class="sos-btn" id="btn-sos-global">🚨 PANIK</button>
+              <span id="tracking-status">Mode: Semua personel</span>
+            </div>
+            <div class="personnel-list" id="personnel-list">
+              <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Memuat data personel...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== CHAT PANEL ===== -->
+        <div class="panel chat-panel">
+          <div class="panel-head">
+            <span>💬 Ruang Komunikasi</span>
+            <span class="tag" id="chat-tag">● LIVE</span>
+          </div>
+
+          <div class="room-tabs" id="room-tabs">
+            <button class="active" data-room="umum">📢 Umum</button>
+            <button data-room="koordinasi">🤝 Koordinasi</button>
+            <button data-room="sos">🆘 SOS</button>
+          </div>
+
+          <div class="chat-messages" id="chat-messages">
+            <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Belum ada pesan. Mulai komunikasi!</div>
+          </div>
+
+          <div id="chat-upload-status"></div>
+
+          <div class="chat-composer">
+            <div class="quick-report-row">
+              <button data-report="lokasi">📍 Laporkan Lokasi</button>
+              <button data-report="kendala">⚠️ Kendala</button>
+              <button data-report="selesai">✅ Selesai</button>
+              <button data-report="butuh-bantuan">🆘 Butuh Bantuan</button>
+            </div>
+            <div class="composer-row">
+              <input type="text" id="chat-input" placeholder="Ketik pesan..." disabled>
+              <button class="icon-btn" id="btn-send-chat" disabled>📤</button>
+              <button class="icon-btn" id="btn-chat-photo" disabled>📷</button>
+              <button class="icon-btn" id="btn-call-start" disabled>📞</button>
+              <input type="file" id="chat-photo-input" accept="image/*">
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /dashboard-content -->
+    </div><!-- /dashboard -->
+
+  </div><!-- /main-content -->
+
+  <!-- ===== ADMIN MODAL ===== -->
+  <div id="admin-modal-overlay">
+    <div>
+      <div class="modal-header">
+        <h3>⚙️ Panel Admin — Kelola User</h3>
+        <button class="icon-btn" id="admin-modal-close">✕</button>
+      </div>
+      <div id="admin-user-status"></div>
+      <div id="admin-user-list"></div>
+    </div>
+  </div>
+
+  <!-- ===== VIDEO CALL MODAL ===== -->
+  <div id="call-overlay">
+    <div id="call-box">
+      <h3>📞 Panggilan Video — <span id="call-room-name">Umum</span></h3>
+      <div class="video-grid">
+        <video id="local-video" autoplay muted playsinline></video>
+        <video id="remote-video" autoplay playsinline></video>
+      </div>
+      <div id="call-status">⏳ Menghubungkan...</div>
+      <div class="call-controls">
+        <button id="call-mute">🔇 Mute</button>
+        <button id="call-video-off">📷 Matikan Video</button>
+        <button class="hangup" id="call-hangup">📞 Akhiri Panggilan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- FIREBASE + LOGIKA APLIKASI (DIAMBIL UTUH DARI FILE ASLI)       -->
+  <!-- ============================================================== -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js">
+  </script>
+
+  <script>
+    // ================================================================
+    // KONFIGURASI FIREBASE — TETAP SAMA PERSIS DENGAN FILE ASLI
+    // (Anda TIDAK perlu mengganti apa pun di sini)
+    // ================================================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyBu5UkKH_3vwGS2FlVagPB2IMTfTfdydKo",
+    authDomain: "scie-tanggap.firebaseapp.com",
+    projectId: "scie-tanggap",
+    storageBucket: "scie-tanggap.firebasestorage.app",
+    messagingSenderId: "628625032096",
+    appId: "1:628625032096:web:c7556287cebffddb7d5ac5"
+  };
+    
+    // Inisialisasi Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // ================================================================
+    // STATE GLOBAL
+    // ================================================================
+    let currentUser = null;
+    let currentUserRole = 'guest';
+    let currentUserData = null;
+    let mapInstance = null;
+    let mapMarkers = {};
+    let trackMode = 'all';
+    let currentRoom = 'umum';
+    let chatUnsubscribe = null;
+    let personnelUnsubscribe = null;
+    let isSosActive = false;
+
+    // DOM refs
+    const $ = id => document.getElementById(id);
+    const authGate = $('auth-gate');
+    const dashboard = $('dashboard');
+    const logoutBtn = $('logout-btn');
+    const adminPanelBtn = $('admin-panel-btn');
+    const sidebar = $('sidebar');
+    const sidebarOverlay = $('sidebar-overlay');
+
+    // ================================================================
+    // FUNGSI UI HELPERS
+    // ================================================================
+    function showAuthStatus(msg, type = 'info') {
+      const el = $('auth-status');
+      if (el) { el.textContent = msg;
+        el.className = type; }
+    }
+
+    function showLupaStatus(msg, type = 'info') {
+      const el = $('lupa-password-status');
+      if (el) { el.textContent = msg;
+        el.className = type; }
+    }
+
+    function showSignupStatus(msg, type = 'info') {
+      const el = $('signup-status');
+      if (el) { el.textContent = msg;
+        el.className = type; }
+    }
+
+    function toggleAuthForm(show) {
+      $('form-login').classList.toggle('hidden', show !== 'login');
+      $('form-signup').classList.toggle('hidden', show !== 'signup');
+      $('form-lupa-password').classList.toggle('hidden', show !== 'lupa');
+    }
+
+    // ================================================================
+    // AUTH HANDLERS — SAMA PERSIS DENGAN FILE ASLI
+    // ================================================================
+    $('btn-login').addEventListener('click', async () => {
+      const email = $('login-email').value.trim();
+      const pass = $('login-password').value;
+      if (!email || !pass) return showAuthStatus('Isi email dan password.', 'err');
+      showAuthStatus('⏳ Memproses...', 'info');
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+        showAuthStatus('✅ Berhasil masuk!', 'ok');
+      } catch (e) {
+        showAuthStatus('❌ ' + e.message, 'err');
+      }
+    });
+
+    $('btn-signup').addEventListener('click', async () => {
+      const email = $('signup-email').value.trim();
+      const pass = $('signup-password').value;
+      const phone = $('signup-phone').value.trim();
+      if (!email || !pass) return showSignupStatus('Isi email dan password.', 'err');
+      if (pass.length < 6) return showSignupStatus('Password minimal 6 karakter.', 'err');
+      showSignupStatus('⏳ Mendaftar...', 'info');
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        await db.collection('users').doc(cred.user.uid).set({
+          email: email,
+          phone: phone || '',
+          role: 'petugas',
+          displayName: email.split('@')[0],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showSignupStatus('✅ Akun berhasil dibuat!', 'ok');
+      } catch (e) {
+        showSignupStatus('❌ ' + e.message, 'err');
+      }
+    });
+
+    $('btn-lupa-password').addEventListener('click', () => toggleAuthForm('lupa'));
+    $('btn-batal-lupa-password').addEventListener('click', () => toggleAuthForm('login'));
+    $('btn-show-signup').addEventListener('click', () => toggleAuthForm('signup'));
+    $('btn-show-login').addEventListener('click', () => toggleAuthForm('login'));
+
+    $('btn-kirim-reset-password').addEventListener('click', async () => {
+      const email = $('lupa-password-email').value.trim();
+      if (!email) return showLupaStatus('Masukkan email.', 'err');
+      showLupaStatus('⏳ Mengirim link...', 'info');
+      try {
+        await auth.sendPasswordResetEmail(email);
+        showLupaStatus('✅ Link reset telah dikirim ke email Anda.', 'ok');
+      } catch (e) {
+        showLupaStatus('❌ ' + e.message, 'err');
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await auth.signOut();
+      } catch (e) { console.error(e); }
+    });
+
+    // ================================================================
+    // AUTH STATE OBSERVER — SAMA PERSIS DENGAN FILE ASLI
+    // ================================================================
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        try {
+          const doc = await db.collection('users').doc(user.uid).get();
+          if (doc.exists) {
+            currentUserData = doc.data();
+            currentUserRole = currentUserData.role || 'petugas';
+          } else {
+            await db.collection('users').doc(user.uid).set({
+              email: user.email,
+              role: 'petugas',
+              displayName: user.email.split('@')[0],
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            currentUserData = { role: 'petugas', displayName: user.email.split('@')[0] };
+            currentUserRole = 'petugas';
+          }
+        } catch (e) {
+          console.error('Gagal ambil data user:', e);
+          currentUserRole = 'petugas';
+        }
+
+        authGate.classList.add('hidden');
+        dashboard.classList.remove('hidden');
+        logoutBtn.classList.remove('hidden');
+        adminPanelBtn.classList.remove('hidden');
+
+        updateSidebarUser();
+        updateGreeting();
+
+        if (!mapInstance) initMap();
+        listenPersonnel();
+        listenChat(currentRoom);
+        listenSosStatus();
+
+        $('chat-input').disabled = false;
+        $('btn-send-chat').disabled = false;
+        $('btn-chat-photo').disabled = false;
+        $('btn-call-start').disabled = false;
+
+        if (currentUserRole === 'guest') {
+          $('guest-readonly-note').classList.add('show');
+          $('chat-input').disabled = true;
+          $('btn-send-chat').disabled = true;
+          $('btn-chat-photo').disabled = true;
+          $('btn-call-start').disabled = true;
+        } else {
+          $('guest-readonly-note').classList.remove('show');
+        }
+
+      } else {
+        currentUser = null;
+        currentUserData = null;
+        currentUserRole = 'guest';
+        authGate.classList.remove('hidden');
+        dashboard.classList.add('hidden');
+        logoutBtn.classList.add('hidden');
+        adminPanelBtn.classList.add('hidden');
+
+        if (chatUnsubscribe) { chatUnsubscribe();
+          chatUnsubscribe = null; }
+        if (personnelUnsubscribe) { personnelUnsubscribe();
+          personnelUnsubscribe = null; }
+
+        $('chat-input').disabled = true;
+        $('btn-send-chat').disabled = true;
+        $('btn-chat-photo').disabled = true;
+        $('btn-call-start').disabled = true;
+        $('guest-readonly-note').classList.remove('show');
+
+        if (mapInstance) {
+          mapInstance.remove();
+          mapInstance = null;
+          mapMarkers = {};
+        }
+
+        toggleAuthForm('login');
+        showAuthStatus('', '');
+      }
+    });
+
+    // ================================================================
+    // SIDEBAR & GREETING UPDATE
+    // ================================================================
+    function updateSidebarUser() {
+      const name = currentUserData?.displayName || currentUser?.email?.split('@')[0] || 'Petugas';
+      const role = currentUserRole || 'guest';
+      $('sidebar-name').textContent = name;
+      $('sidebar-role').textContent = role.toUpperCase();
+      $('sidebar-avatar').textContent = name.charAt(0).toUpperCase();
+    }
+
+    function updateGreeting() {
+      const name = currentUserData?.displayName || currentUser?.email?.split('@')[0] || 'Petugas';
+      const role = currentUserRole || 'guest';
+      $('greeting-name').textContent = name;
+      $('greeting-role').textContent = '● ' + role.toUpperCase();
+    }
+
+    // ================================================================
+    // SIDEBAR TOGGLE (Mobile)
+    // ================================================================
+    function toggleSidebar() {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    }
+
+    $('hamburger').addEventListener('click', toggleSidebar);
+    sidebarOverlay.addEventListener('click', toggleSidebar);
+
+    // ================================================================
+    // INIT MAP
+    // ================================================================
+    function initMap() {
+      const container = $('sar-map');
+      if (!container) return;
+      mapInstance = L.map(container).setView([-6.200000, 106.816666], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(mapInstance);
+    }
+
+    // ================================================================
+    // LISTEN PERSONNEL — SAMA PERSIS DENGAN FILE ASLI
+    // ================================================================
+    function listenPersonnel() {
+      if (personnelUnsubscribe) { personnelUnsubscribe(); }
+
+      personnelUnsubscribe = db.collection('personnel')
+        .onSnapshot((snapshot) => {
+          const data = [];
+          snapshot.forEach(doc => {
+            data.push({ id: doc.id, ...doc.data() });
+          });
+          renderPersonnel(data);
+          updateStats(data);
+          updateMapMarkers(data);
+        }, (error) => {
+          console.error('Personnel listener error:', error);
+        });
+    }
+
+    function renderPersonnel(data) {
+      const container = $('personnel-list');
+      if (!container) return;
+
+      let filtered = data;
+      if (trackMode === 'sos') {
+        filtered = data.filter(p => p.status === 'sos');
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML =
+          `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Tidak ada personel ${trackMode === 'sos' ? 'dalam status SOS' : 'terdaftar'}.</div>`;
+        return;
+      }
+
+      let html = '';
+      filtered.forEach(p => {
+        const statusClass = p.status === 'sos' ? 'status-sos' : p.status === 'hilang' ? 'status-hilang' :
+          'status-aman';
+        const statusLabel = p.status === 'sos' ? '🆘 SOS' : p.status === 'hilang' ? '⚠️ Hilang' : '✅ Aman';
+        const roleLabel = p.role || 'Personel';
+        html += `
+          <div class="personnel-row">
+            <div class="info">
+              <span class="status-dot ${statusClass}"></span>
+              <span class="name">${p.nama || p.id}</span>
+              <span class="role-tag">${roleLabel}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:var(--text-muted);">${statusLabel}</span>
+              <div class="actions">
+                <button onclick="trackPerson('${p.id}')">📍</button>
+                ${currentUserRole !== 'guest' ? `<button class="danger" onclick="setSos('${p.id}')">🆘</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      $('personnel-count').textContent = filtered.length;
+    }
+
+    function updateStats(data) {
+      const total = data.length;
+      const active = data.filter(p => p.status === 'aman' || p.status === 'aktif').length;
+      const sos = data.filter(p => p.status === 'sos').length;
+      $('stat-total').textContent = total;
+      $('stat-active').textContent = active;
+      $('stat-sos').textContent = sos;
+      if (sos > 0) {
+        $('stat-sos-label').textContent = `● ${sos} SOS`;
+        $('stat-sos-label').className = 'stat-change down';
+      } else {
+        $('stat-sos-label').textContent = '● Aman';
+        $('stat-sos-label').className = 'stat-change up';
+      }
+    }
+
+    function updateMapMarkers(data) {
+      if (!mapInstance) return;
+      Object.values(mapMarkers).forEach(m => mapInstance.removeLayer(m));
+      mapMarkers = {};
+
+      data.forEach(p => {
+        if (!p.lat || !p.lng) return;
+        const icon = L.divIcon({
+          html: `<div style="background:${p.status === 'sos' ? '#E5484D' : p.status === 'hilang' ? '#FF9F1C' : '#0B7A5B'};width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>`,
+          className: '',
+          iconSize: [14, 14],
+          iconAnchor: [7, 7]
+        });
+        const marker = L.marker([p.lat, p.lng], { icon })
+          .addTo(mapInstance)
+          .bindPopup(`<b>${p.nama || p.id}</b><br>Status: ${p.status || 'Unknown'}<br>Lokasi: ${p.lat}, ${p.lng}`);
+        mapMarkers[p.id] = marker;
+      });
+    }
+
+    // ================================================================
+    // TRACKING CONTROLS — SAMA PERSIS
+    // ================================================================
+    window.trackPerson = function(id) {
+      console.log('📍 Track person:', id);
+      if (mapMarkers[id]) {
+        mapInstance.setView(mapMarkers[id].getLatLng(), 16);
+      }
+    };
+
+    window.setSos = function(id) {
+      if (currentUserRole === 'guest') return alert('Mode guest tidak bisa mengubah status.');
+      if (!confirm('Set status SOS untuk personel ini?')) return;
+      db.collection('personnel').doc(id).update({
+        status: 'sos',
+        sosTime: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(e => console.error(e));
+    };
+
+    $('btn-track-all').addEventListener('click', function() {
+      trackMode = 'all';
+      this.classList.add('active');
+      $('btn-track-sos').classList.remove('active');
+      $('tracking-status').textContent = 'Mode: Semua personel';
+    });
+
+    $('btn-track-sos').addEventListener('click', function() {
+      trackMode = 'sos';
+      this.classList.add('active');
+      $('btn-track-all').classList.remove('active');
+      $('tracking-status').textContent = 'Mode: Hanya SOS';
+    });
+
+    $('btn-sos-global').addEventListener('click', function() {
+      if (currentUserRole === 'guest') return alert('Mode guest tidak bisa mengirim SOS.');
+      if (!confirm('🚨 Kirim sinyal SOS GLOBAL ke semua personel?')) return;
+      db.collection('chats').add({
+        room: 'sos',
+        userId: currentUser.uid,
+        userName: currentUserData?.displayName || 'Sistem',
+        text: '🚨 SINYAL SOS GLOBAL — Semua personel diminta siaga!',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        type: 'sos'
+      }).then(() => {
+        db.collection('personnel').get().then(snap => {
+          snap.forEach(doc => {
+            db.collection('personnel').doc(doc.id).update({
+              status: 'sos',
+              sosTime: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(e => console.error(e));
+          });
+        });
+        alert('✅ SOS Global dikirim!');
+      }).catch(e => alert('❌ Gagal: ' + e.message));
+    });
+
+    // ================================================================
+    // SOS BANNER LISTENER — SAMA PERSIS
+    // ================================================================
+    function listenSosStatus() {
+      db.collection('personnel')
+        .where('status', '==', 'sos')
+        .onSnapshot((snapshot) => {
+          const sosCount = snapshot.size;
+          const banner = $('sos-banner');
+          const text = $('sos-banner-text');
+          if (sosCount > 0) {
+            banner.classList.add('show');
+            text.textContent = `🚨 ${sosCount} personel dalam status SOS — segera tindak lanjuti!`;
+          } else {
+            banner.classList.remove('show');
+          }
+        }, (error) => {
+          console.error('SOS listener error:', error);
+        });
+    }
+
+    // ================================================================
+    // CHAT SYSTEM — SAMA PERSIS
+    // ================================================================
+    function listenChat(room) {
+      if (chatUnsubscribe) { chatUnsubscribe(); }
+
+      chatUnsubscribe = db.collection('chats')
+        .where('room', '==', room)
+        .orderBy('timestamp', 'asc')
+        .onSnapshot((snapshot) => {
+          const messages = [];
+          snapshot.forEach(doc => {
+            messages.push({ id: doc.id, ...doc.data() });
+          });
+          renderChatMessages(messages);
+        }, (error) => {
+          console.error('Chat listener error:', error);
+        });
+    }
+
+    function renderChatMessages(messages) {
+      const container = $('chat-messages');
+      if (!container) return;
+
+      if (messages.length === 0) {
+        container.innerHTML =
+          `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Belum ada pesan di ruang ini.</div>`;
+        return;
+      }
+
+      let html = '';
+      messages.forEach(msg => {
+        const isMine = msg.userId === currentUser?.uid;
+        const time = msg.timestamp?.toDate?.()?.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) ||
+          '';
+        const userName = msg.userName || 'Anonim';
+
+        let extraClass = '';
+        let extraHtml = '';
+        if (msg.type === 'ai') {
+          extraClass = 'ai';
+          if (msg.kritis) extraClass += ' kritis';
+          extraHtml = `<div class="ai-tag">🤖 AI</div>`;
+        }
+        if (msg.type === 'report') {
+          extraHtml = `<div class="report-tag">📋 LAPORAN</div>`;
+        }
+        if (msg.type === 'sos') {
+          extraHtml = `<div class="report-tag" style="border-color:var(--error);color:var(--error);">🆘 SOS</div>`;
+        }
+
+        const msgClass = isMine ? 'mine' : 'other';
+        html += `
+          <div class="msg ${msgClass} ${extraClass}">
+            <div class="meta">
+              <span>${userName}</span>
+              <span>${time}</span>
+            </div>
+            ${extraHtml}
+            ${msg.text || ''}
+            ${msg.imageUrl ? `<img src="${msg.imageUrl}" alt="Gambar" onclick="window.open('${msg.imageUrl}','_blank')">` : ''}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      container.scrollTop = container.scrollHeight;
+
+      const badge = $('chat-badge');
+      if (badge) {
+        const unread = messages.filter(m => m.userId !== currentUser?.uid).length;
+        badge.textContent = unread > 0 ? unread : '●';
+      }
+    }
+
+    $('btn-send-chat').addEventListener('click', sendChatMessage);
+    $('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+
+    async function sendChatMessage() {
+      const input = $('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      if (currentUserRole === 'guest') return alert('Mode guest tidak bisa mengirim pesan.');
+
+      input.value = '';
+      try {
+        await db.collection('chats').add({
+          room: currentRoom,
+          userId: currentUser.uid,
+          userName: currentUserData?.displayName || currentUser?.email?.split('@')[0] || 'Petugas',
+          text: text,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          type: 'text'
+        });
+      } catch (e) {
+        console.error('Gagal kirim pesan:', e);
+        alert('❌ Gagal kirim pesan.');
+      }
+    }
+
+    document.querySelectorAll('.quick-report-row button').forEach(btn => {
+      btn.addEventListener('click', function() {
+        if (currentUserRole === 'guest') return alert('Mode guest tidak bisa mengirim laporan.');
+        const report = this.dataset.report;
+        const texts = {
+          lokasi: '📍 Saya di posisi: [koordinat]',
+          kendala: '⚠️ Ada kendala di lapangan: [deskripsi]',
+          selesai: '✅ Tugas selesai di lokasi.',
+          'butuh-bantuan': '🆘 Saya butuh bantuan segera!'
+        };
+        const text = texts[report] || report;
+        db.collection('chats').add({
+          room: currentRoom,
+          userId: currentUser.uid,
+          userName: currentUserData?.displayName || currentUser?.email?.split('@')[0] || 'Petugas',
+          text: text,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          type: 'report'
+        }).catch(e => console.error(e));
+      });
+    });
+
+    document.querySelectorAll('.room-tabs button').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.room-tabs button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentRoom = this.dataset.room;
+        listenChat(currentRoom);
+        $('call-room-name').textContent = currentRoom.charAt(0).toUpperCase() + currentRoom.slice(1);
+      });
+    });
+
+    // ================================================================
+    // CHAT PHOTO UPLOAD — SAMA PERSIS
+    // ================================================================
+    $('btn-chat-photo').addEventListener('click', () => {
+      if (currentUserRole === 'guest') return alert('Mode guest tidak bisa upload foto.');
+      $('chat-photo-input').click();
+    });
+
+    $('chat-photo-input').addEventListener('change', async function() {
+      const file = this.files[0];
+      if (!file) return;
+      if (currentUserRole === 'guest') return alert('Mode guest tidak bisa upload foto.');
+
+      $('chat-upload-status').textContent = '⏳ Mengupload foto...';
+      try {
+        const path = `chat_photos/${Date.now()}_${file.name}`;
+        const ref = storage.ref(path);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+
+        await db.collection('chats').add({
+          room: currentRoom,
+          userId: currentUser.uid,
+          userName: currentUserData?.displayName || currentUser?.email?.split('@')[0] || 'Petugas',
+          text: '📷 Mengirim foto',
+          imageUrl: url,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          type: 'image'
+        });
+        $('chat-upload-status').textContent = '✅ Foto terkirim!';
+        this.value = '';
+      } catch (e) {
+        console.error('Upload foto gagal:', e);
+        $('chat-upload-status').textContent = '❌ Gagal upload foto.';
+      }
+      setTimeout(() => { $('chat-upload-status').textContent = ''; }, 3000);
+    });
+
+    // ================================================================
+    // VIDEO CALL — SAMA PERSIS
+    // ================================================================
+    let callActive = false;
+    let localStream = null;
+
+    $('btn-call-start').addEventListener('click', async () => {
+      if (currentUserRole === 'guest') return alert('Mode guest tidak bisa melakukan panggilan.');
+      if (callActive) return;
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        $('local-video').srcObject = localStream;
+        $('call-overlay').classList.add('show');
+        callActive = true;
+        $('call-status').textContent = '📞 Panggilan aktif — menunggu peserta lain...';
+
+        setTimeout(() => {
+          $('remote-video').srcObject = localStream;
+          $('call-status').textContent = '✅ Peserta bergabung!';
+        }, 1500);
+
+      } catch (e) {
+        alert('❌ Gagal akses kamera/mikrofon: ' + e.message);
+      }
+    });
+
+    $('call-hangup').addEventListener('click', endCall);
+    $('call-overlay').addEventListener('click', (e) => {
+      if (e.target === $('call-overlay')) endCall();
+    });
+
+    function endCall() {
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      $('local-video').srcObject = null;
+      $('remote-video').srcObject = null;
+      $('call-overlay').classList.remove('show');
+      callActive = false;
+      $('call-status').textContent = '⏳ Menghubungkan...';
+    }
+
+    $('call-mute').addEventListener('click', function() {
+      if (localStream) {
+        const audio = localStream.getAudioTracks()[0];
+        if (audio) {
+          audio.enabled = !audio.enabled;
+          this.textContent = audio.enabled ? '🔇 Mute' : '🔊 Unmute';
+        }
+      }
+    });
+
+    $('call-video-off').addEventListener('click', function() {
+      if (localStream) {
+        const video = localStream.getVideoTracks()[0];
+        if (video) {
+          video.enabled = !video.enabled;
+          this.textContent = video.enabled ? '📷 Matikan Video' : '📷 Nyalakan Video';
+        }
+      }
+    });
+
+    // ================================================================
+    // ADMIN PANEL — SAMA PERSIS
+    // ================================================================
+    $('admin-panel-btn').addEventListener('click', async () => {
+      if (currentUserRole !== 'admin') {
+        alert('❌ Hanya admin yang dapat mengakses panel ini.');
+        return;
+      }
+      $('admin-modal-overlay').classList.add('show');
+      await loadAdminUsers();
+    });
+
+    $('admin-modal-close').addEventListener('click', () => {
+      $('admin-modal-overlay').classList.remove('show');
+    });
+
+    $('admin-modal-overlay').addEventListener('click', (e) => {
+      if (e.target === $('admin-modal-overlay')) {
+        $('admin-modal-overlay').classList.remove('show');
+      }
+    });
+
+    async function loadAdminUsers() {
+      const container = $('admin-user-list');
+      const status = $('admin-user-status');
+      status.textContent = '⏳ Memuat data user...';
+      try {
+        const snap = await db.collection('users').get();
+        let html = '';
+        snap.forEach(doc => {
+          const data = doc.data();
+          const role = data.role || 'petugas';
+          html += `
+            <div class="user-item">
+              <span class="email">${data.email || doc.id}</span>
+              <select class="role-select" data-uid="${doc.id}" ${doc.id === currentUser.uid ? 'disabled' : ''}>
+                <option value="guest" ${role === 'guest' ? 'selected' : ''}>Guest</option>
+                <option value="petugas" ${role === 'petugas' ? 'selected' : ''}>Petugas</option>
+                <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin</option>
+              </select>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+        status.textContent = `✅ ${snap.size} user terdaftar.`;
+
+        container.querySelectorAll('.role-select').forEach(sel => {
+          sel.addEventListener('change', async function() {
+            const uid = this.dataset.uid;
+            const newRole = this.value;
+            if (!confirm(`Ubah role user ini menjadi ${newRole.toUpperCase()}?`)) {
+              this.value = this.dataset.old || 'petugas';
+              return;
+            }
+            try {
+              await db.collection('users').doc(uid).update({ role: newRole });
+              status.textContent = `✅ Role berhasil diubah menjadi ${newRole.toUpperCase()}.`;
+              this.dataset.old = newRole;
+            } catch (e) {
+              status.textContent = '❌ Gagal update role: ' + e.message;
+            }
+          });
+          sel.dataset.old = sel.value;
+        });
+
+      } catch (e) {
+        status.textContent = '❌ Gagal memuat data: ' + e.message;
+      }
+    }
+
+    // ================================================================
+    // PWA INSTALL BANNER
+    // ================================================================
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      $('install-banner').classList.add('show');
+    });
+
+    $('install-btn').addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        if (result.outcome === 'accepted') {
+          $('install-banner').classList.remove('show');
+        }
+        deferredPrompt = null;
+      }
+    });
+
+    $('install-dismiss-btn').addEventListener('click', () => {
+      $('install-banner').classList.remove('show');
+    });
+
+    // ================================================================
+    // SIDEBAR NAVIGATION
+    // ================================================================
+    document.querySelectorAll('.sidebar-nav a[data-page]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+        this.classList.add('active');
+
+        const page = this.dataset.page;
+        if (page === 'dashboard') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (page === 'map') {
+          document.querySelector('.dashboard-grid')?.scrollIntoView({ behavior: 'smooth' });
+        } else if (page === 'personnel') {
+          document.querySelector('.personnel-list')?.scrollIntoView({ behavior: 'smooth' });
+        } else if (page === 'chat') {
+          document.querySelector('.chat-panel')?.scrollIntoView({ behavior: 'smooth' });
+        } else if (page === 'reports') {
+          alert('📋 Laporan: fitur dalam pengembangan.');
+        }
+
+        if (window.innerWidth <= 768) {
+          toggleSidebar();
+        }
+      });
+    });
+
+    // ================================================================
+    // SEARCH PERSONNEL (fitur tambahan UI)
+    // ================================================================
+    $('search-personnel').addEventListener('input', function() {
+      const query = this.value.toLowerCase();
+      const rows = document.querySelectorAll('.personnel-row');
+      rows.forEach(row => {
+        const name = row.querySelector('.name')?.textContent?.toLowerCase() || '';
+        row.style.display = name.includes(query) ? '' : 'none';
+      });
+    });
+
+    // ================================================================
+    // INIT
+    // ================================================================
+    console.log('🚀 TRACK-ME v2.0 — Dashboard Premium');
+    console.log('📌 Sistem siap. Menunggu autentikasi...');
+
+    if (!auth.currentUser) {
+      toggleAuthForm('login');
+    }
+  </script>
+
+</body>
+</html>
