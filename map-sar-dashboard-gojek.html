@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Map SAR — Dashboard (Terang) | INFOSCIE</title>
+<link rel="manifest" href="manifest-gojek.json">
+<meta name="theme-color" content="#0B7A5B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --bg:#0a0c0d; --panel:#111417; --line:#22282c; --line-bright:#3a4249;
+    --text:#d8dee2; --text-dim:#7c8790; --orange:#ff8a3d; --orange-dim:#a85a26;
+    --green:#5fd68a; --amber:#e0b73a; --red:#e05f5f; --mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text); font-family:var(--mono);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:32px 32px; background-attachment:fixed;
+  }
+  .disclaimer-banner{
+    background:#1a0f05; border-bottom:2px solid var(--orange); color:var(--amber);
+    font-size:11.5px; padding:10px 20px; text-align:center; line-height:1.6;
+  }
+  .disclaimer-banner b{ color:var(--orange); }
+
+  header{
+    border-bottom:1px solid var(--line-bright); padding:16px 24px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  header .brand{ font-size:13px; letter-spacing:.15em; color:var(--text-dim); }
+  header .brand b{ color:var(--orange); }
+  header .title{ font-size:15px; }
+  #logout-btn, #admin-panel-btn{
+    background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);
+    font-family:var(--mono); padding:6px 12px; font-size:11px; cursor:pointer; letter-spacing:.05em;
+  }
+  #logout-btn:hover{ color:var(--red); border-color:var(--red); }
+  #admin-panel-btn:hover{ color:var(--orange); border-color:var(--orange); }
+
+  /* ===== Auth Gate ===== */
+  #auth-gate{
+    min-height:80vh; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  #auth-card{
+    background:var(--panel); border:1px solid var(--line-bright); max-width:420px; width:100%;
+    padding:28px 26px; position:relative;
+  }
+  #auth-card::before, #auth-card::after{
+    content:''; position:absolute; width:12px; height:12px; border:1px solid var(--orange); opacity:.8;
+  }
+  #auth-card::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  #auth-card::after{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+  #auth-card h2{ font-size:16px; margin:0 0 6px 0; }
+  #auth-card p.sub{ font-size:12px; color:var(--text-dim); margin:0 0 18px 0; line-height:1.6; }
+  #auth-card input{
+    width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text);
+    font-family:var(--mono); padding:10px 12px; font-size:13px; margin-bottom:10px;
+  }
+  #auth-card button.primary{
+    width:100%; background:var(--orange); color:#0a0c0d; border:none; font-family:var(--mono);
+    font-weight:700; letter-spacing:.05em; padding:12px; font-size:13px; cursor:pointer; margin-top:6px;
+  }
+  #auth-card button.primary:hover{ background:#ffab6b; }
+  #auth-card button.secondary{
+    width:100%; background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);
+    font-family:var(--mono); padding:10px; font-size:12px; cursor:pointer; margin-top:8px;
+  }
+  #auth-status{ font-size:11.5px; min-height:18px; margin-bottom:8px; }
+  #auth-status.err{ color:var(--red); }
+  #auth-status.ok{ color:var(--green); }
+  #auth-status.info{ color:var(--amber); }
+
+  .hidden{ display:none !important; }
+
+  /* ===== Dashboard ===== */
+  #dashboard{ padding:24px; max-width:1400px; margin:0 auto; }
+  .eyebrow{ font-size:11px; letter-spacing:.2em; color:var(--orange); margin-bottom:6px; text-transform:uppercase; }
+  h1{ font-size:20px; margin:0 0 16px 0; }
+
+  .grid{ display:grid; grid-template-columns:2fr 1fr; gap:20px; }
+  @media(max-width:920px){ .grid{ grid-template-columns:1fr; } }
+
+  .panel{ border:1px solid var(--line-bright); background:var(--panel); position:relative; }
+  .panel::before, .panel::after{ content:''; position:absolute; width:10px; height:10px; border:1px solid var(--orange); opacity:.7; }
+  .panel::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .panel::after{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+  .panel-head{
+    display:flex; justify-content:space-between; align-items:center; padding:10px 14px;
+    border-bottom:1px solid var(--line); font-size:11px; letter-spacing:.1em; color:var(--text-dim);
+  }
+  .panel-head .tag{ color:var(--bg); background:var(--amber); padding:2px 8px; font-size:10px; font-weight:600; }
+  #sar-map{ width:100%; height:480px; }
+  .leaflet-container{ background:#0a0c0d; }
+
+  .personnel-list{ max-height:480px; overflow-y:auto; }
+  .personnel-row{
+    display:flex; justify-content:space-between; align-items:center; padding:10px 14px;
+    border-bottom:1px solid var(--line); font-size:12px;
+  }
+  .personnel-row .status-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:8px; }
+  .status-aman{ background:var(--green); }
+  .status-sos{ background:var(--red); box-shadow:0 0 6px var(--red); }
+  .status-hilang{ background:var(--amber); }
+
+  .tracking-control{
+    display:flex; gap:8px; padding:10px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; align-items:center;
+  }
+  .track-btn{
+    background:var(--green); color:#0a0c0d; border:none; font-family:var(--mono);
+    font-weight:700; padding:8px 12px; font-size:11px; cursor:pointer; letter-spacing:.03em;
+  }
+  .track-btn.active{ background:var(--orange-dim); color:#fff; }
+  .sos-btn{
+    background:var(--red); color:#fff; border:none; font-family:var(--mono);
+    font-weight:700; padding:8px 12px; font-size:11px; cursor:pointer; letter-spacing:.03em;
+  }
+  #tracking-status{ font-size:10.5px; color:var(--text-dim); flex-basis:100%; }
+
+  .sos-banner{
+    background:#2a0808; border:1px solid var(--red); color:#ffb3b3; padding:12px 16px;
+    font-size:12.5px; margin-bottom:16px; display:none;
+  }
+  .sos-banner.show{ display:block; }
+
+  /* ===== Ruang Komunikasi (Chat) ===== */
+  .chat-panel{ margin-top:20px; }
+  .room-tabs{ display:flex; gap:6px; padding:10px 14px; border-bottom:1px solid var(--line); }
+  .room-tabs button{
+    background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);
+    font-family:var(--mono); padding:6px 12px; font-size:11px; cursor:pointer; letter-spacing:.05em;
+  }
+  .room-tabs button.active{ border-color:var(--orange); color:var(--orange); }
+
+  .chat-messages{
+    height:340px; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px;
+    background:#0a0c0d;
+  }
+  .msg{ max-width:75%; padding:8px 12px; font-size:12px; border:1px solid var(--line-bright); position:relative; }
+  .msg.mine{ align-self:flex-end; background:#1a1006; border-color:var(--orange-dim); }
+  .msg.other{ align-self:flex-start; background:#111417; }
+  .msg .meta{ font-size:10px; color:var(--text-dim); margin-bottom:4px; }
+  .msg img{ max-width:100%; margin-top:6px; cursor:pointer; border:1px solid var(--line-bright); }
+  .msg.report{ border-color:var(--amber); }
+  .msg.ai{
+    align-self:center; max-width:90%; background:#0d1a1f; border-color:#3d8aff;
+  }
+  .msg.ai.kritis{ border-color:var(--red); background:#1f0d0d; }
+  .msg .ai-tag{
+    display:inline-block; font-size:9.5px; letter-spacing:.06em; color:#5cb3ff;
+    border:1px solid #3d8aff; padding:1px 6px; margin-bottom:5px;
+  }
+  .msg.ai.kritis .ai-tag{ color:var(--red); border-color:var(--red); }
+  .msg .report-tag{
+    display:inline-block; font-size:9.5px; letter-spacing:.06em; color:var(--amber);
+    border:1px solid var(--amber); padding:1px 6px; margin-bottom:5px;
+  }
+
+  .chat-composer{ border-top:1px solid var(--line); padding:10px 14px; }
+  .quick-report-row{ display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+  .quick-report-row button{
+    background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);
+    font-family:var(--mono); padding:5px 9px; font-size:10.5px; cursor:pointer;
+  }
+  .quick-report-row button:hover{ border-color:var(--amber); color:var(--amber); }
+
+  .composer-row{ display:flex; gap:6px; align-items:center; }
+  .composer-row input[type=text]{
+    flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text);
+    font-family:var(--mono); padding:9px 10px; font-size:12px;
+  }
+  .icon-btn{
+    background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);
+    font-family:var(--mono); padding:8px 10px; cursor:pointer; font-size:13px;
+  }
+  .icon-btn:hover{ color:var(--orange); border-color:var(--orange); }
+  #chat-photo-input{ display:none; }
+  #chat-upload-status{ font-size:10.5px; color:var(--amber); padding:4px 14px 0; min-height:14px; }
+
+  /* ===== Modal Video Call ===== */
+  #call-overlay{
+    display:none; position:fixed; inset:0; background:rgba(4,5,6,0.92); z-index:3000;
+    align-items:center; justify-content:center; padding:20px;
+  }
+  #call-overlay.show{ display:flex; }
+  #call-box{
+    background:var(--panel); border:1px solid var(--line-bright); max-width:820px; width:100%;
+    padding:18px; position:relative;
+  }
+  #call-box h3{ margin:0 0 10px 0; font-size:14px; color:var(--orange); }
+  .video-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .video-grid video{ width:100%; background:#000; border:1px solid var(--line-bright); }
+  #call-status{ font-size:11.5px; color:var(--text-dim); margin:10px 0; }
+  .call-controls{ display:flex; gap:8px; }
+  .call-controls button{
+    background:var(--orange); color:#0a0c0d; border:none; font-family:var(--mono);
+    font-weight:700; padding:9px 16px; font-size:12px; cursor:pointer;
+  }
+  .call-controls button.hangup{ background:var(--red); color:#fff; }
+</style>
+
+<!-- ================================================================
+     TEMA TERANG "GOJEK KW" — override total dari tema HUD gelap di atas.
+     Semua logika JS/Firebase TIDAK diubah sama sekali; ini murni reskin visual
+     lewat CSS custom properties + override elemen dekoratif HUD.
+     ================================================================ -->
+<style>
+  :root{
+    --bg:#F7F8FA;            /* Background dashboard */
+    --panel:#FFFFFF;         /* Surface / kartu */
+    --line:#E4E7EB;          /* Divider */
+    --line-bright:#D8DCE1;   /* Border sedikit lebih tegas */
+    --text:#1A1D1F;          /* Text Primary */
+    --text-dim:#6E7580;      /* Text Secondary */
+    --orange:#0B7A5B;        /* dipakai sbg PRIMARY (nama var lama dipertahankan) */
+    --orange-dim:#065C43;    /* Primary Dark */
+    --green:#12B76A;         /* Success */
+    --amber:#FF9F1C;         /* Secondary / Warning */
+    --red:#E5484D;           /* Error / SOS -- tetap merah mencolok, tidak diubah */
+    --mono:'Plus Jakarta Sans', 'Inter', sans-serif;
+  }
+
+  /* Hilangkan pola grid ala HUD -- gaya Gojek pakai background polos abu muda */
+  body{ background-image:none; }
+
+  /* Disclaimer banner: versi terang, tetap oranye/merah supaya tidak hilang urgensinya */
+  .disclaimer-banner{ background:#FFF4E5; color:#92400E; border-bottom:2px solid var(--amber); }
+  .disclaimer-banner b{ color:var(--orange); }
+
+  /* Kartu & panel: radius 12dp + shadow halus (standar spesifikasi), bukan sudut tajam HUD */
+  .panel, #auth-card, #admin-modal-overlay > div, .personnel-row, #call-box{
+    border-radius:12px !important;
+    box-shadow:0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04);
+  }
+  /* Hilangkan dekorasi "sudut HUD" (corner bracket) -- tidak sesuai gaya bersih Gojek */
+  .panel::before, .panel::after, #auth-card::before, #auth-card::after{ display:none !important; content:none !important; }
+
+  /* Tombol: radius 12dp, tinggi 48dp standar spesifikasi */
+  button{ border-radius:12px !important; }
+  #btn-login, #btn-signup, #btn-kirim-reset-password,
+  .track-btn, .sos-btn, #btn-send-chat, #btn-verify-enroll{
+    height:48px; font-weight:600; letter-spacing:0;
+  }
+
+  /* Input form: latar putih dengan border tipis (bukan hitam pekat ala terminal) */
+  input, select{
+    background:#FFFFFF !important; border:1px solid var(--line-bright) !important;
+    color:var(--text) !important; border-radius:8px !important;
+  }
+  input::placeholder{ color:var(--text-dim); opacity:1; }
+
+  /* Header: putih bersih dengan border bawah tipis, bukan garis HUD tegas */
+  header{ background:var(--panel); border-bottom:1px solid var(--line); }
+
+  /* Tombol header (Panel Admin / Keluar): outline lembut ala Gojek secondary button */
+  #logout-btn, #admin-panel-btn{
+    border-radius:10px !important; border:1px solid var(--line-bright);
+  }
+
+  /* Eyebrow/label kecil: pakai Secondary oranye, letter-spacing dikurangi supaya lebih "human", bukan kode HUD */
+  .eyebrow{ letter-spacing:.05em; }
+</style>
+</head>
+<body>
+
+<div class="disclaimer-banner">
+  ⚠ <b>MATERI POC / UJI LAPANGAN</b> — bukan sistem/prosedur resmi. <b>BASARNAS</b> tetap otoritas dan rujukan utama untuk seluruh operasi SAR resmi di Indonesia. Data di halaman ini tidak boleh jadi dasar tunggal keputusan penyelamatan.
+</div>
+
+<!-- Banner pasang shortcut ke layar HP -- muncul otomatis begitu browser siap (Chrome/Android),
+     tinggal 1 tap "PASANG SEKARANG" (browser TIDAK mengizinkan instalasi sepenuhnya tanpa sentuhan sama sekali). -->
+<div id="install-banner" class="hidden" style="background:#FFF4E5; border-bottom:2px solid var(--amber); color:#92400E; padding:10px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+  <span>📲 Pasang <b style="color:var(--orange);">Map SAR</b> ke layar utama HP supaya lebih cepat dibuka & tampil fullscreen.</span>
+  <div style="display:flex; gap:8px;">
+    <button id="install-btn" style="background:var(--orange); color:#fff; border:none; font-family:var(--mono); font-weight:600; padding:8px 16px; font-size:12px; cursor:pointer; border-radius:10px;">PASANG SEKARANG</button>
+    <button id="install-dismiss-btn" style="background:transparent; color:var(--text-dim); border:1px solid var(--line-bright); font-family:var(--mono); padding:8px 12px; font-size:12px; cursor:pointer; border-radius:10px;">Nanti Saja</button>
+  </div>
+</div>
+
+<header>
+  <div>
+    <div class="brand"><b>MAP SAR</b> // FIDI-SCIE POC</div>
+    <div class="title">Dashboard Personnel Tracking</div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button id="admin-panel-btn" class="hidden">👤 PANEL ADMIN</button>
+    <button id="logout-btn" class="hidden">KELUAR</button>
+  </div>
+</header>
+
+<!-- ===== MODAL PANEL ADMIN (kelola role & status user) ===== -->
+<div id="admin-modal-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(4,5,6,0.92); z-index:4000; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--panel); border:1px solid var(--line-bright); max-width:720px; width:100%; max-height:85vh; overflow-y:auto; padding:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; font-size:15px; color:var(--orange);">Panel Admin — Kelola User</h3>
+      <button id="admin-modal-close" class="icon-btn">✕</button>
+    </div>
+    <div id="admin-user-status" style="font-size:11.5px; margin-bottom:10px;"></div>
+    <div id="admin-user-list"></div>
+  </div>
+</div>
+
+
+<!-- ===== AUTH GATE ===== -->
+<div id="auth-gate">
+  <div id="auth-card">
+
+    <!-- Form: Login -->
+    <div id="form-login">
+      <h2>Masuk — Map SAR</h2>
+      <p class="sub">Portal ini dilindungi login password. Hanya petugas terdaftar yang dapat mengakses dashboard. (POC — verifikasi 2 langkah akan diaktifkan setelah upgrade Firebase.)</p>
+      <div id="auth-status"></div>
+      <input type="email" id="login-email" placeholder="Email">
+      <input type="password" id="login-password" placeholder="Password">
+      <button class="primary" id="btn-login">MASUK</button>
+      <button class="secondary" id="btn-lupa-password">Lupa Password?</button>
+      <button class="secondary" id="btn-show-signup">Belum punya akun? Daftar</button>
+    </div>
+
+    <!-- Form: Lupa Password -->
+    <div id="form-lupa-password" class="hidden">
+      <h2>Reset Password</h2>
+      <p class="sub">Masukkan email akun Anda. Link untuk buat password baru akan dikirim ke email itu.</p>
+      <div id="lupa-password-status"></div>
+      <input type="email" id="lupa-password-email" placeholder="Email">
+      <button class="primary" id="btn-kirim-reset-password">KIRIM LINK RESET</button>
+      <button class="secondary" id="btn-batal-lupa-password">Kembali ke Login</button>
+    </div>
+
+    <!-- Form: Signup -->
+    <div id="form-signup" class="hidden">
+      <h2>Daftar Akun Petugas</h2>
+      <p class="sub">Untuk POC/uji lapangan. Pengelolaan akun produksi sebaiknya dibatasi admin, bukan pendaftaran terbuka.</p>
+      <div id="signup-status"></div>
+      <input type="email" id="signup-email" placeholder="Email">
+      <input type="password" id="signup-password" placeholder="Password (min. 6 karakter)">
+      <input type="tel" id="signup-phone" placeholder="No. HP WhatsApp (format: +62812xxxxxxx)">
+      <button class="primary" id="btn-signup">DAFTAR</button>
+      <button class="secondary" id="btn-show-login">Sudah punya akun? Masuk</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== DASHBOARD (tampil setelah login sukses) ===== -->
+<div id="dashboard" class="hidden">
+  <div class="eyebrow">Modul Tracking POC</div>
+  <h1>Peta Posisi Personel & Status SAR</h1>
+
+  <div class="sos-banner" id="sos-banner">🚨 SINYAL SOS DITERIMA — lihat daftar personel untuk detail titik.</div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="panel-head">
+        <span>PETA POSISI PERSONEL</span>
+        <span class="tag" id="map-tag">LIVE</span>
+      </div>
+      <div id="sar-map"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span>STATUS PERSONEL</span>
+        <span class="tag" id="personnel-tag">LIVE</span>
+      </div>
+      <div class="tracking-control">
+        <button id="btn-toggle-tracking" class="track-btn">📍 AKTIFKAN TRACKING SAYA</button>
+        <button id="btn-personal-sos" class="sos-btn">🚨 SOS SAYA</button>
+        <div id="tracking-status"></div>
+      </div>
+      <div class="personnel-list" id="personnel-list"></div>
+    </div>
+  </div>
+
+  <p style="color:var(--text-dim); font-size:11px; margin-top:16px; line-height:1.6;">
+    Posisi personel di atas berasal dari <b>HP masing-masing pengguna</b> yang mengaktifkan tracking (via GPS browser) —
+    hanya aktif selama tab dashboard terbuka & izin lokasi diberikan, bukan tracking latar belakang 24 jam.
+    Untuk tracking latar belakang penuh/area tanpa sinyal, lihat rencana hardware LoRa/gelang di dokumen arsitektur &amp; protokol.
+  </p>
+
+  <!-- ===== RUANG KOMUNIKASI (CHAT + FOTO + VIDEO CALL) ===== -->
+  <div class="panel chat-panel">
+    <div class="panel-head">
+      <span>RUANG KOMUNIKASI — SOS &amp; VIP ENVIRONMENT</span>
+      <span class="tag">LIVE</span>
+    </div>
+    <div class="room-tabs">
+      <button class="active" data-room="sos">SOS — Pos Komando</button>
+      <button data-room="vip">VIP — Command Channel</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div id="chat-upload-status"></div>
+    <div class="chat-composer">
+      <div class="quick-report-row">
+        <button data-report="Ketinggian Air Bendungan">💧 Ketinggian Air</button>
+        <button data-report="Kondisi Lereng/Slope">⛰️ Slope</button>
+        <button data-report="Laporan Longsor">🚨 Longsor</button>
+      </div>
+      <div class="composer-row">
+        <button class="icon-btn" id="btn-attach-photo" title="Lampirkan foto">📷</button>
+        <input type="file" id="chat-photo-input" accept="image/*">
+        <input type="text" id="chat-text-input" placeholder="Tulis pesan...">
+        <button class="icon-btn" id="btn-send-chat" title="Kirim">➤</button>
+        <button class="icon-btn" id="btn-start-call" title="Video call">🎥</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PANEL STREET VIEW (Fitur Terpisah — Verifikasi Visual, BUKAN Basemap Tracking) ===== -->
+  <div class="panel" style="margin-top:20px;">
+    <div class="panel-head">
+      <span>GOOGLE STREET VIEW — VERIFIKASI VISUAL LOKASI</span>
+      <span class="tag" id="streetview-tag" style="background:var(--red);">BELUM AKTIF</span>
+    </div>
+    <div style="padding:10px 14px; display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--line);">
+      <input type="text" id="sv-lat" placeholder="Latitude" style="width:120px; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px;">
+      <input type="text" id="sv-lon" placeholder="Longitude" style="width:120px; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px;">
+      <button id="btn-sv-lihat" class="icon-btn" style="width:auto; padding:8px 14px;">👁 LIHAT STREET VIEW</button>
+      <button id="btn-sv-dari-personel" class="icon-btn" style="width:auto; padding:8px 14px;">📍 Pakai Posisi Saya Terkini</button>
+    </div>
+    <div id="sv-status" style="padding:6px 14px; font-size:11px; color:var(--text-dim);"></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0;">
+      <div id="gmap-panel" style="height:360px; background:#000;"></div>
+      <div id="streetview-panel" style="height:360px; background:#000;"></div>
+    </div>
+    <p style="color:var(--text-dim); font-size:10.5px; padding:10px 14px; line-height:1.6; margin:0;">
+      Catatan: Street View hanya tersedia di lokasi yang sudah difoto Google (mobil/trekker Street View) — area terpencil mungkin belum ada datanya.
+      Panel ini <b>terpisah dari peta tracking</b> di atas — dipakai sesekali untuk verifikasi visual, bukan basemap real-time.
+    </p>
+  </div>
+
+</div>
+
+<!-- ===== MODAL VIDEO CALL (WebRTC) ===== -->
+<div id="call-overlay">
+  <div id="call-box">
+    <h3 id="call-room-label">Video Call</h3>
+    <div id="call-status">Menunggu...</div>
+    <div class="video-grid">
+      <video id="local-video" autoplay playsinline muted></video>
+      <video id="remote-video" autoplay playsinline></video>
+    </div>
+    <div class="call-controls" style="margin-top:12px;">
+      <button id="btn-hangup" class="hangup">TUTUP PANGGILAN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================================
+     GANTI GANTI_GOOGLE_MAPS_API_KEY dengan API key asli dari Google Cloud Console
+     (lihat langkah di panduan-google-maps-streetview.md)
+     ==================================================================== -->
+<script>
+  function initGoogleMapsStreetView(){
+    document.getElementById('streetview-tag').textContent = 'AKTIF';
+    document.getElementById('streetview-tag').style.background = 'var(--green)';
+
+    const defaultPos = { lat: -4.793, lng: 119.616 }; // default: Pabrik PT Semen Tonasa
+
+    const gmap = new google.maps.Map(document.getElementById('gmap-panel'), {
+      center: defaultPos, zoom: 16, mapTypeId: 'satellite'
+    });
+
+    const panorama = new google.maps.StreetViewPanorama(document.getElementById('streetview-panel'), {
+      position: defaultPos,
+      pov: { heading: 0, pitch: 0 },
+      addressControl: true
+    });
+    gmap.setStreetView(panorama);
+
+    const svService = new google.maps.StreetViewService();
+
+    function pindahKeLokasi(lat, lon){
+      const pos = { lat, lng: lon };
+      gmap.setCenter(pos);
+      svService.getPanorama({ location: pos, radius: 100 }, (data, status) => {
+        const statusEl = document.getElementById('sv-status');
+        if (status === 'OK'){
+          panorama.setPosition(data.location.latLng);
+          statusEl.textContent = 'Street View ditemukan (jarak ' + Math.round(data.location.description ? 0 : 0) + 'm dari titik diminta).';
+          statusEl.style.color = 'var(--green)';
+        } else {
+          statusEl.textContent = 'Street View TIDAK tersedia di sekitar titik ini (radius 100m) — kemungkinan area belum difoto Google.';
+          statusEl.style.color = 'var(--red)';
+        }
+      });
+    }
+
+    document.getElementById('btn-sv-lihat').addEventListener('click', ()=>{
+      const lat = parseFloat(document.getElementById('sv-lat').value);
+      const lon = parseFloat(document.getElementById('sv-lon').value);
+      if (isNaN(lat) || isNaN(lon)){
+        document.getElementById('sv-status').textContent = 'Masukkan latitude & longitude yang valid.';
+        return;
+      }
+      pindahKeLokasi(lat, lon);
+    });
+
+    document.getElementById('btn-sv-dari-personel').addEventListener('click', ()=>{
+      // Pakai posisi tracking pribadi kalau sedang aktif (memakai variabel global dari script utama)
+      if (window.__posisiTerkiniSaya){
+        document.getElementById('sv-lat').value = window.__posisiTerkiniSaya.lat;
+        document.getElementById('sv-lon').value = window.__posisiTerkiniSaya.lon;
+        pindahKeLokasi(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon);
+      } else {
+        document.getElementById('sv-status').textContent = 'Aktifkan tracking Anda dulu di panel atas untuk pakai posisi terkini.';
+      }
+    });
+  }
+
+  function gmapsLoadError(){
+    document.getElementById('sv-status').textContent = 'Gagal memuat Google Maps — cek API key & billing di Google Cloud Console.';
+    document.getElementById('sv-status').style.color = 'var(--red)';
+  }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=GANTI_GOOGLE_MAPS_API_KEY&callback=initGoogleMapsStreetView&loading=async"
+        onerror="gmapsLoadError()" async defer></script>
+
+
+<script type="module">
+  import {
+    initializeApp
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+    sendPasswordResetEmail, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import {
+    getFirestore, doc, setDoc, getDoc, getDocs, updateDoc,
+    collection, addDoc, onSnapshot, query, orderBy, serverTimestamp,
+    deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import {
+    getStorage, ref, uploadBytes, getDownloadURL
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+
+  // ====================================================================
+  // firebaseConfig — project scie-tanggap
+  // ====================================================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyBu5UkKH_3vwGS2FlVagPB2IMTfTfdydKo",
+    authDomain: "scie-tanggap.firebaseapp.com",
+    projectId: "scie-tanggap",
+    storageBucket: "scie-tanggap.firebasestorage.app",
+    messagingSenderId: "628625032096",
+    appId: "1:628625032096:web:c7556287cebffddb7d5ac5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  // ---------- Helper UI ----------
+  function showForm(id){
+    ['form-login','form-lupa-password','form-signup'].forEach(f=>{
+      document.getElementById(f).classList.toggle('hidden', f !== id);
+    });
+  }
+  function setStatus(elId, msg, type){
+    const el = document.getElementById(elId);
+    el.textContent = msg || '';
+    el.className = type || '';
+  }
+
+  document.getElementById('btn-show-signup').addEventListener('click', ()=> showForm('form-signup'));
+  document.getElementById('btn-show-login').addEventListener('click', ()=> showForm('form-login'));
+
+  // ---------- Signup ----------
+  document.getElementById('btn-signup').addEventListener('click', async ()=>{
+    const email = document.getElementById('signup-email').value.trim();
+    const pass = document.getElementById('signup-password').value;
+    const phone = document.getElementById('signup-phone').value.trim();
+    setStatus('signup-status', 'Memproses pendaftaran...', 'info');
+    try{
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      // Simpan nomor HP (untuk keperluan verifikasi 2 langkah via Telegram nanti) + role default 'guest'.
+      // Semua pendaftaran baru berstatus 'guest' (read-only) sampai Pak Marjan menaikkan role-nya manual lewat Firestore Console.
+      await setDoc(doc(db, 'users', cred.user.uid), {
+        email, phone, role: 'guest', status: 'active', dibuatPada: Date.now()
+      });
+      // Langsung masuk dashboard -- tanpa verifikasi 2 langkah untuk tahap POC ini
+      tampilkanDashboard();
+    }catch(err){
+      setStatus('signup-status', 'Gagal daftar: ' + err.message, 'err');
+    }
+  });
+
+  // ---------- Login ----------
+  function pesanErrorFirebase(err){
+    const map = {
+      'auth/invalid-credential': 'Email atau password salah.',
+      'auth/wrong-password': 'Password salah.',
+      'auth/user-not-found': 'Akun dengan email ini tidak ditemukan.',
+      'auth/invalid-email': 'Format email tidak valid.',
+      'auth/too-many-requests': 'Terlalu banyak percobaan gagal. Coba lagi beberapa menit lagi.',
+      'auth/network-request-failed': 'Gagal terhubung ke server. Cek koneksi internet.',
+      'auth/user-disabled': 'Akun ini dinonaktifkan. Hubungi admin.'
+    };
+    return map[err.code] || (err.message || 'Terjadi kesalahan tidak diketahui: ' + (err.code || 'unknown'));
+  }
+
+  document.getElementById('btn-login').addEventListener('click', async ()=>{
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-password').value;
+    if (!email || !pass){
+      setStatus('auth-status', 'Isi email dan password terlebih dahulu.', 'err');
+      return;
+    }
+    setStatus('auth-status', 'Memproses login...', 'info');
+    try{
+      await signInWithEmailAndPassword(auth, email, pass);
+      // onAuthStateChanged di bawah akan menampilkan dashboard begitu login berhasil
+    }catch(err){
+      setStatus('auth-status', 'Login gagal: ' + pesanErrorFirebase(err), 'err');
+    }
+  });
+
+  // ---------- Lupa Password ----------
+  document.getElementById('btn-lupa-password').addEventListener('click', ()=>{
+    document.getElementById('lupa-password-email').value = document.getElementById('login-email').value.trim();
+    showForm('form-lupa-password');
+  });
+
+  document.getElementById('btn-batal-lupa-password').addEventListener('click', ()=> showForm('form-login'));
+
+  document.getElementById('btn-kirim-reset-password').addEventListener('click', async ()=>{
+    const email = document.getElementById('lupa-password-email').value.trim();
+    if (!email){
+      setStatus('lupa-password-status', 'Masukkan email terlebih dahulu.', 'err');
+      return;
+    }
+    setStatus('lupa-password-status', 'Mengirim link reset...', 'info');
+    try{
+      await sendPasswordResetEmail(auth, email);
+      setStatus('lupa-password-status', 'Link reset password terkirim ke ' + email + '. Cek inbox/spam.', 'ok');
+    }catch(err){
+      setStatus('lupa-password-status', 'Gagal kirim: ' + pesanErrorFirebase(err), 'err');
+    }
+  });
+
+  // ---------- Setelah login/signup sukses ----------
+  window.__userRole = 'user'; // default aman sebelum role terbaca dari Firestore
+
+  async function tampilkanDashboard(){
+    document.getElementById('auth-gate').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('logout-btn').classList.remove('hidden');
+
+    // Ambil role user dari Firestore (users/{uid}) untuk menentukan hak akses fitur inti
+    try{
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      window.__userRole = userDoc.exists() ? (userDoc.data().role || 'user') : 'user';
+    }catch(err){
+      window.__userRole = 'user'; // gagal baca -> anggap user biasa (aman, tidak elevate ke admin)
+    }
+
+    initDashboard();
+    terapkanBatasanRole();
+  }
+
+  // ---------- Batasan akses berdasarkan role ----------
+  // guest/viewer -> hanya boleh LIHAT dashboard; tombol tracking/SOS/chat dinonaktifkan.
+  // user, editor, admin -> akses penuh ke fitur inti (SOS, tracking, chat).
+  function terapkanBatasanRole(){
+    const isGuest = (window.__userRole === 'guest' || window.__userRole === 'viewer');
+    const idFiturInti = ['btn-toggle-tracking', 'btn-personal-sos', 'btn-send-chat', 'btn-attach-photo', 'btn-start-call', 'chat-text-input'];
+    idFiturInti.forEach(id=>{
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.disabled = isGuest;
+      el.style.opacity = isGuest ? '0.4' : '1';
+      el.style.cursor = isGuest ? 'not-allowed' : 'pointer';
+    });
+    if (isGuest && !document.getElementById('guest-readonly-note')){
+      const note = document.createElement('div');
+      note.id = 'guest-readonly-note';
+      note.style.cssText = 'background:#1a0f05;border:1px solid var(--amber);color:var(--amber);padding:10px 14px;font-size:11.5px;margin-bottom:16px;';
+      note.textContent = '👁 Mode Tamu (read-only) — tracking, SOS, dan kirim pesan dinonaktifkan untuk akun ini. Hubungi admin untuk menaikkan akses.';
+      const dash = document.getElementById('dashboard');
+      dash.insertBefore(note, dash.firstChild);
+    }
+
+    // Tombol Panel Admin cuma muncul untuk role 'admin'
+    document.getElementById('admin-panel-btn').classList.toggle('hidden', window.__userRole !== 'admin');
+  }
+
+  // ---------- Auth State Listener ----------
+  // POC: langsung tampilkan dashboard begitu ada sesi login, tanpa lapis verifikasi tambahan.
+  onAuthStateChanged(auth, (user)=>{
+    if (user){
+      tampilkanDashboard();
+    } else {
+      document.getElementById('auth-gate').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('logout-btn').classList.add('hidden');
+      document.getElementById('admin-panel-btn').classList.add('hidden');
+      showForm('form-login');
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', ()=> signOut(auth));
+
+  // ==========================================================
+  // PANEL ADMIN — lihat semua user, ubah role & status (aktif/suspend)
+  // ==========================================================
+  const ROLE_TERSEDIA = ['guest', 'user', 'editor', 'admin'];
+
+  document.getElementById('admin-panel-btn').addEventListener('click', ()=>{
+    document.getElementById('admin-modal-overlay').classList.remove('hidden');
+    muatDaftarUserAdmin();
+  });
+  document.getElementById('admin-modal-close').addEventListener('click', ()=>{
+    document.getElementById('admin-modal-overlay').classList.add('hidden');
+  });
+
+  async function muatDaftarUserAdmin(){
+    const statusEl = document.getElementById('admin-user-status');
+    const listEl = document.getElementById('admin-user-list');
+    statusEl.textContent = 'Memuat daftar user...';
+    statusEl.className = 'info';
+    listEl.innerHTML = '';
+    try{
+      const snap = await getDocs(collection(db, 'users'));
+      statusEl.textContent = '';
+      if (snap.empty){
+        listEl.innerHTML = '<div style="color:var(--text-dim); font-size:12px;">Belum ada user terdaftar.</div>';
+        return;
+      }
+      snap.forEach(docSnap=>{
+        const u = docSnap.data();
+        const uid = docSnap.id;
+        const row = document.createElement('div');
+        row.style.cssText = 'border:1px solid var(--line-bright); padding:10px 12px; margin-bottom:8px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between;';
+
+        const info = document.createElement('div');
+        info.style.cssText = 'font-size:12px; flex:1; min-width:180px;';
+        info.innerHTML = '<b>' + (u.email || '(tanpa email)') + '</b><br>'
+          + '<span style="color:var(--text-dim); font-size:10.5px;">' + (u.phone || '-') + ' · uid: ' + uid.slice(0,8) + '...</span>';
+
+        const roleSelect = document.createElement('select');
+        roleSelect.style.cssText = 'background:#000; color:var(--text); border:1px solid var(--line-bright); font-family:var(--mono); padding:6px 8px; font-size:11.5px;';
+        ROLE_TERSEDIA.forEach(r=>{
+          const opt = document.createElement('option');
+          opt.value = r; opt.textContent = r;
+          if (u.role === r) opt.selected = true;
+          roleSelect.appendChild(opt);
+        });
+
+        const statusSelect = document.createElement('select');
+        statusSelect.style.cssText = roleSelect.style.cssText;
+        ['active', 'suspended'].forEach(s=>{
+          const opt = document.createElement('option');
+          opt.value = s; opt.textContent = s;
+          if ((u.status || 'active') === s) opt.selected = true;
+          statusSelect.appendChild(opt);
+        });
+
+        const btnSimpan = document.createElement('button');
+        btnSimpan.textContent = 'SIMPAN';
+        btnSimpan.className = 'icon-btn';
+        btnSimpan.style.cssText = 'width:auto; padding:6px 12px; font-size:11px;';
+        btnSimpan.addEventListener('click', async ()=>{
+          btnSimpan.textContent = '...';
+          try{
+            await updateDoc(doc(db, 'users', uid), { role: roleSelect.value, status: statusSelect.value });
+            btnSimpan.textContent = '✓ TERSIMPAN';
+            setTimeout(()=>{ btnSimpan.textContent = 'SIMPAN'; }, 1500);
+          }catch(err){
+            statusEl.textContent = 'Gagal menyimpan (' + (u.email||uid) + '): ' + err.message;
+            statusEl.className = 'err';
+            btnSimpan.textContent = 'SIMPAN';
+          }
+        });
+
+        row.appendChild(info);
+        row.appendChild(roleSelect);
+        row.appendChild(statusSelect);
+        row.appendChild(btnSimpan);
+        listEl.appendChild(row);
+      });
+    }catch(err){
+      statusEl.textContent = 'Gagal memuat daftar user: ' + err.message;
+      statusEl.className = 'err';
+    }
+  }
+
+  // ---------- Dashboard (data simulasi/dummy untuk POC) ----------
+  let dashboardInited = false;
+  function initDashboard(){
+    if (dashboardInited) return;
+    dashboardInited = true;
+
+    const map = L.map('sar-map').setView([-4.793, 119.616], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors', maxZoom: 19
+    }).addTo(map);
+
+    initPersonnelTracking(map);
+    initChat();
+  }
+
+  // ==========================================================
+  // TRACKING PERSONEL — via GPS HP masing-masing pengguna (Firestore real-time)
+  // + jejak rute (polyline), jarak tempuh, durasi aktif, dan WLA (beban kerja)
+  // ==========================================================
+  let watchId = null;
+  let personnelMarkers = {}; // uid -> L.circleMarker
+  let personnelPolylines = {}; // uid -> L.polyline
+  let trackUnsub = {}; // uid -> fungsi unsubscribe listener trackPoints
+  let trackCache = {}; // uid -> array titik {lat, lon, waktuMs} untuk hitung jarak
+  let statusPribadi = 'aman';
+  let waktuMulaiTrackingSaya = null;
+
+  const JAM_KERJA_STANDAR_MS = 8 * 60 * 60 * 1000; // 8 jam, sesuai UU Ketenagakerjaan No.13/2003 -- SESUAIKAN kalau standar SIPATRA-SMART berbeda
+
+  // Rumus jarak antar-koordinat (Haversine), hasil dalam meter
+  function hitungJarakMeter(lat1, lon1, lat2, lon2){
+    const R = 6371000;
+    const toRad = (d)=> d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  function formatDurasi(ms){
+    const totalMenit = Math.floor(ms / 60000);
+    const jam = Math.floor(totalMenit / 60);
+    const menit = totalMenit % 60;
+    return jam + ' jam ' + menit + ' menit';
+  }
+
+  function initPersonnelTracking(map){
+    // Render real-time dari Firestore -> peta + daftar, untuk SEMUA user yang aktif tracking
+    const q = collection(db, 'personnel');
+    onSnapshot(q, (snap)=>{
+      const listEl = document.getElementById('personnel-list');
+      listEl.innerHTML = '';
+      let adaSos = false;
+      const idsAktif = new Set();
+
+      snap.forEach(docSnap=>{
+        const p = docSnap.data();
+        const uid = docSnap.id;
+        idsAktif.add(uid);
+        if (!p.lat || !p.lon) return;
+
+        const color = p.status === 'sos' ? '#e05f5f' : (p.status === 'hilang' ? '#e0b73a' : '#5fd68a');
+
+        if (personnelMarkers[uid]){
+          personnelMarkers[uid].setLatLng([p.lat, p.lon]);
+          personnelMarkers[uid].setStyle({ color, fillColor: color });
+          personnelMarkers[uid].setPopupContent('<b>' + (p.nama || p.email) + '</b><br>Status: ' + p.status.toUpperCase());
+        } else {
+          personnelMarkers[uid] = L.circleMarker([p.lat, p.lon], { radius: 8, color, weight: 2, fillColor: color, fillOpacity: 0.5 })
+            .addTo(map)
+            .bindPopup('<b>' + (p.nama || p.email) + '</b><br>Status: ' + p.status.toUpperCase());
+        }
+
+        if (p.status === 'sos') adaSos = true;
+
+        // Mulai dengarkan jejak rute personel ini kalau belum
+        if (!trackUnsub[uid]){
+          langgananTrackPoints(uid, map, color);
+        } else {
+          // Update warna polyline mengikuti status terkini
+          if (personnelPolylines[uid]) personnelPolylines[uid].setStyle({ color });
+        }
+
+        // Hitung jarak & durasi dari cache titik yang sudah terkumpul
+        const titik = trackCache[uid] || [];
+        let jarakMeter = 0;
+        for (let i = 1; i < titik.length; i++){
+          jarakMeter += hitungJarakMeter(titik[i-1].lat, titik[i-1].lon, titik[i].lat, titik[i].lon);
+        }
+        const jarakKm = (jarakMeter / 1000).toFixed(2);
+
+        let infoDurasiWla = '';
+        if (p.mulaiTracking){
+          const durasiMs = Date.now() - p.mulaiTracking;
+          const wlaPersen = ((durasiMs / JAM_KERJA_STANDAR_MS) * 100).toFixed(0);
+          const wlaWarna = wlaPersen >= 100 ? 'color:var(--red);' : (wlaPersen >= 80 ? 'color:var(--amber);' : 'color:var(--text-dim);');
+          infoDurasiWla = '<div style="font-size:10px; color:var(--text-dim);">'
+            + formatDurasi(durasiMs) + ' aktif · ' + jarakKm + ' km · '
+            + '<span style="' + wlaWarna + '">WLA ' + wlaPersen + '%</span></div>';
+        }
+
+        const row = document.createElement('div');
+        row.className = 'personnel-row';
+        row.style.flexDirection = 'column';
+        row.style.alignItems = 'flex-start';
+        row.innerHTML = '<div style="display:flex; justify-content:space-between; width:100%;">'
+          + '<span><span class="status-dot status-' + p.status + '"></span>' + (p.nama || p.email) + '</span>'
+          + '<span>' + p.status.toUpperCase() + '</span></div>'
+          + infoDurasiWla;
+        listEl.appendChild(row);
+      });
+
+      // Bersihkan marker/polyline/listener untuk personel yang sudah berhenti tracking
+      Object.keys(personnelMarkers).forEach(uid=>{
+        if (!idsAktif.has(uid)){
+          map.removeLayer(personnelMarkers[uid]);
+          delete personnelMarkers[uid];
+          if (personnelPolylines[uid]){ map.removeLayer(personnelPolylines[uid]); delete personnelPolylines[uid]; }
+          if (trackUnsub[uid]){ trackUnsub[uid](); delete trackUnsub[uid]; }
+          delete trackCache[uid];
+        }
+      });
+
+      document.getElementById('sos-banner').classList.toggle('show', adaSos);
+
+      if (snap.empty){
+        listEl.innerHTML = '<div class="personnel-row" style="color:var(--text-dim);">Belum ada personel yang mengaktifkan tracking.</div>';
+      }
+    });
+
+    // Tombol toggle tracking pribadi
+    document.getElementById('btn-toggle-tracking').addEventListener('click', ()=>{
+      if (watchId === null){
+        mulaiTrackingSaya();
+      } else {
+        hentikanTrackingSaya();
+      }
+    });
+
+    // Tombol SOS pribadi
+    document.getElementById('btn-personal-sos').addEventListener('click', async ()=>{
+      statusPribadi = (statusPribadi === 'sos') ? 'aman' : 'sos';
+      const btn = document.getElementById('btn-personal-sos');
+      btn.textContent = statusPribadi === 'sos' ? '✅ BATALKAN SOS' : '🚨 SOS SAYA';
+      if (watchId !== null){
+        await updatePosisiKeFirestore(null); // update status tanpa perlu posisi baru
+      } else {
+        setTrackingStatus('Aktifkan tracking dulu supaya status SOS tercatat dengan posisi.');
+      }
+    });
+  }
+
+  // Dengarkan subcollection trackPoints seorang personel -> gambar polyline + isi cache jarak
+  function langgananTrackPoints(uid, map, color){
+    const qPoints = query(collection(db, 'personnel', uid, 'trackPoints'), orderBy('waktuMs', 'asc'));
+    trackUnsub[uid] = onSnapshot(qPoints, (snap)=>{
+      const titik = [];
+      snap.forEach(d=> titik.push(d.data()));
+      trackCache[uid] = titik;
+
+      const latlngs = titik.map(t=> [t.lat, t.lon]);
+      if (personnelPolylines[uid]){
+        personnelPolylines[uid].setLatLngs(latlngs);
+      } else if (latlngs.length > 1){
+        personnelPolylines[uid] = L.polyline(latlngs, { color, weight: 3, opacity: 0.6, dashArray: '4,4' }).addTo(map);
+      }
+    });
+  }
+
+  function setTrackingStatus(msg){
+    document.getElementById('tracking-status').textContent = msg || '';
+  }
+
+  let wakeLockRef = null;
+
+  async function mintaWakeLock(){
+    try{
+      if ('wakeLock' in navigator){
+        wakeLockRef = await navigator.wakeLock.request('screen');
+        wakeLockRef.addEventListener('release', ()=>{
+          setTrackingStatus('Catatan: layar terkunci/wake lock terlepas — tracking bisa terhenti sampai layar dibuka lagi.');
+        });
+      }
+    }catch(err){
+      // Wake Lock bisa gagal (mis. baterai hemat daya aktif) -- tracking tetap jalan, cuma tanpa jaminan layar menyala
+      console.warn('Wake Lock gagal:', err.message);
+    }
+  }
+
+  function lepasWakeLock(){
+    if (wakeLockRef){
+      wakeLockRef.release().catch(()=>{});
+      wakeLockRef = null;
+    }
+  }
+
+  function mulaiTrackingSaya(){
+    if (!navigator.geolocation){
+      setTrackingStatus('Perangkat/browser tidak mendukung GPS.');
+      return;
+    }
+    setTrackingStatus('Meminta izin lokasi...');
+    waktuMulaiTrackingSaya = Date.now();
+    mintaWakeLock(); // jaga layar tetap menyala selama tracking -- lihat catatan batasan di dokumen
+    watchId = navigator.geolocation.watchPosition(
+      (pos)=>{
+        setTrackingStatus('Tracking aktif — update terakhir: ' + new Date().toLocaleTimeString('id-ID') + ' · layar dijaga tetap menyala');
+        updatePosisiKeFirestore(pos.coords);
+      },
+      (err)=>{
+        setTrackingStatus('Gagal mengambil lokasi: ' + err.message);
+        watchId = null;
+        lepasWakeLock();
+        document.getElementById('btn-toggle-tracking').classList.remove('active');
+        document.getElementById('btn-toggle-tracking').textContent = '📍 AKTIFKAN TRACKING SAYA';
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+    );
+    document.getElementById('btn-toggle-tracking').classList.add('active');
+    document.getElementById('btn-toggle-tracking').textContent = '⏸ HENTIKAN TRACKING';
+  }
+
+  async function hentikanTrackingSaya(){
+    if (watchId !== null){
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    lepasWakeLock();
+    document.getElementById('btn-toggle-tracking').classList.remove('active');
+    document.getElementById('btn-toggle-tracking').textContent = '📍 AKTIFKAN TRACKING SAYA';
+    setTrackingStatus('Tracking dihentikan. Menghapus posisi Anda dari peta...');
+    try{
+      await deleteDoc(doc(db, 'personnel', auth.currentUser.uid));
+      // Catatan: subcollection trackPoints TIDAK otomatis terhapus saat dokumen induk dihapus
+      // di Firestore (perlu dibersihkan manual/Cloud Function kalau mau benar-benar rapi -- lihat catatan di panduan).
+    }catch(e){ /* abaikan kalau dokumen memang belum ada */ }
+    waktuMulaiTrackingSaya = null;
+    setTrackingStatus('Tracking dihentikan.');
+  }
+
+  async function updatePosisiKeFirestore(coords){
+    const user = auth.currentUser;
+    if (!user) return;
+    const dataUpdate = {
+      email: user.email,
+      nama: user.email,
+      status: statusPribadi,
+      waktu: serverTimestamp()
+    };
+    if (waktuMulaiTrackingSaya){
+      dataUpdate.mulaiTracking = waktuMulaiTrackingSaya;
+    }
+    if (coords){
+      dataUpdate.lat = coords.latitude;
+      dataUpdate.lon = coords.longitude;
+      dataUpdate.akurasi = coords.accuracy || null;
+      window.__posisiTerkiniSaya = { lat: coords.latitude, lon: coords.longitude };
+    }
+    try{
+      await setDoc(doc(db, 'personnel', user.uid), dataUpdate, { merge: true });
+      if (coords){
+        await addDoc(collection(db, 'personnel', user.uid, 'trackPoints'), {
+          lat: coords.latitude,
+          lon: coords.longitude,
+          waktuMs: Date.now()
+        });
+      }
+    }catch(err){
+      setTrackingStatus('Gagal update posisi: ' + err.message);
+    }
+  }
+
+  // ==========================================================
+  // RUANG KOMUNIKASI — Chat (teks + foto) & Laporan Cepat
+  // ==========================================================
+  let currentRoom = 'sos';
+  let unsubscribeChat = null;
+  let pendingReportTag = null; // tag laporan cepat yang sedang dipilih (mis. "Ketinggian Air Bendungan")
+
+  function initChat(){
+    document.querySelectorAll('.room-tabs button[data-room]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.room-tabs button[data-room]').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        currentRoom = btn.dataset.room;
+        subscribeToRoom(currentRoom);
+      });
+    });
+
+    document.querySelectorAll('.quick-report-row button[data-report]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        pendingReportTag = btn.dataset.report;
+        const input = document.getElementById('chat-text-input');
+        input.placeholder = 'Tulis detail untuk laporan: ' + pendingReportTag + ' (mis. angka/keterangan)';
+        input.focus();
+      });
+    });
+
+    document.getElementById('btn-attach-photo').addEventListener('click', ()=>{
+      document.getElementById('chat-photo-input').click();
+    });
+
+    document.getElementById('chat-photo-input').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if (file) await kirimPesan({ file });
+      e.target.value = '';
+    });
+
+    document.getElementById('btn-send-chat').addEventListener('click', async ()=>{
+      const text = document.getElementById('chat-text-input').value.trim();
+      if (!text) return;
+      await kirimPesan({ text });
+    });
+
+    document.getElementById('chat-text-input').addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter'){
+        e.preventDefault();
+        document.getElementById('btn-send-chat').click();
+      }
+    });
+
+    document.getElementById('btn-start-call').addEventListener('click', ()=> mulaiVideoCall(currentRoom));
+    document.getElementById('btn-hangup').addEventListener('click', tutupVideoCall);
+
+    subscribeToRoom(currentRoom);
+  }
+
+  function subscribeToRoom(roomId){
+    if (unsubscribeChat) unsubscribeChat();
+    const listEl = document.getElementById('chat-messages');
+    listEl.innerHTML = '';
+    const q = query(collection(db, 'chatRooms', roomId, 'messages'), orderBy('waktu', 'asc'));
+    unsubscribeChat = onSnapshot(q, (snap)=>{
+      listEl.innerHTML = '';
+      snap.forEach(docSnap=>{
+        const m = docSnap.data();
+        renderPesan(m);
+      });
+      listEl.scrollTop = listEl.scrollHeight;
+    });
+  }
+
+  function renderPesan(m){
+    const listEl = document.getElementById('chat-messages');
+    const isAi = m.source === 'ai';
+    const mine = m.uid === auth.currentUser?.uid;
+    const div = document.createElement('div');
+
+    if (isAi){
+      div.className = 'msg ai' + (m.aiTingkat === 'kritis' ? ' kritis' : '');
+    } else {
+      div.className = 'msg ' + (mine ? 'mine' : 'other') + (m.reportTag ? ' report' : '');
+    }
+
+    let html = '<div class="meta">' + (m.namaPengirim || m.email || 'Petugas') + '</div>';
+    if (isAi){
+      html += '<div class="ai-tag">🤖 ' + (m.aiTingkat ? m.aiTingkat.toUpperCase() : 'AI AGENT') + '</div>';
+    }
+    if (m.reportTag){
+      html += '<div class="report-tag">📋 ' + m.reportTag + '</div>';
+    }
+    if (m.text){
+      html += '<div>' + m.text.replace(/</g,'&lt;').replace(/\n/g,'<br>') + '</div>';
+    }
+    if (m.photoUrl){
+      html += '<img src="' + m.photoUrl + '" onclick="window.open(this.src)">';
+    }
+    div.innerHTML = html;
+    listEl.appendChild(div);
+  }
+
+  async function kirimPesan({ text, file }){
+    const user = auth.currentUser;
+    if (!user) return;
+    setStatus2('chat-upload-status', '', '');
+
+    let photoUrl = null;
+    if (file){
+      try{
+        setStatus2('chat-upload-status', 'Mengunggah foto...', 'info');
+        const path = `chat-photos/${currentRoom}/${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, file);
+        photoUrl = await getDownloadURL(storageRef);
+        setStatus2('chat-upload-status', '', '');
+      }catch(err){
+        setStatus2('chat-upload-status', 'Gagal unggah foto: ' + err.message, 'err');
+        return;
+      }
+    }
+
+    const payload = {
+      uid: user.uid,
+      email: user.email,
+      namaPengirim: user.email,
+      text: text || null,
+      photoUrl: photoUrl || null,
+      reportTag: pendingReportTag || null,
+      source: 'web',
+      waktu: serverTimestamp()
+    };
+
+    try{
+      await addDoc(collection(db, 'chatRooms', currentRoom, 'messages'), payload);
+      document.getElementById('chat-text-input').value = '';
+      document.getElementById('chat-text-input').placeholder = 'Tulis pesan...';
+      pendingReportTag = null;
+    }catch(err){
+      setStatus2('chat-upload-status', 'Gagal kirim pesan: ' + err.message, 'err');
+    }
+  }
+
+  function setStatus2(elId, msg, type){
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = type || '';
+  }
+
+  // ==========================================================
+  // VIDEO CALL — WebRTC dengan Firestore sebagai jalur signaling
+  // ==========================================================
+  const rtcConfig = {
+    iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }] // STUN publik gratis (Google)
+  };
+  let peerConnection = null;
+  let localStream = null;
+  let currentCallDocRef = null;
+  let unsubCallListeners = [];
+
+  async function mulaiVideoCall(roomId){
+    document.getElementById('call-overlay').classList.add('show');
+    document.getElementById('call-room-label').textContent = 'Video Call — Ruang: ' + roomId;
+    document.getElementById('call-status').textContent = 'Meminta izin kamera/mikrofon...';
+
+    try{
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      document.getElementById('local-video').srcObject = localStream;
+    }catch(err){
+      document.getElementById('call-status').textContent = 'Gagal akses kamera/mikrofon: ' + err.message;
+      return;
+    }
+
+    peerConnection = new RTCPeerConnection(rtcConfig);
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+    const remoteStream = new MediaStream();
+    document.getElementById('remote-video').srcObject = remoteStream;
+    peerConnection.ontrack = (event)=>{
+      event.streams[0].getTracks().forEach(track => remoteStream.addTrack(track));
+    };
+
+    // Dokumen call bersama per room (POC: satu call slot per room, dipakai bergantian)
+    currentCallDocRef = doc(db, 'calls', roomId);
+    const callSnap = await getDoc(currentCallDocRef);
+
+    const callerCandidates = collection(currentCallDocRef, 'callerCandidates');
+    const calleeCandidates = collection(currentCallDocRef, 'calleeCandidates');
+
+    if (!callSnap.exists() || !callSnap.data().offer){
+      // ---- Jadi PEMANGGIL (buat offer baru) ----
+      document.getElementById('call-status').textContent = 'Menunggu peserta lain bergabung...';
+      peerConnection.onicecandidate = (event)=>{
+        if (event.candidate) addDoc(callerCandidates, event.candidate.toJSON());
+      };
+      const offerDesc = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offerDesc);
+      await setDoc(currentCallDocRef, { offer: { type: offerDesc.type, sdp: offerDesc.sdp } });
+
+      const unsub1 = onSnapshot(currentCallDocRef, async (snap)=>{
+        const data = snap.data();
+        if (data && data.answer && !peerConnection.currentRemoteDescription){
+          document.getElementById('call-status').textContent = 'Tersambung.';
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        }
+      });
+      const unsub2 = onSnapshot(calleeCandidates, (snap)=>{
+        snap.docChanges().forEach(change=>{
+          if (change.type === 'added') peerConnection.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+        });
+      });
+      unsubCallListeners = [unsub1, unsub2];
+
+    } else {
+      // ---- Jadi PENERIMA (jawab offer yang sudah ada) ----
+      document.getElementById('call-status').textContent = 'Menyambung ke panggilan...';
+      peerConnection.onicecandidate = (event)=>{
+        if (event.candidate) addDoc(calleeCandidates, event.candidate.toJSON());
+      };
+      const offer = callSnap.data().offer;
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const answerDesc = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answerDesc);
+      await setDoc(currentCallDocRef, { answer: { type: answerDesc.type, sdp: answerDesc.sdp } }, { merge: true });
+
+      const unsub1 = onSnapshot(callerCandidates, (snap)=>{
+        snap.docChanges().forEach(change=>{
+          if (change.type === 'added') peerConnection.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+        });
+      });
+      document.getElementById('call-status').textContent = 'Tersambung.';
+      unsubCallListeners = [unsub1];
+    }
+  }
+
+  async function tutupVideoCall(){
+    document.getElementById('call-overlay').classList.remove('show');
+    unsubCallListeners.forEach(u => u && u());
+    unsubCallListeners = [];
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    if (peerConnection) peerConnection.close();
+    peerConnection = null;
+    localStream = null;
+    // Bersihkan dokumen call supaya slot room bisa dipakai panggilan berikutnya
+    if (currentCallDocRef){
+      try{ await deleteDoc(currentCallDocRef); }catch(e){}
+      currentCallDocRef = null;
+    }
+  }
+
+  // ==========================================================
+  // PWA — registrasi service worker (supaya bisa "Install App" / Add to Home Screen)
+  // ==========================================================
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('service-worker.js').catch(err=>{
+        console.warn('Service worker gagal terdaftar:', err.message);
+      });
+    });
+  }
+
+  // ==========================================================
+  // PWA — banner pasang shortcut otomatis (1-tap "Add to Home Screen")
+  // Catatan jujur: browser TIDAK mengizinkan instalasi 100% tanpa sentuhan user
+  // sama sekali (kebijakan keamanan Chrome/Android) -- ini cara paling dekat:
+  // begitu Chrome mendeteksi halaman layak di-install, event 'beforeinstallprompt'
+  // otomatis tertangkap & banner muncul sendiri, tinggal 1 tap tombol.
+  // ==========================================================
+  let deferredInstallPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault(); // cegah mini-infobar bawaan Chrome, pakai banner sendiri
+    deferredInstallPrompt = e;
+    // Jangan tawarkan lagi kalau user sudah pernah pilih "Nanti Saja" di sesi ini
+    if (!sessionStorage.getItem('installBannerDismissed')){
+      document.getElementById('install-banner').classList.remove('hidden');
+    }
+  });
+
+  document.getElementById('install-btn').addEventListener('click', async ()=>{
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt(); // munculkan dialog instalasi asli Android
+    await deferredInstallPrompt.userChoice; // tunggu user pilih Install/Cancel di dialog
+    deferredInstallPrompt = null;
+    document.getElementById('install-banner').classList.add('hidden');
+  });
+
+  document.getElementById('install-dismiss-btn').addEventListener('click', ()=>{
+    sessionStorage.setItem('installBannerDismissed', '1');
+    document.getElementById('install-banner').classList.add('hidden');
+  });
+
+  // Begitu app berhasil dipasang, sembunyikan banner (jaga-jaga kalau masih terbuka)
+  window.addEventListener('appinstalled', ()=>{
+    document.getElementById('install-banner').classList.add('hidden');
+  });
+</script>
+</body>
+</html>
