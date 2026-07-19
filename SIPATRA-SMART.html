@@ -458,6 +458,11 @@
     display:inline-flex !important; align-items:center; gap:6px;
   }
   .room-tabs button.active{ background:var(--primary-light,#E3F3EC) !important; }
+  /* PENTING: pastikan .hidden tetap menang walau bentrok dengan rule pill di atas --
+     tanpa ini, tombol/tab yang disembunyikan JS (mis. tab VIP untuk role non-admin)
+     akan tetap muncul karena selector ".room-tabs button" spesifisitasnya lebih tinggi
+     dari ".hidden" saja. */
+  .room-tabs button.hidden{ display:none !important; }
 
   .quick-report-row button{ border-radius:999px !important; padding:6px 14px !important; }
 
@@ -1305,7 +1310,7 @@ MAIN CONTENT
     document.getElementById('btn-tandai-wilayah-kerja').classList.toggle('hidden', !isAdminAtauVip);
 
     // Tab room "VIP -- Command Channel" HANYA untuk admin/editor/vip -- BUKAN untuk 'user'/'guest'
-    const bolehLihatRoomVip = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+    const bolehLihatRoomVip = (window.__userRole === 'admin' || window.__userRole === 'vip');
     const tabVip = document.getElementById('tab-room-vip');
     tabVip.classList.toggle('hidden', !bolehLihatRoomVip);
     // Kalau sedang di room VIP tapi role tidak berhak (mis. baru diturunkan jadi 'user'), paksa balik ke room SOS
