@@ -1257,16 +1257,20 @@
     return jarak <= wilayahKerjaCache.radiusMeter;
   }
 
+  let statusCheckInHariIniDiketahui = false; // cache lokal -- begitu sudah tahu (checkin ada/belum ada), jangan baca Firestore lagi tiap update GPS
+
   async function cekAutoCheckIn(lat, lon, dipicuManual){
     if (window.__userRole !== 'user') return; // HANYA role='user' yang tunduk sistem ini
     if (!wilayahKerjaCache) return; // belum ada Wilayah Kerja ditandai admin
     if (!auth.currentUser) return;
+    if (statusCheckInHariIniDiketahui && !dipicuManual) return; // sudah pernah dicek sesi ini, hemat kuota baca
 
     if (!titikDalamWilayahKerja(lat, lon)) return; // masih di luar Wilayah Kerja (lingkaran ATAU poligon)
 
     const idDok = idDokumenJadwalHariIni(auth.currentUser.uid);
     try{
       const existing = await getDoc(doc(db, 'jadwalKerja', idDok));
+      statusCheckInHariIniDiketahui = true; // hasil apa pun, tidak perlu baca ulang otomatis lagi hari ini
       if (existing.exists()){
         if (dipicuManual) alert('Anda sudah check-in hari ini.');
         return; // sudah check-in hari ini, jangan dobel (prinsip 1x di kemunculan pertama)
@@ -1944,7 +1948,7 @@
 
     // Cek dialog check-out setiap 30 detik
     if (intervalCekCheckout) clearInterval(intervalCekCheckout);
-    intervalCekCheckout = setInterval(cekWaktuCheckout, 30000);
+    intervalCekCheckout = setInterval(cekWaktuCheckout, 180000);
     cekWaktuCheckout();
 
     // ==========================================================
