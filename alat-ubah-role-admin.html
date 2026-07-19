@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alat Darurat — Ubah Role Jadi Admin</title>
+<style>
+  body{ background:#12151A; color:#e8e8e8; font-family:monospace; padding:20px; max-width:480px; margin:0 auto; }
+  h2{ color:#FF6A1A; font-size:18px; }
+  input{ width:100%; box-sizing:border-box; background:#000; border:1px solid #333; color:#fff; padding:10px; margin-bottom:10px; font-family:monospace; }
+  button{ width:100%; padding:12px; background:#FF6A1A; color:#000; border:none; font-weight:700; cursor:pointer; font-family:monospace; }
+  button:disabled{ opacity:0.5; cursor:not-allowed; }
+  #status{ margin-top:14px; font-size:12.5px; line-height:1.6; white-space:pre-wrap; }
+  .ok{ color:#5fd68a; }
+  .err{ color:#e05f5f; }
+  .catatan{ font-size:11px; color:#999; margin-top:20px; border-top:1px solid #333; padding-top:14px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<h2>🔧 Alat Darurat — Ubah Role Jadi Admin</h2>
+<p style="font-size:12px; color:#999;">Login pakai akun yang mau diubah, lalu klik tombol. Cuma bisa ubah akun MILIK SENDIRI (sesuai Firestore Rules), tidak bisa dipakai untuk ubah akun orang lain.</p>
+
+<input type="email" id="input-email" placeholder="Email akun">
+<input type="password" id="input-pass" placeholder="Password akun">
+<button id="btn-jalankan">Login & Ubah Role Jadi Admin</button>
+
+<div id="status"></div>
+
+<div class="catatan">
+  <b>Catatan:</b><br>
+  • Kalau muncul error "quota"/"resource-exhausted", berarti kuota harian Firestore proyek MASIH habis — tunggu sampai reset (±15:00 WITA), lalu coba lagi.<br>
+  • Setelah berhasil, LOGOUT dari dashboard utama lalu LOGIN LAGI supaya perubahan role terbaca.<br>
+  • Simpan file ini baik-baik untuk dipakai lagi kalau kejadian serupa terulang.
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBu5UkKH_3vwGS2FlVagPB2IMTfTfdydKo",
+    authDomain: "scie-tanggap.firebaseapp.com",
+    projectId: "scie-tanggap",
+    storageBucket: "scie-tanggap.firebasestorage.app",
+    messagingSenderId: "628625032096",
+    appId: "1:628625032096:web:c7556287cebffddb7d5ac5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  function tulisStatus(pesan, tipe){
+    const el = document.getElementById('status');
+    el.textContent = pesan;
+    el.className = tipe || '';
+  }
+
+  document.getElementById('btn-jalankan').addEventListener('click', async ()=>{
+    const email = document.getElementById('input-email').value.trim();
+    const pass = document.getElementById('input-pass').value;
+    const btn = document.getElementById('btn-jalankan');
+
+    if (!email || !pass){
+      tulisStatus('Isi email dan password dulu.', 'err');
+      return;
+    }
+
+    btn.disabled = true;
+    tulisStatus('Login...', '');
+
+    try{
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      tulisStatus('Login berhasil (' + cred.user.email + '). Mengubah role...', '');
+
+      await updateDoc(doc(db, 'users', cred.user.uid), { role: 'admin' });
+
+      tulisStatus('✅ BERHASIL! Role akun ' + cred.user.email + ' sudah jadi admin.\n\nSekarang: buka dashboard utama, LOGOUT lalu LOGIN LAGI supaya perubahan terbaca.', 'ok');
+    }catch(err){
+      let pesanRamah = err.message;
+      if (err.code === 'permission-denied' || err.message.includes('insufficient')){
+        pesanRamah = 'Ditolak sistem (Firestore Rules) -- kemungkinan akun ini sebelumnya BUKAN role "user" yang sedang login sendiri, atau Rules belum sesuai.';
+      } else if (err.message.toLowerCase().includes('quota') || err.message.toLowerCase().includes('resource-exhausted')){
+        pesanRamah = 'Kuota harian Firestore proyek MASIH habis. Tunggu sampai reset otomatis (sekitar jam 15:00 WITA), lalu coba lagi.';
+      }
+      tulisStatus('❌ Gagal: ' + pesanRamah, 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
