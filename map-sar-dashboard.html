@@ -437,14 +437,14 @@
           <div style="font-size:10px; color:var(--text-dim); margin-bottom:8px;">
             Lantai/ketinggian diisi manual (bukan dari GPS) — akurasi ketinggian GPS terlalu kasar untuk membedakan antar-lantai bangunan industri.
           </div>
-          <button id="btn-pindai-ble" class="icon-btn" style="width:100%; padding:8px; margin-bottom:8px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);">📶 Pindai BLE Beacon Lantai Ini (opsional)</button>
+          <button id="btn-pindai-ble" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim); margin-bottom:8px;" title="Pindai BLE Beacon Lantai Ini (opsional)">📶</button>
           <div id="hasil-ble-zona" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;"></div>
           <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
             Klik di peta untuk menandai titik batas zona (minimal 3 titik). Titik akan otomatis tersambung membentuk area.
           </div>
           <div style="display:flex; gap:8px;">
-            <button id="btn-selesai-zona" class="icon-btn" style="width:auto; padding:8px 14px; background:var(--green); color:#0a0c0d;">✅ Selesai (<span id="jumlah-titik-zona">0</span> titik)</button>
-            <button id="btn-batal-zona" class="icon-btn" style="width:auto; padding:8px 14px;">✖ Batal</button>
+            <button id="btn-selesai-zona" class="icon-btn icon-square-btn" style="background:var(--green); color:#0a0c0d;" title="Selesai Menandai Zona">✅<span id="jumlah-titik-zona" style="font-size:9px; margin-left:2px;">0</span></button>
+            <button id="btn-batal-zona" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
         <div id="daftar-zona-bahaya" style="margin-top:8px;"></div>
@@ -453,14 +453,14 @@
         <div id="panel-tandai-markas" class="hidden" style="border:1px solid var(--green); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-markas" placeholder="Nama Markas (mis. Pos Komando Utama)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
           <input type="number" id="input-radius-markas" placeholder="Radius (meter, mis. 50)" value="50" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
-          <button id="btn-markas-posisi-saya" class="icon-btn" style="width:100%; padding:8px; margin-bottom:8px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);">📍 Pakai Posisi Saya Sekarang sebagai Titik Pusat</button>
+          <button id="btn-markas-posisi-saya" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim); margin-bottom:8px;" title="Pakai Posisi Saya Sekarang sebagai Titik Pusat">📍</button>
           <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
             Atau klik di peta untuk menandai titik pusat Markas secara manual. Kalau Markas pindah, hapus yang lama lalu tandai titik baru.
           </div>
           <div id="status-titik-markas" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;">Belum ada titik pusat dipilih.</div>
           <div style="display:flex; gap:8px;">
-            <button id="btn-simpan-markas" class="icon-btn" style="width:auto; padding:8px 14px; background:var(--green); color:#0a0c0d;">✅ Simpan Markas</button>
-            <button id="btn-batal-markas" class="icon-btn" style="width:auto; padding:8px 14px;">✖ Batal</button>
+            <button id="btn-simpan-markas" class="icon-btn icon-square-btn" style="background:var(--green); color:#0a0c0d;" title="Simpan Markas">💾</button>
+            <button id="btn-batal-markas" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
         <div id="daftar-zona-markas" style="margin-top:8px;"></div>
@@ -469,14 +469,14 @@
         <div id="panel-tandai-aman" class="hidden" style="border:1px solid #4aa3ff; padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-aman" placeholder="Nama Zona Aman (mis. Titik Kumpul Evakuasi 1)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
           <input type="number" id="input-radius-aman" placeholder="Radius (meter, mis. 30)" value="30" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
-          <button id="btn-aman-posisi-saya" class="icon-btn" style="width:100%; padding:8px; margin-bottom:8px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);">📍 Pakai Posisi Saya Sekarang sebagai Titik Pusat</button>
+          <button id="btn-aman-posisi-saya" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim); margin-bottom:8px;" title="Pakai Posisi Saya Sekarang sebagai Titik Pusat">📍</button>
           <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
             Zona Aman = titik kumpul/evakuasi darurat (bencana, kebakaran, kecelakaan kerja) — bisa lebih dari satu, terpisah dari Zona Markas operasional.
           </div>
           <div id="status-titik-aman" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;">Belum ada titik pusat dipilih.</div>
           <div style="display:flex; gap:8px;">
-            <button id="btn-simpan-aman" class="icon-btn" style="width:auto; padding:8px 14px; background:#4aa3ff; color:#0a0c0d;">✅ Simpan Zona Aman</button>
-            <button id="btn-batal-aman" class="icon-btn" style="width:auto; padding:8px 14px;">✖ Batal</button>
+            <button id="btn-simpan-aman" class="icon-btn icon-square-btn" style="background:#4aa3ff; color:#0a0c0d;" title="Simpan Zona Aman">💾</button>
+            <button id="btn-batal-aman" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
         <div id="daftar-zona-aman" style="margin-top:8px;"></div>
@@ -496,7 +496,7 @@
 
           <div id="wilayah-kerja-mode-lingkaran">
             <input type="number" id="input-radius-wilayah-kerja" placeholder="Radius (meter, mis. 3000)" value="3000" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
-            <button id="btn-wilayah-kerja-posisi-saya" class="icon-btn" style="width:100%; padding:8px; margin-bottom:8px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);">📍 Pakai Posisi Saya Sekarang sebagai Anchor</button>
+            <button id="btn-wilayah-kerja-posisi-saya" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim); margin-bottom:8px;" title="Pakai Posisi Saya Sekarang sebagai Anchor">📍</button>
             <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
               Anchor = titik pusat (mis. gerbang OGS). Klik di peta untuk menandai, atau pakai posisi Anda sekarang.
             </div>
@@ -511,8 +511,8 @@
 
           <div id="status-titik-wilayah-kerja" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;">Belum ada titik/area dipilih.</div>
           <div style="display:flex; gap:8px;">
-            <button id="btn-simpan-wilayah-kerja" class="icon-btn" style="width:auto; padding:8px 14px; background:#ffb84d; color:#0a0c0d;">✅ Simpan Wilayah Kerja</button>
-            <button id="btn-batal-wilayah-kerja" class="icon-btn" style="width:auto; padding:8px 14px;">✖ Batal</button>
+            <button id="btn-simpan-wilayah-kerja" class="icon-btn icon-square-btn" style="background:#ffb84d; color:#0a0c0d;" title="Simpan Wilayah Kerja">💾</button>
+            <button id="btn-batal-wilayah-kerja" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
         <div id="daftar-wilayah-kerja" style="margin-top:8px;"></div>
