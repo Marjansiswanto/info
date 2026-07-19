@@ -648,6 +648,7 @@ MAIN CONTENT
       <button id="btn-checkout-selesai" class="icon-btn" style="width:100%; padding:10px; background:var(--green); color:#0a0c0d; font-weight:700;">✅ CHECK-OUT (Selesai Kerja)</button>
       <button id="btn-checkout-tutup-wo" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--amber); color:#0a0c0d; font-weight:700;">📋 TUTUP WO</button>
       <button id="btn-checkout-lembur" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--panel); border:1px solid var(--orange); color:var(--orange);">🕐 LEMBUR</button>
+      <button id="btn-checkout-akan-kembali" class="icon-btn hidden" style="width:100%; padding:10px; background:transparent; border:1px solid var(--line-bright); color:var(--text);">🔄 Akan Kembali (Masih Bertugas)</button>
     </div>
   </div>
 </div>
@@ -1529,6 +1530,7 @@ MAIN CONTENT
 
     initPersonnelTracking(map);
     initChat();
+    mulaiPemantauanGeofencePasif(); // khusus role='user' -- auto check-in/out tanpa perlu tombol tracking
   }
 
   // ==========================================================
@@ -1744,6 +1746,68 @@ MAIN CONTENT
     }
   }
 
+  // ==========================================================
+  // PEMANTAUAN GEOFENCE PASIF — khusus role='user' (personil/supervisor/manager).
+  // Berjalan otomatis di LATAR BELAKANG begitu dashboard dibuka, TANPA perlu
+  // user menekan tombol "Aktifkan Tracking Saya" terlebih dahulu. Tugasnya
+  // HANYA memantau transisi masuk/keluar Zona/Wilayah Kerja untuk memicu
+  // check-in otomatis (sesuai jadwal shift) dan pop-up konfirmasi check-out
+  // begitu terdeteksi keluar zona -- terpisah dari tracking manual yang
+  // mengirim posisi live ke peta.
+  // ==========================================================
+  let watchIdGeofencePasif = null;
+  let statusDiDalamWilayahKerjaSaatIni = null; // null = belum pernah dicek sama sekali
+
+  function mulaiPemantauanGeofencePasif(){
+    if (window.__userRole !== 'user') return; // HANYA personil/supervisor/manager
+    if (!navigator.geolocation) return;
+    if (watchIdGeofencePasif !== null) return; // sudah berjalan, jangan dobel
+
+    watchIdGeofencePasif = navigator.geolocation.watchPosition(
+      (pos)=> cekTransisiZonaKerja(pos.coords.latitude, pos.coords.longitude),
+      (err)=> console.warn('Pemantauan geofence pasif gagal mengambil lokasi:', err.message),
+      { enableHighAccuracy:false, maximumAge:30000, timeout:20000 } // hemat baterai -- akurasi kasar cukup utk deteksi masuk/keluar zona besar
+    );
+  }
+
+  async function cekTransisiZonaKerja(lat, lon){
+    if (!wilayahKerjaCache) return; // admin belum tandai Wilayah Kerja -- tidak ada yang bisa dipantau
+    const sekarangDiDalam = titikDalamWilayahKerja(lat, lon);
+
+    if (statusDiDalamWilayahKerjaSaatIni === null){
+      // Pemeriksaan pertama sejak dashboard dibuka -- kalau kebetulan sudah di dalam zona, langsung check-in
+      statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
+      if (sekarangDiDalam) cekAutoCheckIn(lat, lon, false);
+      return;
+    }
+
+    if (sekarangDiDalam && !statusDiDalamWilayahKerjaSaatIni){
+      // TRANSISI: baru saja MASUK Zona/Wilayah Kerja -> check-in otomatis sesuai jadwal shift
+      cekAutoCheckIn(lat, lon, false);
+    } else if (!sekarangDiDalam && statusDiDalamWilayahKerjaSaatIni){
+      // TRANSISI: baru saja KELUAR Zona/Wilayah Kerja -> tampilkan pop-up konfirmasi check-out
+      await tampilkanPopupKeluarZonaKerja();
+    }
+    statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
+  }
+
+  // Dipanggil begitu geofence pasif mendeteksi user KELUAR dari Wilayah Kerja --
+  // cek dulu apakah memang sedang ada sesi check-in aktif hari ini sebelum menampilkan pop-up
+  // (supaya tidak muncul pop-up untuk orang yang memang belum/tidak check-in).
+  async function tampilkanPopupKeluarZonaKerja(){
+    if (!auth.currentUser) return;
+    if (dialogCheckoutSudahTampil) return; // jangan tumpuk dialog kalau sudah ada yang tampil (mis. dari cekWaktuCheckout)
+    const idDok = idDokumenJadwalHariIni(auth.currentUser.uid);
+    try{
+      const snap = await getDoc(doc(db, 'jadwalKerja', idDok));
+      if (!snap.exists() || snap.data().statusHariIni !== 'aktif') return; // belum check-in -- tidak relevan
+      jadwalKerjaHariIniCache = { id: idDok, ...snap.data() };
+      tampilkanDialogCheckout(snap.data(), 'keluar-zona');
+    }catch(err){
+      console.error('Gagal cek status untuk pop-up keluar zona:', err);
+    }
+  }
+
   // Dipanggil berkala (setInterval) untuk cek apakah waktunya tampilkan dialog check-out
   async function cekWaktuCheckout(){
     if (window.__userRole !== 'user') return;
@@ -1768,23 +1832,31 @@ MAIN CONTENT
     }
   }
 
-  function tampilkanDialogCheckout(dataJadwal){
+  function tampilkanDialogCheckout(dataJadwal, alasan){
     dialogCheckoutSudahTampil = true;
     const overlay = document.getElementById('checkout-modal-overlay');
     const info = document.getElementById('checkout-modal-info');
     const btnTutupWO = document.getElementById('btn-checkout-tutup-wo');
     const btnLembur = document.getElementById('btn-checkout-lembur');
+    const btnAkanKembali = document.getElementById('btn-checkout-akan-kembali');
 
-    info.textContent = 'Shift ' + dataJadwal.shiftTerdeteksi + ' Anda sudah selesai. Silakan pilih tindakan:';
+    const dipicuKeluarZona = (alasan === 'keluar-zona');
+    info.textContent = dipicuKeluarZona
+      ? 'Anda terdeteksi MENINGGALKAN Zona Kerja. Apakah pekerjaan sudah selesai?'
+      : 'Shift ' + dataJadwal.shiftTerdeteksi + ' Anda sudah selesai. Silakan pilih tindakan:';
 
     // Tutup WO -- HANYA tampil kalau ada WO aktif tercatat di sesi tracking berjalan
     const adaWoAktif = !!idRuteAktif;
     btnTutupWO.classList.toggle('hidden', !adaWoAktif);
 
-    // Lembur -- HANYA untuk Shift 1 & Shift 2, dan HANYA kalau belum pernah lembur hari ini
-    const bolehLembur = (dataJadwal.shiftTerdeteksi === 'Shift 1' || dataJadwal.shiftTerdeteksi === 'Shift 2') && !dataJadwal.lembur;
+    // Lembur -- HANYA relevan untuk trigger jadwal (bukan keluar zona), Shift 1/2, & belum pernah lembur hari ini
+    const bolehLembur = !dipicuKeluarZona
+      && (dataJadwal.shiftTerdeteksi === 'Shift 1' || dataJadwal.shiftTerdeteksi === 'Shift 2') && !dataJadwal.lembur;
     btnLembur.classList.toggle('hidden', !bolehLembur);
     btnLembur.textContent = dataJadwal.shiftTerdeteksi === 'Shift 1' ? '🕐 LEMBUR s/d 7/7 Pagi (19:30)' : '🕐 LEMBUR s/d 7/7 Malam (07:30)';
+
+    // Akan Kembali -- HANYA muncul kalau dipicu keluar zona (bukan jadwal shift habis)
+    btnAkanKembali.classList.toggle('hidden', !dipicuKeluarZona);
 
     overlay.classList.remove('hidden');
   }
@@ -1793,6 +1865,12 @@ MAIN CONTENT
     document.getElementById('checkout-modal-overlay').classList.add('hidden');
     dialogCheckoutSudahTampil = false;
   }
+
+  document.getElementById('btn-checkout-akan-kembali').addEventListener('click', ()=>{
+    // User memilih tetap bertugas (cuma sementara keluar zona, mis. ambil alat/istirahat) -- tidak checkout
+    tutupDialogCheckout();
+    setTrackingStatus('Dicatat: masih bertugas. Pop-up akan muncul lagi kalau Anda keluar zona kerja setelah ini.');
+  });
 
   document.getElementById('btn-checkout-selesai').addEventListener('click', async ()=>{
     if (!jadwalKerjaHariIniCache) return;
