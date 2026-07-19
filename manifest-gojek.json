@@ -1,0 +1,32 @@
+{
+  "name": "Map SAR — Dashboard",
+  "short_name": "Map SAR",
+  "description": "Dashboard tracking personel & komunikasi SAR — FIDI-SCIE (tema terang)",
+  "start_url": "./map-sar-dashboard-gojek.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#F7F8FA",
+  "theme_color": "#0B7A5B",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
