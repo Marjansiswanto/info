@@ -2796,8 +2796,9 @@
   async function muatSemuaUserUntukPencarian(){
     // Pencarian user HANYA berguna untuk yang boleh mulai DM baru -- sembunyikan kolom cari kalau tidak berhak
     const kolomCari = document.getElementById('dm-input-cari-user');
-    kolomCari.parentElement.querySelector('#dm-input-cari-user').classList.toggle('hidden', !bolehMulaiDMBaru());
-    if (!bolehMulaiDMBaru()) return;
+    const berhak = bolehMulaiDMBaru();
+    kolomCari.classList.toggle('hidden', !berhak);
+    if (!berhak) return;
     try{
       const snap = await getDocs(collection(db, 'users'));
       semuaUserCache = [];
@@ -2866,22 +2867,24 @@
     if (!auth.currentUser) return;
     dmRoomAktif = idRoomDM(auth.currentUser.uid, uidLawan);
 
-    // Pastikan dokumen dmRooms ada (create-if-missing) supaya muncul di daftar kedua belah pihak
+    // CATATAN PENTING: sengaja TIDAK getDoc() dulu untuk cek "apakah room sudah ada" --
+    // Firestore Rules TIDAK BISA mengevaluasi izin baca pada dokumen yang belum ada
+    // (resource.data jadi null, rules gagal dievaluasi -> selalu dianggap permission-denied).
+    // Solusinya: langsung setDoc dengan merge:true. Firestore otomatis memeriksa rule
+    // "create" kalau dokumen belum ada (butuh admin/editor/vip -- sesuai desain: cuma
+    // mereka boleh MULAI DM baru), atau rule "update" kalau sudah ada (cukup jadi
+    // partisipan -- sesuai desain: user biasa boleh balas di percakapan yang sudah ada).
     try{
       const roomRef = doc(db, 'dmRooms', dmRoomAktif);
-      const roomSnap = await getDoc(roomRef);
-      if (!roomSnap.exists()){
-        const uidUrutan = [auth.currentUser.uid, uidLawan].sort();
-        const namaSaya = auth.currentUser.email;
-        const dataUrutan = uidUrutan[0] === auth.currentUser.uid
-          ? { participantNama: [namaSaya, namaLawan], participantEmail: [auth.currentUser.email, ''] }
-          : { participantNama: [namaLawan, namaSaya], participantEmail: ['', auth.currentUser.email] };
-        await setDoc(roomRef, {
-          participants: uidUrutan,
-          ...dataUrutan,
-          dibuatWaktu: serverTimestamp()
-        });
-      }
+      const uidUrutan = [auth.currentUser.uid, uidLawan].sort();
+      const namaSaya = auth.currentUser.email;
+      const dataUrutan = uidUrutan[0] === auth.currentUser.uid
+        ? { participantNama: [namaSaya, namaLawan], participantEmail: [auth.currentUser.email, ''] }
+        : { participantNama: [namaLawan, namaSaya], participantEmail: ['', auth.currentUser.email] };
+      await setDoc(roomRef, {
+        participants: uidUrutan,
+        ...dataUrutan
+      }, { merge: true });
     }catch(err){
       alert('Gagal membuka percakapan: ' + err.message);
       return;
