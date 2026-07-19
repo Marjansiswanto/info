@@ -265,6 +265,32 @@
 
   /* Eyebrow/label kecil: pakai Secondary oranye, letter-spacing dikurangi supaya lebih "human", bukan kode HUD */
   .eyebrow{ letter-spacing:.05em; }
+
+  /* ================================================================
+     PERBAIKAN: beberapa warna sebelumnya ditulis sebagai kode hex
+     langsung (bukan variabel), jadi tidak ikut berubah ke tema terang --
+     inilah yang bikin ruang chat/peta tetap gelap & teks tak terbaca.
+     ================================================================ */
+  .leaflet-container{ background:#EAECEF !important; }
+
+  /* Ruang chat: latar terang, bubble beda warna tipis per jenis pengirim */
+  .chat-messages{ background:#F1F2F4 !important; }
+  .msg{ color:var(--text) !important; }
+  .msg.mine{ background:#E3F3EC !important; border-color:var(--orange) !important; }
+  .msg.other{ background:#FFFFFF !important; border-color:var(--line-bright) !important; }
+  .msg.ai{ background:#EAF2FF !important; border-color:#2F6FED !important; }
+  .msg.ai .ai-tag{ color:#2F6FED !important; border-color:#2F6FED !important; }
+  .msg.ai.kritis{ background:#FDECEC !important; border-color:var(--red) !important; }
+  .msg .meta{ color:var(--text-dim) !important; }
+
+  /* Banner SOS: tetap merah mencolok, tapi versi terang supaya teks tetap terbaca */
+  .sos-banner{ background:#FDECEC !important; color:#B3363A !important; border-color:var(--red) !important; }
+
+  /* Panel Street View / Google Maps embed: placeholder terang, bukan kotak hitam pekat */
+  #gmap-panel, #streetview-panel{ background:#EAECEF !important; }
+
+  /* Banner Mode Tamu (guest read-only), dibuat lewat JS -- tetap terang & selaras tema */
+  #guest-readonly-note{ background:#FFF4E5 !important; color:#92400E !important; border-color:var(--amber) !important; }
 </style>
 </head>
 <body>
