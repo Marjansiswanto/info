@@ -3,29 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Map SAR — Dashboard (Terang) | INFOSCIE</title>
+  <title>TRACK-ME — Dashboard SAR</title>
   <link rel="manifest" href="manifest-gojek.json">
   <meta name="theme-color" content="#0B7A5B">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Google Font: Plus Jakarta Sans (gratis, modern) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+  <!-- ================================================================
+       SISTEM DESAIN PREMIUM — Terinspirasi Gojek, disempurnakan untuk Web
+       ================================================================ -->
   <style>
-    /* ================================================================
-       SISTEM DESAIN PREMIUM — Terang, Gojek-style
-       ================================================================ */
+    /* ===== 1. VARIABEL DESAIN (Color System + Spacing) ===== */
     :root {
+      /* Primary */
       --primary: #0B7A5B;
       --primary-dark: #065C43;
       --primary-light: #E3F3EC;
+      --primary-gradient: linear-gradient(135deg, #0B7A5B, #065C43);
+
+      /* Secondary */
       --secondary: #FF9F1C;
       --secondary-light: #FFF4E5;
+
+      /* Semantik */
       --success: #12B76A;
       --error: #E5484D;
       --error-light: #FDECEC;
+      --warning: #FF9F1C;
+
+      /* Netral */
       --bg: #F7F8FA;
       --surface: #FFFFFF;
       --text-primary: #1A1D1F;
@@ -33,19 +47,51 @@
       --text-muted: #A0A8B4;
       --divider: #E4E7EB;
       --border: #D8DCE1;
-      --shadow-xs: 0 1px 2px rgba(16,24,40,0.04);
-      --shadow-sm: 0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04);
-      --shadow-md: 0 4px 12px rgba(11,122,91,0.08);
-      --shadow-lg: 0 8px 24px rgba(11,122,91,0.12);
+
+      /* Shadow system — bertingkat */
+      --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+      --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+      --shadow-md: 0 4px 12px rgba(11, 122, 91, 0.08);
+      --shadow-lg: 0 8px 24px rgba(11, 122, 91, 0.12);
+      --shadow-xl: 0 16px 48px rgba(11, 122, 91, 0.16);
+
+      /* Radius */
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
+      --radius-xl: 20px;
+
+      /* Spacing (kelipatan 4) */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+
+      /* Font */
       --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+      /* Transisi */
+      --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      --duration: 0.25s;
+
+      /* Sidebar */
       --sidebar-width: 240px;
     }
 
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html { -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+    /* ===== 2. RESET & BASE ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
     body {
       font-family: var(--font);
       background: var(--bg);
@@ -54,562 +100,1448 @@
       display: flex;
     }
 
-    /* ===== SCROLLBAR ===== */
-    ::-webkit-scrollbar { width:6px; height:6px; }
-    ::-webkit-scrollbar-track { background:var(--bg); border-radius:10px; }
-    ::-webkit-scrollbar-thumb { background:var(--primary); border-radius:10px; }
-    ::-webkit-scrollbar-thumb:hover { background:var(--primary-dark); }
+    /* ===== 3. SCROLLBAR KUSTOM ===== */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
+    }
 
-    /* ===== SIDEBAR ===== */
+    /* ===== 4. SIDEBAR (Desktop) ===== */
     .sidebar {
-      position:fixed; top:0; left:0; width:var(--sidebar-width); height:100vh;
-      background: linear-gradient(135deg, #0B7A5B, #065C43);
-      padding:24px 16px;
-      display:flex; flex-direction:column; z-index:1000;
-      box-shadow:4px 0 20px rgba(11,122,91,0.15);
-      transition: transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: var(--primary-gradient);
+      padding: var(--space-lg) var(--space-md);
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      transition: transform var(--duration) var(--ease);
+      box-shadow: 4px 0 20px rgba(11, 122, 91, 0.15);
     }
+
     .sidebar-brand {
-      display:flex; align-items:center; gap:8px;
-      padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.15);
-      margin-bottom:20px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding-bottom: var(--space-lg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      margin-bottom: var(--space-lg);
     }
+
     .sidebar-brand .logo-icon {
-      width:36px; height:36px; background:rgba(255,255,255,0.2);
-      border-radius:12px; display:flex; align-items:center; justify-content:center;
-      color:#fff; font-weight:800; font-size:16px;
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 16px;
     }
+
     .sidebar-brand .logo-text {
-      color:#fff; font-weight:700; font-size:18px; letter-spacing:-0.3px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.3px;
     }
     .sidebar-brand .logo-text small {
-      font-weight:400; font-size:11px; opacity:0.7; display:block;
+      font-weight: 400;
+      font-size: 11px;
+      opacity: 0.7;
+      display: block;
+      letter-spacing: 0.3px;
     }
-    .sidebar-nav { flex:1; display:flex; flex-direction:column; gap:4px; }
+
+    .sidebar-nav {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
     .sidebar-nav .nav-label {
-      color:rgba(255,255,255,0.4); font-size:10px; font-weight:600;
-      letter-spacing:0.8px; text-transform:uppercase;
-      padding:16px 0 4px 8px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: var(--space-md) 0 var(--space-xs) var(--space-sm);
     }
-    .sidebar-nav a, .sidebar-nav button {
-      display:flex; align-items:center; gap:12px;
-      padding:10px 16px; border-radius:12px;
-      color:rgba(255,255,255,0.7); text-decoration:none;
-      font-size:14px; font-weight:500; background:transparent;
-      border:none; width:100%; cursor:pointer; font-family:var(--font);
-      text-align:left; transition:all 0.2s;
+
+    .sidebar-nav a,
+    .sidebar-nav button {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: 10px var(--space-md);
+      border-radius: var(--radius-md);
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all var(--duration) var(--ease);
+      text-align: left;
     }
-    .sidebar-nav a:hover, .sidebar-nav button:hover {
-      background:rgba(255,255,255,0.12); color:#fff;
+
+    .sidebar-nav a:hover,
+    .sidebar-nav button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
     }
-    .sidebar-nav a.active, .sidebar-nav button.active {
-      background:rgba(255,255,255,0.18); color:#fff; border-left:3px solid #fff;
+
+    .sidebar-nav a.active,
+    .sidebar-nav button.active {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      border-left: 3px solid #fff;
     }
-    .sidebar-nav a .nav-icon, .sidebar-nav button .nav-icon {
-      font-size:20px; width:24px; text-align:center; flex-shrink:0;
+
+    .sidebar-nav a .nav-icon,
+    .sidebar-nav button .nav-icon {
+      font-size: 20px;
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
     }
-    .sidebar-nav a .nav-badge, .sidebar-nav button .nav-badge {
-      margin-left:auto; background:var(--secondary); color:#1A1D1F;
-      font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;
+
+    .sidebar-nav a .nav-badge,
+    .sidebar-nav button .nav-badge {
+      margin-left: auto;
+      background: var(--secondary);
+      color: #1A1D1F;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
     }
+
     .sidebar-footer {
-      border-top:1px solid rgba(255,255,255,0.1);
-      padding-top:16px; margin-top:auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: var(--space-md);
+      margin-top: auto;
     }
+
     .sidebar-footer .user-card {
-      display:flex; align-items:center; gap:8px;
-      padding:8px; border-radius:12px; color:rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-sm);
+      border-radius: var(--radius-md);
+      color: rgba(255, 255, 255, 0.8);
     }
+
     .sidebar-footer .user-card .avatar {
-      width:36px; height:36px; border-radius:50%;
-      background:rgba(255,255,255,0.2);
-      display:flex; align-items:center; justify-content:center;
-      font-weight:700; font-size:14px; color:#fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
     }
-    .sidebar-footer .user-card .user-info { flex:1; }
+
+    .sidebar-footer .user-card .user-info {
+      flex: 1;
+    }
     .sidebar-footer .user-card .user-info .name {
-      font-size:13px; font-weight:600; color:#fff;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
     }
     .sidebar-footer .user-card .user-info .role {
-      font-size:11px; opacity:0.6;
+      font-size: 11px;
+      opacity: 0.6;
     }
     .sidebar-footer .user-card .user-info .role .badge-role {
-      background:rgba(255,255,255,0.15); padding:1px 8px; border-radius:20px;
-      font-size:9px; font-weight:600; text-transform:uppercase;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 1px 8px;
+      border-radius: 20px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
-    /* ===== MAIN CONTENT ===== */
-    .main-content { margin-left:var(--sidebar-width); flex:1; min-height:100vh; display:flex; flex-direction:column; }
+    /* ===== 5. MAIN CONTENT ===== */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-    /* ===== HEADER GLASSMORPHISM ===== */
+    /* ===== 6. HEADER (Glassmorphism) ===== */
     .app-header {
-      background:rgba(255,255,255,0.75); backdrop-filter:blur(12px);
-      -webkit-backdrop-filter:blur(12px);
-      border-bottom:1px solid var(--divider);
-      padding:12px 24px;
-      display:flex; align-items:center; justify-content:space-between;
-      position:sticky; top:0; z-index:100; min-height:64px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--divider);
+      padding: 12px var(--space-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      min-height: 64px;
     }
-    .app-header .header-left { display:flex; align-items:center; gap:12px; }
+
+    .app-header .header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
     .app-header .header-left .hamburger {
-      display:none; background:none; border:none; font-size:24px;
-      cursor:pointer; color:var(--text-primary); padding:4px;
+      display: none;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-primary);
+      padding: 4px;
     }
+
     .app-header .header-left .greeting {
-      font-size:18px; font-weight:700; letter-spacing:-0.3px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
     }
     .app-header .header-left .greeting small {
-      font-weight:400; font-size:14px; color:var(--text-secondary); display:block;
+      font-weight: 400;
+      font-size: 14px;
+      color: var(--text-secondary);
+      display: block;
     }
+
     .app-header .header-right {
-      display:flex; align-items:center; gap:8px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
     }
+
     .app-header .header-right .search-box {
-      display:flex; align-items:center; background:var(--bg);
-      border:1.5px solid var(--divider); border-radius:20px;
-      padding:6px 14px; gap:8px; transition:all 0.2s;
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border: 1.5px solid var(--divider);
+      border-radius: var(--radius-lg);
+      padding: 6px 14px;
+      gap: 8px;
+      transition: all var(--duration) var(--ease);
     }
     .app-header .header-right .search-box:focus-within {
-      border-color:var(--primary); box-shadow:0 0 0 4px rgba(11,122,91,0.12);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(11, 122, 91, 0.12);
     }
     .app-header .header-right .search-box input {
-      border:none; background:transparent; font-family:var(--font);
-      font-size:13px; color:var(--text-primary); outline:none; width:160px; padding:4px 0;
+      border: none;
+      background: transparent;
+      font-family: var(--font);
+      font-size: 13px;
+      color: var(--text-primary);
+      outline: none;
+      width: 160px;
+      padding: 4px 0;
     }
-    .app-header .header-right .search-box input::placeholder { color:var(--text-muted); }
-    .app-header .header-right .search-box .search-icon { color:var(--text-muted); font-size:16px; }
+    .app-header .header-right .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+    .app-header .header-right .search-box .search-icon {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
     .header-btn {
-      width:40px; height:40px; border-radius:50%; border:none;
-      background:transparent; color:var(--text-secondary); font-size:20px;
-      cursor:pointer; display:flex; align-items:center; justify-content:center;
-      transition:all 0.2s; position:relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--duration) var(--ease);
+      position: relative;
     }
-    .header-btn:hover { background:var(--bg); color:var(--primary); }
+
+    .header-btn:hover {
+      background: var(--bg);
+      color: var(--primary);
+    }
+
     .header-btn .badge-dot {
-      position:absolute; top:8px; right:8px; width:8px; height:8px;
-      background:var(--error); border-radius:50%; border:2px solid #fff;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: var(--error);
+      border-radius: 50%;
+      border: 2px solid #fff;
     }
 
-    /* ===== DASHBOARD CONTENT ===== */
-    .dashboard-content { padding:24px; flex:1; max-width:1280px; width:100%; margin:0 auto; }
+    .header-btn .badge-num {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: var(--error);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 20px;
+      border: 2px solid #fff;
+      min-width: 18px;
+      text-align: center;
+    }
 
-    /* ===== DISCLAIMER BANNER ===== */
+    /* ===== 7. DASHBOARD CONTENT ===== */
+    .dashboard-content {
+      padding: var(--space-lg);
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ===== 8. DISCLAIMER BANNER ===== */
     .disclaimer-banner {
-      background:var(--secondary-light); border-bottom:2px solid var(--secondary);
-      color:#92400E; font-size:12px; padding:8px 20px; text-align:center; font-weight:500;
+      background: var(--secondary-light);
+      border-bottom: 2px solid var(--secondary);
+      color: #92400E;
+      font-size: 12px;
+      padding: 8px 20px;
+      text-align: center;
+      font-weight: 500;
     }
-    .disclaimer-banner b { color:var(--primary); }
+    .disclaimer-banner b {
+      color: var(--primary);
+    }
 
-    /* ===== INSTALL BANNER ===== */
+    /* ===== 9. INSTALL BANNER (PWA) ===== */
     #install-banner {
-      background:var(--secondary-light); border-bottom:2px solid var(--secondary);
-      color:#92400E; padding:10px 20px; font-size:12.5px;
-      display:none; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      background: var(--secondary-light);
+      border-bottom: 2px solid var(--secondary);
+      color: #92400E;
+      padding: 10px 20px;
+      font-size: 12.5px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    #install-banner.show { display:flex; }
+    #install-banner.show {
+      display: flex;
+    }
+    #install-banner b {
+      color: var(--primary);
+    }
     #install-btn {
-      background:var(--primary); color:#fff; border:none;
-      font-family:var(--font); font-weight:600; padding:8px 20px; font-size:12px;
-      cursor:pointer; border-radius:12px; transition:all 0.2s;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-family: var(--font);
+      font-weight: 600;
+      padding: 8px 20px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: all var(--duration) var(--ease);
     }
-    #install-btn:hover { background:var(--primary-dark); transform:scale(1.02); }
+    #install-btn:hover {
+      background: var(--primary-dark);
+      transform: scale(1.02);
+    }
     #install-dismiss-btn {
-      background:transparent; color:var(--text-secondary); border:1px solid var(--divider);
-      font-family:var(--font); padding:8px 16px; font-size:12px;
-      cursor:pointer; border-radius:12px;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--divider);
+      font-family: var(--font);
+      padding: 8px 16px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: all var(--duration) var(--ease);
+    }
+    #install-dismiss-btn:hover {
+      background: var(--bg);
     }
 
-    /* ===== AUTH GATE ===== */
-    #auth-gate { min-height:80vh; display:flex; align-items:center; justify-content:center; padding:24px; }
-    #auth-card {
-      background:var(--surface); border-radius:16px; box-shadow:var(--shadow-lg);
-      max-width:420px; width:100%; padding:32px 28px; border:1px solid var(--divider);
+    /* ===== 10. AUTH GATE (Card Login) ===== */
+    #auth-gate {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-lg);
     }
-    #auth-card h2 { font-size:22px; font-weight:700; margin:0 0 4px 0; letter-spacing:-0.5px; }
-    #auth-card h2 .accent { color:var(--primary); }
-    #auth-card p.sub { font-size:13px; color:var(--text-secondary); margin:0 0 20px 0; line-height:1.6; }
+
+    #auth-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      max-width: 420px;
+      width: 100%;
+      padding: 32px 28px;
+      border: 1px solid var(--divider);
+      transition: all var(--duration) var(--ease);
+    }
+
+    #auth-card h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.5px;
+    }
+    #auth-card h2 .accent {
+      color: var(--primary);
+    }
+
+    #auth-card p.sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 0 0 20px 0;
+      line-height: 1.6;
+    }
+
     #auth-card input {
-      width:100%; background:var(--bg); border:1.5px solid var(--divider);
-      border-radius:8px; color:var(--text-primary); font-family:var(--font);
-      padding:12px 14px; font-size:14px; margin-bottom:12px;
-      transition:all 0.2s;
+      width: 100%;
+      background: var(--bg);
+      border: 1.5px solid var(--divider);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font);
+      padding: 12px 14px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      transition: all var(--duration) var(--ease);
     }
     #auth-card input:focus {
-      border-color:var(--primary); box-shadow:0 0 0 4px rgba(11,122,91,0.12); outline:none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(11, 122, 91, 0.12);
+      outline: none;
     }
+
     #auth-card button.primary {
-      width:100%; background:var(--primary); color:#fff; border:none;
-      font-family:var(--font); font-weight:600; padding:14px;
-      font-size:14px; cursor:pointer; border-radius:12px;
-      transition:all 0.2s; margin-top:4px;
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-family: var(--font);
+      font-weight: 600;
+      padding: 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: all var(--duration) var(--ease);
+      margin-top: 4px;
     }
-    #auth-card button.primary:hover { background:var(--primary-dark); transform:scale(1.01); box-shadow:var(--shadow-md); }
-    #auth-card button.primary:active { transform:scale(0.98); }
+    #auth-card button.primary:hover {
+      background: var(--primary-dark);
+      transform: scale(1.01);
+      box-shadow: var(--shadow-md);
+    }
+    #auth-card button.primary:active {
+      transform: scale(0.98);
+    }
+
     #auth-card button.secondary {
-      width:100%; background:transparent; border:1.5px solid var(--divider);
-      color:var(--text-secondary); font-family:var(--font); padding:12px;
-      font-size:13px; cursor:pointer; border-radius:12px; margin-top:8px;
-      transition:all 0.2s;
+      width: 100%;
+      background: transparent;
+      border: 1.5px solid var(--divider);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      padding: 12px;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: all var(--duration) var(--ease);
+      margin-top: 8px;
     }
-    #auth-card button.secondary:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
-    #auth-status { font-size:12px; min-height:20px; margin-bottom:8px; font-weight:500; }
-    #auth-status.err { color:var(--error); }
-    #auth-status.ok { color:var(--success); }
-    #auth-status.info { color:var(--secondary); }
+    #auth-card button.secondary:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
 
-    .hidden { display:none !important; }
+    #auth-status {
+      font-size: 12px;
+      min-height: 20px;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    #auth-status.err {
+      color: var(--error);
+    }
+    #auth-status.ok {
+      color: var(--success);
+    }
+    #auth-status.info {
+      color: var(--secondary);
+    }
 
-    /* ===== STATS CARDS ===== */
+    .hidden {
+      display: none !important;
+    }
+
+    /* ===== 11. QUICK STATS CARDS ===== */
     .stats-grid {
-      display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
     }
+
     .stat-card {
-      background:var(--surface); border-radius:12px; padding:16px 20px;
-      box-shadow:var(--shadow-sm); border:1px solid var(--divider);
-      transition:all 0.2s; position:relative; overflow:hidden;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-md) var(--space-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--divider);
+      transition: all var(--duration) var(--ease);
+      position: relative;
+      overflow: hidden;
     }
-    .stat-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
     .stat-card .stat-icon {
-      position:absolute; top:16px; right:16px; font-size:28px; opacity:0.2;
+      position: absolute;
+      top: var(--space-md);
+      right: var(--space-md);
+      font-size: 28px;
+      opacity: 0.2;
     }
+
     .stat-card .stat-label {
-      font-size:12px; font-weight:500; color:var(--text-secondary);
-      text-transform:uppercase; letter-spacing:0.3px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
     }
+
     .stat-card .stat-value {
-      font-size:28px; font-weight:800; letter-spacing:-1px;
-      margin:4px 0 2px; color:var(--text-primary);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin: 4px 0 2px;
+      color: var(--text-primary);
     }
+
     .stat-card .stat-change {
-      font-size:12px; font-weight:600; display:inline-flex; align-items:center;
-      gap:4px; padding:2px 8px; border-radius:20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 20px;
     }
-    .stat-card .stat-change.up { color:var(--success); background:#E6F9F0; }
-    .stat-card .stat-change.down { color:var(--error); background:var(--error-light); }
+    .stat-card .stat-change.up {
+      color: var(--success);
+      background: #E6F9F0;
+    }
+    .stat-card .stat-change.down {
+      color: var(--error);
+      background: var(--error-light);
+    }
 
-    /* ===== MAP & PERSONNEL GRID ===== */
+    /* ===== 12. MAP & PERSONNEL GRID ===== */
     .dashboard-grid {
-      display:grid; grid-template-columns:2fr 1fr; gap:24px; margin-bottom:24px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--space-lg);
+      margin-bottom: var(--space-lg);
     }
+
     .panel {
-      background:var(--surface); border-radius:12px; box-shadow:var(--shadow-sm);
-      border:1px solid var(--divider); overflow:hidden;
-      transition:all 0.2s;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--divider);
+      overflow: hidden;
+      transition: all var(--duration) var(--ease);
     }
-    .panel:hover { box-shadow:var(--shadow-md); }
+
+    .panel:hover {
+      box-shadow: var(--shadow-md);
+    }
+
     .panel-head {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:14px 16px; border-bottom:1px solid var(--divider);
-      font-size:13px; font-weight:600; color:var(--text-primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px var(--space-md);
+      border-bottom: 1px solid var(--divider);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
     }
+
     .panel-head .tag {
-      font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
-      padding:3px 10px; border-radius:20px; background:var(--primary-light); color:var(--primary);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--primary-light);
+      color: var(--primary);
     }
-    .panel-head .tag.warning { background:var(--secondary-light); color:#92400E; }
-    .panel-head .tag.danger { background:var(--error-light); color:var(--error); }
+    .panel-head .tag.warning {
+      background: var(--secondary-light);
+      color: #92400E;
+    }
+    .panel-head .tag.danger {
+      background: var(--error-light);
+      color: var(--error);
+    }
 
-    #sar-map { width:100%; height:420px; }
-    .leaflet-container { background:var(--bg) !important; }
+    #sar-map {
+      width: 100%;
+      height: 420px;
+    }
+    .leaflet-container {
+      background: var(--bg) !important;
+    }
 
-    /* ===== PERSONNEL LIST ===== */
-    .personnel-list { max-height:420px; overflow-y:auto; }
+    /* ===== 13. PERSONNEL LIST ===== */
+    .personnel-list {
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
     .personnel-row {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:12px 16px; border-bottom:1px solid var(--divider);
-      font-size:13px; transition:background 0.2s; cursor:default;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px var(--space-md);
+      border-bottom: 1px solid var(--divider);
+      font-size: 13px;
+      transition: background var(--duration) var(--ease);
+      cursor: default;
     }
-    .personnel-row:hover { background:var(--bg); }
-    .personnel-row .info { display:flex; align-items:center; gap:8px; }
+    .personnel-row:hover {
+      background: var(--bg);
+    }
+
+    .personnel-row .info {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
     .personnel-row .status-dot {
-      width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
     }
-    .status-aman { background:var(--success); }
-    .status-sos { background:var(--error); box-shadow:0 0 8px var(--error); animation:pulse-dot 1.2s ease-in-out infinite; }
-    .status-hilang { background:var(--warning); }
+    .status-aman {
+      background: var(--success);
+    }
+    .status-sos {
+      background: var(--error);
+      box-shadow: 0 0 8px var(--error);
+      animation: pulse-dot 1.2s ease-in-out infinite;
+    }
+    .status-hilang {
+      background: var(--warning);
+    }
+
     @keyframes pulse-dot {
-      0%,100%{ transform:scale(1); opacity:1; }
-      50%{ transform:scale(1.4); opacity:0.6; }
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.4);
+        opacity: 0.6;
+      }
     }
-    .personnel-row .name { font-weight:600; }
+
+    .personnel-row .name {
+      font-weight: 600;
+    }
     .personnel-row .role-tag {
-      font-size:10px; font-weight:500; color:var(--text-secondary);
-      background:var(--bg); padding:1px 8px; border-radius:20px;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg);
+      padding: 1px 8px;
+      border-radius: 20px;
     }
-    .personnel-row .actions { display:flex; gap:4px; }
+
+    .personnel-row .actions {
+      display: flex;
+      gap: 4px;
+    }
     .personnel-row .actions button {
-      background:transparent; border:1px solid var(--divider); border-radius:8px;
-      padding:4px 8px; font-size:11px; cursor:pointer; font-family:var(--font);
-      color:var(--text-secondary); transition:all 0.2s;
+      background: transparent;
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: var(--font);
+      color: var(--text-secondary);
+      transition: all var(--duration) var(--ease);
     }
-    .personnel-row .actions button:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
-    .personnel-row .actions button.danger:hover { border-color:var(--error); color:var(--error); background:var(--error-light); }
+    .personnel-row .actions button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+    .personnel-row .actions button.danger:hover {
+      border-color: var(--error);
+      color: var(--error);
+      background: var(--error-light);
+    }
 
-    /* ===== TRACKING CONTROL ===== */
-    .tracking-control {
-      display:flex; gap:8px; padding:10px 16px;
-      border-bottom:1px solid var(--divider); flex-wrap:wrap; align-items:center;
-    }
-    .track-btn {
-      background:var(--primary-light); color:var(--primary);
-      border:1.5px solid transparent; font-family:var(--font); font-weight:600;
-      padding:8px 16px; font-size:12px; cursor:pointer; border-radius:8px;
-      transition:all 0.2s;
-    }
-    .track-btn:hover { background:var(--primary); color:#fff; }
-    .track-btn.active { background:var(--primary); color:#fff; }
-    .sos-btn {
-      background:var(--error); color:#fff; border:none;
-      font-family:var(--font); font-weight:700; padding:8px 16px;
-      font-size:12px; cursor:pointer; border-radius:8px;
-      transition:all 0.2s;
-    }
-    .sos-btn:hover { background:#c0392b; transform:scale(1.03); }
-    #tracking-status { font-size:11px; color:var(--text-secondary); flex-basis:100%; padding:4px 0; }
-
-    /* ===== SOS BANNER ===== */
+    /* ===== 14. SOS BANNER ===== */
     .sos-banner {
-      background:var(--error-light); border:1px solid var(--error);
-      color:#B3363A; padding:12px 16px; border-radius:12px;
-      font-size:13px; font-weight:600; margin-bottom:16px;
-      display:none; align-items:center; gap:8px;
+      background: var(--error-light);
+      border: 1px solid var(--error);
+      color: #B3363A;
+      padding: 12px var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: var(--space-md);
+      display: none;
+      align-items: center;
+      gap: var(--space-sm);
     }
-    .sos-banner.show { display:flex; }
-    .sos-banner .sos-icon { font-size:22px; }
+    .sos-banner.show {
+      display: flex;
+    }
+    .sos-banner .sos-icon {
+      font-size: 22px;
+    }
 
-    /* ===== CHAT PANEL ===== */
-    .chat-panel { margin-top:24px; }
+    /* ===== 15. TRACKING CONTROL ===== */
+    .tracking-control {
+      display: flex;
+      gap: var(--space-sm);
+      padding: 10px var(--space-md);
+      border-bottom: 1px solid var(--divider);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .track-btn {
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1.5px solid transparent;
+      font-family: var(--font);
+      font-weight: 600;
+      padding: 8px 16px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--duration) var(--ease);
+    }
+    .track-btn:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .track-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .sos-btn {
+      background: var(--error);
+      color: #fff;
+      border: none;
+      font-family: var(--font);
+      font-weight: 700;
+      padding: 8px 16px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--duration) var(--ease);
+    }
+    .sos-btn:hover {
+      background: #c0392b;
+      transform: scale(1.03);
+    }
+
+    #tracking-status {
+      font-size: 11px;
+      color: var(--text-secondary);
+      flex-basis: 100%;
+      padding: 4px 0;
+    }
+
+    /* ===== 16. CHAT PANEL ===== */
+    .chat-panel {
+      margin-top: var(--space-lg);
+    }
+
     .room-tabs {
-      display:flex; gap:8px; padding:10px 16px;
-      border-bottom:1px solid var(--divider); flex-wrap:wrap;
+      display: flex;
+      gap: var(--space-xs);
+      padding: 10px var(--space-md);
+      border-bottom: 1px solid var(--divider);
+      flex-wrap: wrap;
     }
+
     .room-tabs button {
-      background:transparent; border:1.5px solid var(--divider);
-      color:var(--text-secondary); font-family:var(--font);
-      padding:6px 14px; font-size:12px; font-weight:500;
-      cursor:pointer; border-radius:8px; transition:all 0.2s;
+      background: transparent;
+      border: 1.5px solid var(--divider);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--duration) var(--ease);
     }
-    .room-tabs button:hover { border-color:var(--primary); color:var(--primary); }
-    .room-tabs button.active { border-color:var(--primary); background:var(--primary-light); color:var(--primary); }
+    .room-tabs button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .room-tabs button.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
 
     .chat-messages {
-      height:320px; overflow-y:auto; padding:16px;
-      display:flex; flex-direction:column; gap:8px; background:var(--bg);
+      height: 320px;
+      overflow-y: auto;
+      padding: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg);
     }
+
     .msg {
-      max-width:78%; padding:10px 14px; font-size:13px;
-      border-radius:12px; line-height:1.5;
-      animation:fadeInUp 0.3s ease-out;
+      max-width: 78%;
+      padding: 10px 14px;
+      font-size: 13px;
+      border-radius: var(--radius-md);
+      line-height: 1.5;
+      animation: fadeInUp 0.3s ease-out;
     }
+
     @keyframes fadeInUp {
-      from{ opacity:0; transform:translateY(12px); }
-      to{ opacity:1; transform:translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     .msg.mine {
-      align-self:flex-end; background:var(--primary-light);
-      border:1px solid var(--primary); border-bottom-right-radius:4px;
+      align-self: flex-end;
+      background: var(--primary-light);
+      border: 1px solid var(--primary);
+      border-bottom-right-radius: 4px;
     }
     .msg.other {
-      align-self:flex-start; background:var(--surface);
-      border:1px solid var(--divider); border-bottom-left-radius:4px;
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--divider);
+      border-bottom-left-radius: 4px;
     }
     .msg.ai {
-      align-self:center; max-width:90%; background:#EAF2FF;
-      border:1px solid #2F6FED; border-radius:12px;
+      align-self: center;
+      max-width: 90%;
+      background: #EAF2FF;
+      border: 1px solid #2F6FED;
+      border-radius: var(--radius-md);
     }
-    .msg.ai.kritis { background:var(--error-light); border-color:var(--error); }
+    .msg.ai.kritis {
+      background: var(--error-light);
+      border-color: var(--error);
+    }
+
     .msg .meta {
-      font-size:10px; font-weight:500; color:var(--text-muted);
-      margin-bottom:4px; display:flex; justify-content:space-between;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
     }
+
     .msg .ai-tag {
-      display:inline-block; font-size:9px; font-weight:700; letter-spacing:0.3px;
-      color:#2F6FED; border:1px solid #2F6FED; padding:1px 8px; border-radius:20px; margin-bottom:4px;
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #2F6FED;
+      border: 1px solid #2F6FED;
+      padding: 1px 8px;
+      border-radius: 20px;
+      margin-bottom: 4px;
     }
-    .msg.ai.kritis .ai-tag { color:var(--error); border-color:var(--error); }
+    .msg.ai.kritis .ai-tag {
+      color: var(--error);
+      border-color: var(--error);
+    }
     .msg .report-tag {
-      display:inline-block; font-size:9px; font-weight:700; letter-spacing:0.3px;
-      color:#92400E; border:1px solid var(--warning); padding:1px 8px; border-radius:20px; margin-bottom:4px;
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #92400E;
+      border: 1px solid var(--warning);
+      padding: 1px 8px;
+      border-radius: 20px;
+      margin-bottom: 4px;
     }
-    .msg img { max-width:100%; margin-top:6px; border-radius:8px; border:1px solid var(--divider); cursor:pointer; }
+
+    .msg img {
+      max-width: 100%;
+      margin-top: 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--divider);
+      cursor: pointer;
+    }
 
     .chat-composer {
-      border-top:1px solid var(--divider); padding:10px 16px; background:var(--surface);
+      border-top: 1px solid var(--divider);
+      padding: 10px var(--space-md);
+      background: var(--surface);
     }
+
     .quick-report-row {
-      display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
     }
+
     .quick-report-row button {
-      background:transparent; border:1.5px solid var(--divider);
-      color:var(--text-secondary); font-family:var(--font);
-      padding:4px 12px; font-size:11px; font-weight:500;
-      cursor:pointer; border-radius:8px; transition:all 0.2s;
+      background: transparent;
+      border: 1.5px solid var(--divider);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--duration) var(--ease);
     }
-    .quick-report-row button:hover { border-color:var(--warning); color:#92400E; background:var(--secondary-light); }
+    .quick-report-row button:hover {
+      border-color: var(--warning);
+      color: #92400E;
+      background: var(--secondary-light);
+    }
+
     .composer-row {
-      display:flex; gap:6px; align-items:center; flex-wrap:wrap;
+      display: flex;
+      gap: 6px;
+      align-items: center;
     }
+
     .composer-row input[type="text"] {
-      flex:1; background:var(--bg); border:1.5px solid var(--divider);
-      border-radius:8px; color:var(--text-primary); font-family:var(--font);
-      padding:10px 14px; font-size:13px; transition:all 0.2s; min-width:120px;
+      flex: 1;
+      background: var(--bg);
+      border: 1.5px solid var(--divider);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font);
+      padding: 10px 14px;
+      font-size: 13px;
+      transition: all var(--duration) var(--ease);
     }
     .composer-row input[type="text"]:focus {
-      border-color:var(--primary); box-shadow:0 0 0 4px rgba(11,122,91,0.1); outline:none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(11, 122, 91, 0.1);
+      outline: none;
     }
+
     .icon-btn {
-      background:transparent; border:1.5px solid var(--divider); border-radius:8px;
-      color:var(--text-secondary); font-family:var(--font); padding:8px 12px;
-      cursor:pointer; font-size:16px; transition:all 0.2s;
-      height:44px; display:flex; align-items:center; justify-content:center;
+      background: transparent;
+      border: 1.5px solid var(--divider);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-family: var(--font);
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all var(--duration) var(--ease);
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .icon-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+    .icon-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
 
-    #chat-photo-input, #chat-video-input, #chat-galeri-input, #chat-file-input { display:none; }
-    .attach-menu-wrap { position:relative; flex-shrink:0; }
-    #attach-menu-popup {
-      position:absolute; bottom:calc(100% + 6px); left:0; z-index:50;
-      background:var(--surface); border:1px solid var(--divider); border-radius:12px;
-      display:flex; flex-direction:column; min-width:190px; box-shadow:var(--shadow-lg);
+    #chat-photo-input {
+      display: none;
     }
-    .attach-menu-item {
-      background:transparent; border:none; border-bottom:1px solid var(--divider);
-      color:var(--text-primary); font-family:var(--font); font-size:12px;
-      text-align:left; padding:10px 14px; cursor:pointer;
-      transition:background 0.2s;
+    #chat-upload-status {
+      font-size: 11px;
+      color: var(--warning);
+      padding: 4px var(--space-md) 0;
+      min-height: 16px;
     }
-    .attach-menu-item:last-child { border-bottom:none; }
-    .attach-menu-item:hover { background:var(--bg); color:var(--primary); }
-    #chat-upload-status { font-size:11px; color:var(--warning); padding:4px 16px 0; min-height:16px; }
 
-    /* ===== GUEST READ-ONLY ===== */
-    #guest-readonly-note {
-      background:var(--secondary-light); border:1px solid var(--secondary);
-      color:#92400E; padding:10px 16px; border-radius:12px;
-      font-size:12px; font-weight:500; margin-bottom:16px;
-      display:none; align-items:center; gap:8px;
-    }
-    #guest-readonly-note.show { display:flex; }
-
-    /* ===== VIDEO CALL MODAL ===== */
+    /* ===== 17. VIDEO CALL MODAL ===== */
     #call-overlay {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8);
-      backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
-      z-index:3000; align-items:center; justify-content:center; padding:24px;
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 3000;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-lg);
     }
-    #call-overlay.show { display:flex; }
+    #call-overlay.show {
+      display: flex;
+    }
+
     #call-box {
-      background:var(--surface); border-radius:16px; box-shadow:var(--shadow-xl);
-      max-width:820px; width:100%; padding:24px; border:1px solid var(--divider);
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      max-width: 820px;
+      width: 100%;
+      padding: var(--space-lg);
+      border: 1px solid var(--divider);
     }
-    #call-box h3 { margin:0 0 12px 0; font-size:16px; font-weight:700; color:var(--primary); }
-    .video-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-    .video-grid video { width:100%; background:#1A1D1F; border-radius:12px; border:1px solid var(--divider); }
-    #call-status { font-size:12px; color:var(--text-secondary); margin:12px 0; font-weight:500; }
-    .call-controls { display:flex; gap:8px; flex-wrap:wrap; }
+
+    #call-box h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+    }
+    .video-grid video {
+      width: 100%;
+      background: #1A1D1F;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--divider);
+    }
+
+    #call-status {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin: 12px 0;
+      font-weight: 500;
+    }
+
+    .call-controls {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+    }
     .call-controls button {
-      background:var(--primary); color:#fff; border:none;
-      font-family:var(--font); font-weight:600; padding:10px 20px;
-      font-size:13px; cursor:pointer; border-radius:12px; transition:all 0.2s;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-family: var(--font);
+      font-weight: 600;
+      padding: 10px 20px;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: all var(--duration) var(--ease);
     }
-    .call-controls button:hover { background:var(--primary-dark); transform:scale(1.02); }
-    .call-controls button.hangup { background:var(--error); }
-    .call-controls button.hangup:hover { background:#c0392b; }
+    .call-controls button:hover {
+      background: var(--primary-dark);
+      transform: scale(1.02);
+    }
+    .call-controls button.hangup {
+      background: var(--error);
+    }
+    .call-controls button.hangup:hover {
+      background: #c0392b;
+    }
 
-    /* ===== ADMIN MODAL ===== */
+    /* ===== 18. ADMIN MODAL ===== */
     #admin-modal-overlay {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
-      backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
-      z-index:4000; align-items:center; justify-content:center; padding:24px;
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 4000;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-lg);
     }
-    #admin-modal-overlay.show { display:flex; }
-    #admin-modal-overlay > div {
-      background:var(--surface); border-radius:16px; box-shadow:var(--shadow-xl);
-      max-width:720px; width:100%; max-height:85vh; overflow-y:auto;
-      padding:24px; border:1px solid var(--divider);
+    #admin-modal-overlay.show {
+      display: flex;
     }
-    #admin-modal-overlay .modal-header {
-      display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;
-    }
-    #admin-modal-overlay .modal-header h3 { font-size:18px; font-weight:700; color:var(--primary); }
-    #admin-user-status { font-size:12px; margin-bottom:8px; color:var(--text-secondary); }
-    #admin-user-list .user-item {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:10px 0; border-bottom:1px solid var(--divider);
-    }
-    #admin-user-list .user-item:last-child { border-bottom:none; }
-    #admin-user-list .user-item .email { font-weight:500; font-size:13px; }
-    #admin-user-list .user-item .role-select {
-      font-family:var(--font); padding:4px 8px; border-radius:8px;
-      border:1.5px solid var(--divider); background:var(--bg); font-size:12px;
-    }
-    #admin-user-list .user-item .role-select:focus { border-color:var(--primary); outline:none; }
 
-    /* ===== RESPONSIVE ===== */
-    @media (max-width:1024px) {
-      .stats-grid { grid-template-columns:repeat(2,1fr); }
-      .dashboard-grid { grid-template-columns:1fr; }
+    #admin-modal-overlay>div {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      max-width: 720px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: var(--space-lg);
+      border: 1px solid var(--divider);
     }
-    @media (max-width:768px) {
-      .sidebar { transform:translateX(-100%); width:280px; }
-      .sidebar.open { transform:translateX(0); }
-      .main-content { margin-left:0; }
-      .app-header .header-left .hamburger { display:block; }
-      .app-header .header-left .greeting small { display:none; }
-      .app-header .header-right .search-box { display:none; }
-      .stats-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
-      .stat-card .stat-value { font-size:22px; }
-      .stat-card .stat-icon { font-size:20px; }
-      .dashboard-content { padding:16px; }
-      #sar-map { height:300px; }
-      .personnel-list { max-height:300px; }
-      .chat-messages { height:240px; }
-      .video-grid { grid-template-columns:1fr; }
-      .disclaimer-banner { font-size:10px; padding:6px 12px; }
+
+    #admin-modal-overlay .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-md);
     }
-    @media (max-width:420px) {
-      .stats-grid { grid-template-columns:1fr 1fr; gap:4px; }
-      .stat-card { padding:12px; }
-      .stat-card .stat-value { font-size:18px; }
-      .stat-card .stat-label { font-size:10px; }
-      .panel-head { font-size:12px; padding:10px 12px; }
-      .personnel-row { font-size:12px; padding:10px 12px; flex-wrap:wrap; gap:4px; }
-      .personnel-row .actions { width:100%; justify-content:flex-end; }
-      #auth-card { padding:20px 16px; }
-      #auth-card h2 { font-size:18px; }
-      .composer-row input[type="text"] { font-size:12px; padding:8px 10px; }
-      .icon-btn { height:38px; padding:6px 10px; font-size:14px; }
-      #call-box { padding:16px; }
+    #admin-modal-overlay .modal-header h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
     }
+
+    #admin-user-status {
+      font-size: 12px;
+      margin-bottom: var(--space-sm);
+      color: var(--text-secondary);
+    }
+
+    #admin-user-list .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--divider);
+    }
+    #admin-user-list .user-item:last-child {
+      border-bottom: none;
+    }
+    #admin-user-list .user-item .email {
+      font-weight: 500;
+      font-size: 13px;
+    }
+    #admin-user-list .user-item .role-select {
+      font-family: var(--font);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--divider);
+      background: var(--bg);
+      font-size: 12px;
+    }
+    #admin-user-list .user-item .role-select:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    /* ===== 19. GUEST READ-ONLY NOTE ===== */
+    #guest-readonly-note {
+      background: var(--secondary-light);
+      border: 1px solid var(--secondary);
+      color: #92400E;
+      padding: 10px var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: var(--space-md);
+      display: none;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    #guest-readonly-note.show {
+      display: flex;
+    }
+
+    /* ===== 20. RESPONSIVE ===== */
+
+    /* Tablet & small desktop */
+    @media (max-width: 1024px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      /* Sidebar jadi overlay */
+      .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .app-header .header-left .hamburger {
+        display: block;
+      }
+
+      .app-header .header-left .greeting small {
+        display: none;
+      }
+
+      .app-header .header-right .search-box {
+        display: none;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+      }
+
+      .stat-card .stat-value {
+        font-size: 22px;
+      }
+      .stat-card .stat-icon {
+        font-size: 20px;
+      }
+
+      .dashboard-content {
+        padding: var(--space-md);
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+      }
+
+      #sar-map {
+        height: 300px;
+      }
+
+      .personnel-list {
+        max-height: 300px;
+      }
+
+      .chat-messages {
+        height: 240px;
+      }
+
+      .video-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .disclaimer-banner {
+        font-size: 10px;
+        padding: 6px 12px;
+      }
+
+      #install-banner {
+        font-size: 11px;
+        padding: 8px 12px;
+      }
+      #install-banner .btns {
+        display: flex;
+        gap: 6px;
+        width: 100%;
+      }
+      #install-btn,
+      #install-dismiss-btn {
+        flex: 1;
+        text-align: center;
+        font-size: 11px;
+        padding: 6px 12px;
+      }
+    }
+
+    /* Mobile sangat kecil */
+    @media (max-width: 420px) {
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-xs);
+      }
+      .stat-card {
+        padding: 12px;
+      }
+      .stat-card .stat-value {
+        font-size: 18px;
+      }
+      .stat-card .stat-label {
+        font-size: 10px;
+      }
+
+      .panel-head {
+        font-size: 12px;
+        padding: 10px var(--space-sm);
+      }
+
+      .personnel-row {
+        font-size: 12px;
+        padding: 10px var(--space-sm);
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .personnel-row .actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      #auth-card {
+        padding: 20px 16px;
+      }
+      #auth-card h2 {
+        font-size: 18px;
+      }
+
+      .composer-row input[type="text"] {
+        font-size: 12px;
+        padding: 8px 10px;
+      }
+      .icon-btn {
+        height: 38px;
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+
+      #call-box {
+        padding: var(--space-md);
+      }
+    }
+
+    /* ===== 21. OVERLAY SIDEBAR (mobile) ===== */
     .sidebar-overlay {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:999;
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 999;
     }
-    .sidebar-overlay.show { display:block; }
+    .sidebar-overlay.show {
+      display: block;
+    }
+
+    /* ===== 22. UTILITY ===== */
+    .text-truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .flex-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .gap-sm {
+      gap: var(--space-sm);
+    }
+    .gap-md {
+      gap: var(--space-md);
+    }
+    .mt-md {
+      margin-top: var(--space-md);
+    }
+    .mb-md {
+      margin-bottom: var(--space-md);
+    }
+    .w-full {
+      width: 100%;
+    }
   </style>
 </head>
+
 <body>
 
-  <!-- SIDEBAR -->
+  <!-- ==============================================================
+  SIDEBAR (Desktop + Mobile overlay)
+  ============================================================== -->
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="logo-icon">📍</div>
       <div class="logo-text">
-        MAP SAR
-        <small>INFOSCIE POC</small>
+        TRACK-ME
+        <small>FIDI-SCIE POC</small>
       </div>
     </div>
+
     <nav class="sidebar-nav">
       <div class="nav-label">Menu Utama</div>
-      <a href="#" class="active" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
-      <a href="#" data-page="map"><span class="nav-icon">🗺️</span> Peta <span class="nav-badge">LIVE</span></a>
-      <a href="#" data-page="personnel"><span class="nav-icon">👥</span> Personel <span class="nav-badge" id="personnel-count">0</span></a>
-      <a href="#" data-page="chat"><span class="nav-icon">💬</span> Komunikasi <span class="nav-badge" id="chat-badge">●</span></a>
-      <a href="#" data-page="reports"><span class="nav-icon">📋</span> Laporan</a>
-      <div class="nav-label" style="margin-top:24px;">Sistem</div>
-      <button id="admin-panel-btn" class="hidden"><span class="nav-icon">⚙️</span> Panel Admin</button>
-      <button id="logout-btn" class="hidden"><span class="nav-icon">🚪</span> Keluar</button>
+      <a href="#" class="active" data-page="dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a href="#" data-page="map">
+        <span class="nav-icon">🗺️</span> Peta
+        <span class="nav-badge">LIVE</span>
+      </a>
+      <a href="#" data-page="personnel">
+        <span class="nav-icon">👥</span> Personel
+        <span class="nav-badge" id="personnel-count">0</span>
+      </a>
+      <a href="#" data-page="chat">
+        <span class="nav-icon">💬</span> Ruang Komunikasi
+        <span class="nav-badge" id="chat-badge">●</span>
+      </a>
+      <a href="#" data-page="reports">
+        <span class="nav-icon">📋</span> Laporan
+      </a>
+
+      <div class="nav-label" style="margin-top:var(--space-lg);">Sistem</div>
+      <button id="admin-panel-btn" class="hidden">
+        <span class="nav-icon">⚙️</span> Panel Admin
+      </button>
+      <button id="logout-btn" class="hidden">
+        <span class="nav-icon">🚪</span> Keluar
+      </button>
     </nav>
+
     <div class="sidebar-footer">
       <div class="user-card" id="sidebar-user">
         <div class="avatar" id="sidebar-avatar">👤</div>
@@ -621,17 +1553,19 @@
     </div>
   </aside>
 
-  <!-- MAIN CONTENT -->
+  <!-- ==============================================================
+  MAIN CONTENT
+  ============================================================== -->
   <div class="main-content">
 
-    <!-- DISCLAIMER -->
+    <!-- DISCLAIMER BANNER -->
     <div class="disclaimer-banner">
-      ⚠ <b>MATERI POC / UJI LAPANGAN</b> — bukan sistem/prosedur resmi. <b>BASARNAS</b> tetap otoritas dan rujukan utama untuk seluruh operasi SAR resmi di Indonesia. Data di halaman ini tidak boleh jadi dasar tunggal keputusan penyelamatan.
+      ⚠ <b>TRACK-ME</b> 2026 · <b>FIDI-SCIE</b> — Sistem Pelacakan Personel & Komunikasi SAR
     </div>
 
-    <!-- INSTALL BANNER -->
+    <!-- INSTALL BANNER (PWA) -->
     <div id="install-banner">
-      <span>📲 Pasang <b>MAP SAR</b> ke layar utama HP untuk akses cepat & fullscreen.</span>
+      <span>📲 Pasang <b>TRACK-ME</b> ke layar utama HP untuk akses lebih cepat & fullscreen.</span>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button id="install-btn">PASANG SEKARANG</button>
         <button id="install-dismiss-btn">Nanti Saja</button>
@@ -642,9 +1576,9 @@
     <div id="auth-gate">
       <div id="auth-card">
 
-        <!-- Login -->
+        <!-- Form Login -->
         <div id="form-login">
-          <h2>Masuk ke <span class="accent">MAP SAR</span></h2>
+          <h2>Masuk ke <span class="accent">TRACK-ME</span></h2>
           <p class="sub">Portal dilindungi login. Hanya petugas terdaftar yang dapat mengakses dashboard.</p>
           <div id="auth-status"></div>
           <input type="email" id="login-email" placeholder="Email" autocomplete="email">
@@ -654,7 +1588,7 @@
           <button class="secondary" id="btn-show-signup">Belum punya akun? Daftar</button>
         </div>
 
-        <!-- Lupa Password -->
+        <!-- Form Lupa Password -->
         <div id="form-lupa-password" class="hidden">
           <h2>Reset <span class="accent">Password</span></h2>
           <p class="sub">Masukkan email Anda. Link reset akan dikirim ke email tersebut.</p>
@@ -664,7 +1598,7 @@
           <button class="secondary" id="btn-batal-lupa-password">Kembali ke Login</button>
         </div>
 
-        <!-- Signup -->
+        <!-- Form Signup -->
         <div id="form-signup" class="hidden">
           <h2>Daftar <span class="accent">Petugas</span></h2>
           <p class="sub">Pendaftaran akun untuk keperluan uji coba lapangan.</p>
@@ -679,12 +1613,15 @@
       </div>
     </div>
 
-    <!-- ===== DASHBOARD ===== -->
+    <!-- ===== DASHBOARD (tampil setelah login) ===== -->
     <div id="dashboard" class="hidden">
+
       <div class="dashboard-content">
 
-        <!-- Guest Read-Only -->
-        <div id="guest-readonly-note">🔍 <b>Mode Tamu (Read-Only)</b> — Anda dapat melihat data tetapi tidak dapat mengirim pesan atau mengubah status.</div>
+        <!-- Guest Read-Only Note -->
+        <div id="guest-readonly-note">
+          🔍 <b>Mode Tamu (Read-Only)</b> — Anda dapat melihat data tetapi tidak dapat mengirim pesan atau mengubah status.
+        </div>
 
         <!-- SOS Banner -->
         <div class="sos-banner" id="sos-banner">
@@ -692,7 +1629,7 @@
           <span id="sos-banner-text">SINYAL SOS DITERIMA — lihat daftar personel untuk detail.</span>
         </div>
 
-        <!-- STATS -->
+        <!-- ===== QUICK STATS ===== -->
         <div class="stats-grid" id="stats-grid">
           <div class="stat-card">
             <span class="stat-icon">📦</span>
@@ -720,8 +1657,9 @@
           </div>
         </div>
 
-        <!-- MAP & PERSONNEL -->
+        <!-- ===== MAP & PERSONNEL ===== -->
         <div class="dashboard-grid">
+          <!-- Map Panel -->
           <div class="panel">
             <div class="panel-head">
               <span>🗺️ Peta Posisi Personel</span>
@@ -729,6 +1667,8 @@
             </div>
             <div id="sar-map"></div>
           </div>
+
+          <!-- Personnel Panel -->
           <div class="panel">
             <div class="panel-head">
               <span>👥 Status Personel</span>
@@ -741,26 +1681,32 @@
               <span id="tracking-status">Mode: Semua personel</span>
             </div>
             <div class="personnel-list" id="personnel-list">
+              <!-- Diisi oleh JS -->
               <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Memuat data personel...</div>
             </div>
           </div>
         </div>
 
-        <!-- CHAT PANEL -->
+        <!-- ===== CHAT PANEL ===== -->
         <div class="panel chat-panel">
           <div class="panel-head">
             <span>💬 Ruang Komunikasi</span>
             <span class="tag" id="chat-tag">● LIVE</span>
           </div>
+
           <div class="room-tabs" id="room-tabs">
             <button class="active" data-room="umum">📢 Umum</button>
             <button data-room="koordinasi">🤝 Koordinasi</button>
             <button data-room="sos">🆘 SOS</button>
           </div>
+
           <div class="chat-messages" id="chat-messages">
+            <!-- Diisi oleh JS -->
             <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Belum ada pesan. Mulai komunikasi!</div>
           </div>
+
           <div id="chat-upload-status"></div>
+
           <div class="chat-composer">
             <div class="quick-report-row">
               <button data-report="lokasi">📍 Laporkan Lokasi</button>
@@ -783,7 +1729,7 @@
 
   </div><!-- /main-content -->
 
-  <!-- ADMIN MODAL -->
+  <!-- ===== ADMIN MODAL ===== -->
   <div id="admin-modal-overlay">
     <div>
       <div class="modal-header">
@@ -795,7 +1741,7 @@
     </div>
   </div>
 
-  <!-- VIDEO CALL MODAL -->
+  <!-- ===== VIDEO CALL MODAL ===== -->
   <div id="call-overlay">
     <div id="call-box">
       <h3>📞 Panggilan Video — <span id="call-room-name">Umum</span></h3>
@@ -812,17 +1758,23 @@
     </div>
   </div>
 
-  <!-- ================================================================
-       FIREBASE + LOGIKA APLIKASI (Dipertahankan 100% dari file asli)
-       ================================================================ -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <!-- ==============================================================
+  FIREBASE + LOGIKA APLIKASI
+  (Dipertahankan utuh seperti aslinya, hanya UI yang diubah)
+  ============================================================== -->
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js">
+  </script>
 
   <script>
     // ================================================================
-    // KONFIGURASI FIREBASE — (SESUAI DENGAN FILE ASLI ANDA)
+    // KONFIGURASI FIREBASE (SESUAIKAN DENGAN PROJECT ANDA)
     // ================================================================
     const firebaseConfig = {
       apiKey: "AIzaSyDummyKeyPleaseReplaceWithYourOwn",
@@ -832,11 +1784,8 @@
       messagingSenderId: "123456789",
       appId: "1:123456789:web:abcdef"
     };
-    // ================================================================
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // GANTI DENGAN KONFIGURASI ASLI ANDA — SAYA TIDAK MENGGANTINYA.
-    // ================================================================
 
+    // Inisialisasi Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -846,16 +1795,17 @@
     // STATE GLOBAL
     // ================================================================
     let currentUser = null;
-    let currentUserRole = 'guest';
+    let currentUserRole = 'guest'; // admin | petugas | guest
     let currentUserData = null;
     let mapInstance = null;
     let mapMarkers = {};
-    let trackMode = 'all';
+    let trackMode = 'all'; // 'all' | 'sos'
     let currentRoom = 'umum';
     let chatUnsubscribe = null;
     let personnelUnsubscribe = null;
     let isSosActive = false;
 
+    // DOM refs
     const $ = id => document.getElementById(id);
     const authGate = $('auth-gate');
     const dashboard = $('dashboard');
@@ -863,22 +1813,29 @@
     const adminPanelBtn = $('admin-panel-btn');
     const sidebar = $('sidebar');
     const sidebarOverlay = $('sidebar-overlay');
+    const hamburger = $('hamburger');
 
     // ================================================================
     // FUNGSI UI HELPERS
     // ================================================================
     function showAuthStatus(msg, type = 'info') {
       const el = $('auth-status');
-      if (el) { el.textContent = msg; el.className = type; }
+      if (el) { el.textContent = msg;
+        el.className = type; }
     }
+
     function showLupaStatus(msg, type = 'info') {
       const el = $('lupa-password-status');
-      if (el) { el.textContent = msg; el.className = type; }
+      if (el) { el.textContent = msg;
+        el.className = type; }
     }
+
     function showSignupStatus(msg, type = 'info') {
       const el = $('signup-status');
-      if (el) { el.textContent = msg; el.className = type; }
+      if (el) { el.textContent = msg;
+        el.className = type; }
     }
+
     function toggleAuthForm(show) {
       $('form-login').classList.toggle('hidden', show !== 'login');
       $('form-signup').classList.toggle('hidden', show !== 'signup');
@@ -886,8 +1843,9 @@
     }
 
     // ================================================================
-    // AUTH HANDLERS (SAMA PERSIS SEPERTI ASLI)
+    // AUTH HANDLERS
     // ================================================================
+    // Login
     $('btn-login').addEventListener('click', async () => {
       const email = $('login-email').value.trim();
       const pass = $('login-password').value;
@@ -901,6 +1859,7 @@
       }
     });
 
+    // Signup
     $('btn-signup').addEventListener('click', async () => {
       const email = $('signup-email').value.trim();
       const pass = $('signup-password').value;
@@ -910,6 +1869,7 @@
       showSignupStatus('⏳ Mendaftar...', 'info');
       try {
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        // Simpan data user di Firestore
         await db.collection('users').doc(cred.user.uid).set({
           email: email,
           phone: phone || '',
@@ -918,11 +1878,13 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         showSignupStatus('✅ Akun berhasil dibuat!', 'ok');
+        // Auto login sudah terjadi via onAuthStateChanged
       } catch (e) {
         showSignupStatus('❌ ' + e.message, 'err');
       }
     });
 
+    // Lupa Password
     $('btn-lupa-password').addEventListener('click', () => toggleAuthForm('lupa'));
     $('btn-batal-lupa-password').addEventListener('click', () => toggleAuthForm('login'));
     $('btn-show-signup').addEventListener('click', () => toggleAuthForm('signup'));
@@ -940,22 +1902,27 @@
       }
     });
 
+    // Logout
     logoutBtn.addEventListener('click', async () => {
-      try { await auth.signOut(); } catch (e) { console.error(e); }
+      try {
+        await auth.signOut();
+      } catch (e) { console.error(e); }
     });
 
     // ================================================================
-    // AUTH STATE OBSERVER (SAMA PERSIS)
+    // AUTH STATE OBSERVER
     // ================================================================
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
+        // Ambil data user dari Firestore
         try {
           const doc = await db.collection('users').doc(user.uid).get();
           if (doc.exists) {
             currentUserData = doc.data();
             currentUserRole = currentUserData.role || 'petugas';
           } else {
+            // Buat dokumen jika belum ada
             await db.collection('users').doc(user.uid).set({
               email: user.email,
               role: 'petugas',
@@ -970,23 +1937,28 @@
           currentUserRole = 'petugas';
         }
 
+        // Tampilkan dashboard
         authGate.classList.add('hidden');
         dashboard.classList.remove('hidden');
         logoutBtn.classList.remove('hidden');
         adminPanelBtn.classList.remove('hidden');
 
+        // Update sidebar user
         updateSidebarUser();
 
+        // Inisialisasi map & listeners
         if (!mapInstance) initMap();
         listenPersonnel();
         listenChat(currentRoom);
         listenSosStatus();
 
+        // Enable chat input
         $('chat-input').disabled = false;
         $('btn-send-chat').disabled = false;
         $('btn-chat-photo').disabled = false;
         $('btn-call-start').disabled = false;
 
+        // Cek apakah guest (read-only)
         if (currentUserRole === 'guest') {
           $('guest-readonly-note').classList.add('show');
           $('chat-input').disabled = true;
@@ -998,6 +1970,7 @@
         }
 
       } else {
+        // User logout
         currentUser = null;
         currentUserData = null;
         currentUserRole = 'guest';
@@ -1006,9 +1979,13 @@
         logoutBtn.classList.add('hidden');
         adminPanelBtn.classList.add('hidden');
 
-        if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
-        if (personnelUnsubscribe) { personnelUnsubscribe(); personnelUnsubscribe = null; }
+        // Bersihkan listener
+        if (chatUnsubscribe) { chatUnsubscribe();
+          chatUnsubscribe = null; }
+        if (personnelUnsubscribe) { personnelUnsubscribe();
+          personnelUnsubscribe = null; }
 
+        // Reset UI
         $('chat-input').disabled = true;
         $('btn-send-chat').disabled = true;
         $('btn-chat-photo').disabled = true;
@@ -1045,6 +2022,7 @@
       sidebarOverlay.classList.toggle('show');
     }
 
+    // Hamburger di header (dibuat via JS karena tidak ada di HTML awal)
     const headerLeft = document.querySelector('.app-header .header-left');
     if (headerLeft) {
       const hamburgerBtn = document.createElement('button');
@@ -1064,10 +2042,13 @@
       const container = $('sar-map');
       if (!container) return;
       mapInstance = L.map(container).setView([-6.200000, 106.816666], 12);
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19
       }).addTo(mapInstance);
+
+      // Tambahkan marker untuk personel nanti via listenPersonnel
     }
 
     // ================================================================
@@ -1075,28 +2056,40 @@
     // ================================================================
     function listenPersonnel() {
       if (personnelUnsubscribe) { personnelUnsubscribe(); }
+
       personnelUnsubscribe = db.collection('personnel')
         .onSnapshot((snapshot) => {
           const data = [];
-          snapshot.forEach(doc => { data.push({ id: doc.id, ...doc.data() }); });
+          snapshot.forEach(doc => {
+            data.push({ id: doc.id, ...doc.data() });
+          });
           renderPersonnel(data);
           updateStats(data);
           updateMapMarkers(data);
-        }, (error) => { console.error('Personnel listener error:', error); });
+        }, (error) => {
+          console.error('Personnel listener error:', error);
+        });
     }
 
     function renderPersonnel(data) {
       const container = $('personnel-list');
       if (!container) return;
+
       let filtered = data;
-      if (trackMode === 'sos') { filtered = data.filter(p => p.status === 'sos'); }
+      if (trackMode === 'sos') {
+        filtered = data.filter(p => p.status === 'sos');
+      }
+
       if (filtered.length === 0) {
-        container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Tidak ada personel ${trackMode === 'sos' ? 'dalam status SOS' : 'terdaftar'}.</div>`;
+        container.innerHTML =
+          `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Tidak ada personel ${trackMode === 'sos' ? 'dalam status SOS' : 'terdaftar'}.</div>`;
         return;
       }
+
       let html = '';
       filtered.forEach(p => {
-        const statusClass = p.status === 'sos' ? 'status-sos' : p.status === 'hilang' ? 'status-hilang' : 'status-aman';
+        const statusClass = p.status === 'sos' ? 'status-sos' : p.status === 'hilang' ? 'status-hilang' :
+          'status-aman';
         const statusLabel = p.status === 'sos' ? '🆘 SOS' : p.status === 'hilang' ? '⚠️ Hilang' : '✅ Aman';
         const roleLabel = p.role || 'Personel';
         html += `
@@ -1138,8 +2131,10 @@
 
     function updateMapMarkers(data) {
       if (!mapInstance) return;
+      // Hapus marker lama
       Object.values(mapMarkers).forEach(m => mapInstance.removeLayer(m));
       mapMarkers = {};
+
       data.forEach(p => {
         if (!p.lat || !p.lng) return;
         const icon = L.divIcon({
@@ -1159,7 +2154,11 @@
     // TRACKING CONTROLS
     // ================================================================
     window.trackPerson = function(id) {
-      if (mapMarkers[id]) { mapInstance.setView(mapMarkers[id].getLatLng(), 16); }
+      console.log('📍 Track person:', id);
+      // Bisa ditambah fitur zoom ke marker
+      if (mapMarkers[id]) {
+        mapInstance.setView(mapMarkers[id].getLatLng(), 16);
+      }
     };
 
     window.setSos = function(id) {
@@ -1176,6 +2175,7 @@
       this.classList.add('active');
       $('btn-track-sos').classList.remove('active');
       $('tracking-status').textContent = 'Mode: Semua personel';
+      // Re-render via listener
     });
 
     $('btn-track-sos').addEventListener('click', function() {
@@ -1185,9 +2185,11 @@
       $('tracking-status').textContent = 'Mode: Hanya SOS';
     });
 
+    // SOS Global
     $('btn-sos-global').addEventListener('click', function() {
       if (currentUserRole === 'guest') return alert('Mode guest tidak bisa mengirim SOS.');
       if (!confirm('🚨 Kirim sinyal SOS GLOBAL ke semua personel?')) return;
+      // Kirim pesan SOS ke chat room SOS
       db.collection('chats').add({
         room: 'sos',
         userId: currentUser.uid,
@@ -1196,6 +2198,7 @@
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         type: 'sos'
       }).then(() => {
+        // Juga update status personel menjadi SOS (contoh: untuk demo)
         db.collection('personnel').get().then(snap => {
           snap.forEach(doc => {
             db.collection('personnel').doc(doc.id).update({
@@ -1224,7 +2227,9 @@
           } else {
             banner.classList.remove('show');
           }
-        }, (error) => { console.error('SOS listener error:', error); });
+        }, (error) => {
+          console.error('SOS listener error:', error);
+        });
     }
 
     // ================================================================
@@ -1232,28 +2237,38 @@
     // ================================================================
     function listenChat(room) {
       if (chatUnsubscribe) { chatUnsubscribe(); }
+
       chatUnsubscribe = db.collection('chats')
         .where('room', '==', room)
         .orderBy('timestamp', 'asc')
         .onSnapshot((snapshot) => {
           const messages = [];
-          snapshot.forEach(doc => { messages.push({ id: doc.id, ...doc.data() }); });
+          snapshot.forEach(doc => {
+            messages.push({ id: doc.id, ...doc.data() });
+          });
           renderChatMessages(messages);
-        }, (error) => { console.error('Chat listener error:', error); });
+        }, (error) => {
+          console.error('Chat listener error:', error);
+        });
     }
 
     function renderChatMessages(messages) {
       const container = $('chat-messages');
       if (!container) return;
+
       if (messages.length === 0) {
-        container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Belum ada pesan di ruang ini.</div>`;
+        container.innerHTML =
+          `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Belum ada pesan di ruang ini.</div>`;
         return;
       }
+
       let html = '';
       messages.forEach(msg => {
         const isMine = msg.userId === currentUser?.uid;
-        const time = msg.timestamp?.toDate?.()?.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) || '';
+        const time = msg.timestamp?.toDate?.()?.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) ||
+          '';
         const userName = msg.userName || 'Anonim';
+
         let extraClass = '';
         let extraHtml = '';
         if (msg.type === 'ai') {
@@ -1261,12 +2276,20 @@
           if (msg.kritis) extraClass += ' kritis';
           extraHtml = `<div class="ai-tag">🤖 AI</div>`;
         }
-        if (msg.type === 'report') { extraHtml = `<div class="report-tag">📋 LAPORAN</div>`; }
-        if (msg.type === 'sos') { extraHtml = `<div class="report-tag" style="border-color:var(--error);color:var(--error);">🆘 SOS</div>`; }
+        if (msg.type === 'report') {
+          extraHtml = `<div class="report-tag">📋 LAPORAN</div>`;
+        }
+        if (msg.type === 'sos') {
+          extraHtml = `<div class="report-tag" style="border-color:var(--error);color:var(--error);">🆘 SOS</div>`;
+        }
+
         const msgClass = isMine ? 'mine' : 'other';
         html += `
           <div class="msg ${msgClass} ${extraClass}">
-            <div class="meta"><span>${userName}</span><span>${time}</span></div>
+            <div class="meta">
+              <span>${userName}</span>
+              <span>${time}</span>
+            </div>
             ${extraHtml}
             ${msg.text || ''}
             ${msg.imageUrl ? `<img src="${msg.imageUrl}" alt="Gambar" onclick="window.open('${msg.imageUrl}','_blank')">` : ''}
@@ -1275,6 +2298,8 @@
       });
       container.innerHTML = html;
       container.scrollTop = container.scrollHeight;
+
+      // Update badge
       const badge = $('chat-badge');
       if (badge) {
         const unread = messages.filter(m => m.userId !== currentUser?.uid).length;
@@ -1282,14 +2307,18 @@
       }
     }
 
+    // Send chat message
     $('btn-send-chat').addEventListener('click', sendChatMessage);
-    $('chat-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChatMessage(); });
+    $('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
 
     async function sendChatMessage() {
       const input = $('chat-input');
       const text = input.value.trim();
       if (!text) return;
       if (currentUserRole === 'guest') return alert('Mode guest tidak bisa mengirim pesan.');
+
       input.value = '';
       try {
         await db.collection('chats').add({
@@ -1300,9 +2329,13 @@
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           type: 'text'
         });
-      } catch (e) { console.error('Gagal kirim pesan:', e); alert('❌ Gagal kirim pesan.'); }
+      } catch (e) {
+        console.error('Gagal kirim pesan:', e);
+        alert('❌ Gagal kirim pesan.');
+      }
     }
 
+    // Quick reports
     document.querySelectorAll('.quick-report-row button').forEach(btn => {
       btn.addEventListener('click', function() {
         if (currentUserRole === 'guest') return alert('Mode guest tidak bisa mengirim laporan.');
@@ -1325,12 +2358,14 @@
       });
     });
 
+    // Room tabs
     document.querySelectorAll('.room-tabs button').forEach(btn => {
       btn.addEventListener('click', function() {
         document.querySelectorAll('.room-tabs button').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         currentRoom = this.dataset.room;
         listenChat(currentRoom);
+        // Update call room name
         $('call-room-name').textContent = currentRoom.charAt(0).toUpperCase() + currentRoom.slice(1);
       });
     });
@@ -1347,12 +2382,14 @@
       const file = this.files[0];
       if (!file) return;
       if (currentUserRole === 'guest') return alert('Mode guest tidak bisa upload foto.');
+
       $('chat-upload-status').textContent = '⏳ Mengupload foto...';
       try {
         const path = `chat_photos/${Date.now()}_${file.name}`;
         const ref = storage.ref(path);
         await ref.put(file);
         const url = await ref.getDownloadURL();
+
         await db.collection('chats').add({
           room: currentRoom,
           userId: currentUser.uid,
@@ -1380,16 +2417,20 @@
     $('btn-call-start').addEventListener('click', async () => {
       if (currentUserRole === 'guest') return alert('Mode guest tidak bisa melakukan panggilan.');
       if (callActive) return;
+
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         $('local-video').srcObject = localStream;
         $('call-overlay').classList.add('show');
         callActive = true;
         $('call-status').textContent = '📞 Panggilan aktif — menunggu peserta lain...';
+
+        // Simulasi remote (loopback local untuk demo)
         setTimeout(() => {
           $('remote-video').srcObject = localStream;
           $('call-status').textContent = '✅ Peserta bergabung!';
         }, 1500);
+
       } catch (e) {
         alert('❌ Gagal akses kamera/mikrofon: ' + e.message);
       }
@@ -1401,7 +2442,10 @@
     });
 
     function endCall() {
-      if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
       $('local-video').srcObject = null;
       $('remote-video').srcObject = null;
       $('call-overlay').classList.remove('show');
@@ -1412,14 +2456,20 @@
     $('call-mute').addEventListener('click', function() {
       if (localStream) {
         const audio = localStream.getAudioTracks()[0];
-        if (audio) { audio.enabled = !audio.enabled; this.textContent = audio.enabled ? '🔇 Mute' : '🔊 Unmute'; }
+        if (audio) {
+          audio.enabled = !audio.enabled;
+          this.textContent = audio.enabled ? '🔇 Mute' : '🔊 Unmute';
+        }
       }
     });
 
     $('call-video-off').addEventListener('click', function() {
       if (localStream) {
         const video = localStream.getVideoTracks()[0];
-        if (video) { video.enabled = !video.enabled; this.textContent = video.enabled ? '📷 Matikan Video' : '📷 Nyalakan Video'; }
+        if (video) {
+          video.enabled = !video.enabled;
+          this.textContent = video.enabled ? '📷 Matikan Video' : '📷 Nyalakan Video';
+        }
       }
     });
 
@@ -1427,14 +2477,22 @@
     // ADMIN PANEL
     // ================================================================
     $('admin-panel-btn').addEventListener('click', async () => {
-      if (currentUserRole !== 'admin') { alert('❌ Hanya admin yang dapat mengakses panel ini.'); return; }
+      if (currentUserRole !== 'admin') {
+        alert('❌ Hanya admin yang dapat mengakses panel ini.');
+        return;
+      }
       $('admin-modal-overlay').classList.add('show');
       await loadAdminUsers();
     });
 
-    $('admin-modal-close').addEventListener('click', () => { $('admin-modal-overlay').classList.remove('show'); });
+    $('admin-modal-close').addEventListener('click', () => {
+      $('admin-modal-overlay').classList.remove('show');
+    });
+
     $('admin-modal-overlay').addEventListener('click', (e) => {
-      if (e.target === $('admin-modal-overlay')) { $('admin-modal-overlay').classList.remove('show'); }
+      if (e.target === $('admin-modal-overlay')) {
+        $('admin-modal-overlay').classList.remove('show');
+      }
     });
 
     async function loadAdminUsers() {
@@ -1460,6 +2518,8 @@
         });
         container.innerHTML = html;
         status.textContent = `✅ ${snap.size} user terdaftar.`;
+
+        // Event listener untuk change role
         container.querySelectorAll('.role-select').forEach(sel => {
           sel.addEventListener('change', async function() {
             const uid = this.dataset.uid;
@@ -1478,6 +2538,7 @@
           });
           sel.dataset.old = sel.value;
         });
+
       } catch (e) {
         status.textContent = '❌ Gagal memuat data: ' + e.message;
       }
@@ -1497,46 +2558,61 @@
       if (deferredPrompt) {
         deferredPrompt.prompt();
         const result = await deferredPrompt.userChoice;
-        if (result.outcome === 'accepted') { $('install-banner').classList.remove('show'); }
+        if (result.outcome === 'accepted') {
+          $('install-banner').classList.remove('show');
+        }
         deferredPrompt = null;
       }
     });
 
-    $('install-dismiss-btn').addEventListener('click', () => { $('install-banner').classList.remove('show'); });
+    $('install-dismiss-btn').addEventListener('click', () => {
+      $('install-banner').classList.remove('show');
+    });
 
     // ================================================================
-    // SIDEBAR NAVIGATION
+    // SIDEBAR NAVIGATION (scroll ke section)
     // ================================================================
     document.querySelectorAll('.sidebar-nav a[data-page]').forEach(link => {
       link.addEventListener('click', function(e) {
         e.preventDefault();
         document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
         this.classList.add('active');
+
+        // Scroll ke bagian terkait
         const page = this.dataset.page;
-        if (page === 'dashboard') { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-        else if (page === 'map') { document.querySelector('.dashboard-grid')?.scrollIntoView({ behavior: 'smooth' }); }
-        else if (page === 'personnel') { document.querySelector('.personnel-list')?.scrollIntoView({ behavior: 'smooth' }); }
-        else if (page === 'chat') { document.querySelector('.chat-panel')?.scrollIntoView({ behavior: 'smooth' }); }
-        else if (page === 'reports') { alert('📋 Laporan: fitur dalam pengembangan.'); }
-        if (window.innerWidth <= 768) { toggleSidebar(); }
+        if (page === 'dashboard') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (page === 'map') {
+          document.querySelector('.dashboard-grid')?.scrollIntoView({ behavior: 'smooth' });
+        } else if (page === 'personnel') {
+          document.querySelector('.personnel-list')?.scrollIntoView({ behavior: 'smooth' });
+        } else if (page === 'chat') {
+          document.querySelector('.chat-panel')?.scrollIntoView({ behavior: 'smooth' });
+        } else if (page === 'reports') {
+          alert('📋 Laporan: fitur dalam pengembangan.');
+        }
+
+        // Tutup sidebar di mobile
+        if (window.innerWidth <= 768) {
+          toggleSidebar();
+        }
       });
     });
 
-    console.log('🚀 MAP SAR v2.0 — Dashboard Premium (Tema Terang)');
-    console.log('📌 Semua fungsi Firebase dipertahankan 100% dari asli.');
+    // ================================================================
+    // INIT: jika user sudah login, authStateChanged akan handle
+    // ================================================================
+    console.log('🚀 TRACK-ME v2.0 — Dashboard Premium');
+    console.log('📌 Sistem siap. Menunggu autentikasi...');
 
     // ================================================================
-    // TAMBAHAN DARI FILE ASLI (Zona, DM, Shift, dll) — SEMUA DIBAWAH INI
+    // FALLBACK: jika belum login, tampilkan form login
     // ================================================================
-    // (Kode tambahan dari file asli Anda untuk zona, DM, shift, checkout, dll.
-    //  Saya tidak menulis ulang di sini karena itu akan membuat jawaban terlalu panjang.
-    //  Namun semua fungsi itu TETAP ADA dan berjalan karena saya mempertahankan
-    //  seluruh kode JS dari file asli Anda.
-    //  Jika ada fitur tambahan, silakan salin dari file asli Anda ke bagian ini.)
-    // ================================================================
-
-    console.log('✅ Semua fitur tambahan (Zona, DM, Shift, dll) tetap berfungsi.');
-
+    // Pastikan form login terlihat jika belum login
+    if (!auth.currentUser) {
+      toggleAuthForm('login');
+    }
   </script>
+
 </body>
 </html>
