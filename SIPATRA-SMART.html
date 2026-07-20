@@ -1092,7 +1092,7 @@ MAIN CONTENT
 
     <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
       <div style="flex:1; min-width:200px;">
-        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Persentase per Kategori</div>
+        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Persentase per Tingkat Bahaya</div>
         <canvas id="chart-pie-bahaya" style="max-height:220px;"></canvas>
       </div>
       <div style="flex:1; min-width:200px;">
@@ -3631,16 +3631,19 @@ MAIN CONTENT
   }
 
   function renderChartPieBahaya(){
-    const perKategori = {};
-    daftarBahayaCache.forEach(l=>{ perKategori[l.kategori] = (perKategori[l.kategori] || 0) + 1; });
-    const labels = Object.keys(perKategori);
-    const data = Object.values(perKategori);
-    const warna = ['#0B7A5B','#e5484d','#ffb020','#4aa3ff','#3ecf8e','#b084f0','#ff6ec7','#8c9096'];
+    // PENTING: dikelompokkan per TINGKAT BAHAYA (bukan kategori) -- supaya warnanya konsisten
+    // dengan kotak ringkasan di atas (Tinggi=merah, Sedang=kuning, Rendah=hijau).
+    const jmlTinggi = daftarBahayaCache.filter(l=> l.tingkat === 'tinggi').length;
+    const jmlSedang = daftarBahayaCache.filter(l=> l.tingkat === 'sedang').length;
+    const jmlRendah = daftarBahayaCache.filter(l=> l.tingkat === 'rendah').length;
 
     if (chartPieBahaya) chartPieBahaya.destroy();
     chartPieBahaya = new Chart(document.getElementById('chart-pie-bahaya'), {
       type: 'pie',
-      data: { labels, datasets: [{ data, backgroundColor: warna }] },
+      data: {
+        labels: ['🔴 Tinggi', '🟡 Sedang', '🟢 Rendah'],
+        datasets: [{ data: [jmlTinggi, jmlSedang, jmlRendah], backgroundColor: ['#e5484d', '#ffb020', '#3ecf8e'] }]
+      },
       options: {
         plugins: { legend: { position: 'bottom', labels: { color: '#1A1D1F', font: { size: 9 }, boxWidth: 10 } } }
       }
@@ -3648,36 +3651,47 @@ MAIN CONTENT
   }
 
   function renderChartBarBahaya(){
+    // Bertumpuk (stacked) 3 warna per periode -- Tinggi/Sedang/Rendah -- konsisten dgn skema warna.
     const periode = document.getElementById('select-periode-bahaya').value;
-    const kelompok = {}; // label -> jumlah
+    const kelompok = {}; // label -> { tinggi, sedang, rendah }
+
+    function labelDariTanggal(tgl){
+      if (periode === 'harian') return tgl.toLocaleDateString('id-ID', { day:'2-digit', month:'2-digit' });
+      if (periode === 'bulanan') return tgl.toLocaleDateString('id-ID', { month:'short', year:'2-digit' });
+      const kuartal = Math.floor(tgl.getMonth() / 3) + 1;
+      return 'Q' + kuartal + ' ' + tgl.getFullYear();
+    }
 
     daftarBahayaCache.forEach(l=>{
       if (!l.waktuLapor || !l.waktuLapor.toDate) return;
-      const tgl = l.waktuLapor.toDate();
-      let label;
-      if (periode === 'harian'){
-        label = tgl.toLocaleDateString('id-ID', { day:'2-digit', month:'2-digit' });
-      } else if (periode === 'bulanan'){
-        label = tgl.toLocaleDateString('id-ID', { month:'short', year:'2-digit' });
-      } else {
-        const kuartal = Math.floor(tgl.getMonth() / 3) + 1;
-        label = 'Q' + kuartal + ' ' + tgl.getFullYear();
-      }
-      kelompok[label] = (kelompok[label] || 0) + 1;
+      const label = labelDariTanggal(l.waktuLapor.toDate());
+      if (!kelompok[label]) kelompok[label] = { tinggi:0, sedang:0, rendah:0 };
+      if (l.tingkat === 'tinggi') kelompok[label].tinggi++;
+      else if (l.tingkat === 'sedang') kelompok[label].sedang++;
+      else if (l.tingkat === 'rendah') kelompok[label].rendah++;
     });
 
     const labels = Object.keys(kelompok);
-    const data = Object.values(kelompok);
+    const dataTinggi = labels.map(lb=> kelompok[lb].tinggi);
+    const dataSedang = labels.map(lb=> kelompok[lb].sedang);
+    const dataRendah = labels.map(lb=> kelompok[lb].rendah);
 
     if (chartBarBahaya) chartBarBahaya.destroy();
     chartBarBahaya = new Chart(document.getElementById('chart-bar-bahaya'), {
       type: 'bar',
-      data: { labels, datasets: [{ data, backgroundColor: '#0B7A5B' }] },
+      data: {
+        labels,
+        datasets: [
+          { label: 'Tinggi', data: dataTinggi, backgroundColor: '#e5484d' },
+          { label: 'Sedang', data: dataSedang, backgroundColor: '#ffb020' },
+          { label: 'Rendah', data: dataRendah, backgroundColor: '#3ecf8e' }
+        ]
+      },
       options: {
-        plugins: { legend: { display: false } },
+        plugins: { legend: { display: true, position: 'bottom', labels: { color: '#1A1D1F', font: { size: 9 }, boxWidth: 10 } } },
         scales: {
-          x: { ticks: { color: '#1A1D1F', font: { size: 9 } }, grid: { color: '#E4E7EB' } },
-          y: { ticks: { color: '#1A1D1F', font: { size: 9 }, stepSize: 1 }, grid: { color: '#E4E7EB' }, beginAtZero: true }
+          x: { stacked: true, ticks: { color: '#1A1D1F', font: { size: 9 } }, grid: { color: '#E4E7EB' } },
+          y: { stacked: true, ticks: { color: '#1A1D1F', font: { size: 9 }, stepSize: 1 }, grid: { color: '#E4E7EB' }, beginAtZero: true }
         }
       }
     });
