@@ -746,6 +746,7 @@ MAIN CONTENT
       <input type="email" id="signup-email" placeholder="Email">
       <input type="password" id="signup-password" placeholder="Password (min. 6 karakter)">
       <input type="tel" id="signup-phone" placeholder="No. HP WhatsApp (format: +62812xxxxxxx)">
+      <p class="sub" style="margin-top:-4px;">📍 Tracking posisi <b>otomatis wajib aktif</b> saat memasuki Zona/Wilayah Kerja (sesuai prosedur K3/OGS), untuk keselamatan &amp; identifikasi personel di lapangan.</p>
       <button class="primary" id="btn-signup">DAFTAR</button>
       <button class="secondary" id="btn-show-login">Sudah punya akun? Masuk</button>
     </div>
@@ -1593,11 +1594,14 @@ MAIN CONTENT
   const JAM_KERJA_STANDAR_MS = 8 * 60 * 60 * 1000; // 8 jam, sesuai UU Ketenagakerjaan No.13/2003 -- SESUAIKAN kalau standar SIPATRA-SMART berbeda
 
   // Filter kualitas GPS -- supaya jejak rute tidak berantakan akibat lompatan sinyal lemah/fallback WiFi
-  const AKURASI_MAKS_METER = 100;     // titik dgn radius akurasi lebih besar dari ini dianggap tidak layak masuk jejak rute --
-                                       // dinaikkan dari 50m ke 100m (konsisten dgn ambang auto-zoom) karena GPS HP di
-                                       // area pabrik (banyak struktur beton/baja) sering akurasinya lebih kasar dari 50m,
-                                       // menyebabkan hampir semua titik terbuang & jarak tempuh rute macet di 0.00 km
+  const AKURASI_MAKS_METER = 300;     // titik dgn radius akurasi lebih besar dari ini dianggap tidak layak masuk jejak rute --
+                                       // dinaikkan lagi dari 100m ke 300m: di lapangan (area tambang/pabrik dengan struktur
+                                       // beton/baja besar, mis. gudang batu bara) akurasi GPS HP kerap jauh lebih kasar dari
+                                       // 100m, menyebabkan HAMPIR SEMUA titik tetap terbuang & jarak tempuh macet permanen
+                                       // di 0.00 km walau personel benar-benar berpindah beberapa km.
   const KECEPATAN_MAKS_MPS = 40;      // ~144 km/jam -- lompatan yang mustahil ditempuh personel (jalan kaki/motor) dalam SAR
+  const JEDA_MAKS_TANPA_TITIK_MS = 3 * 60 * 1000; // 3 menit -- kalau sudah selama ini tidak ada titik yang lolos filter,
+                                       // longgarkan sekali supaya jejak tidak macet permanen di area sinyal sangat buruk
   let titikTerakhirValid = null;      // {lat, lon, waktuMs} -- titik terakhir yang lolos filter, dipakai HANYA sebagai acuan (bukan disimpan ke Firestore)
   let titikAwalSudahDikirim = false;  // flag: titik Markas (awal sesi tracking) sudah tercatat ke Firestore atau belum
   let titikAwalLokal = null;          // {lat, lon, waktuMs} -- salinan lokal titik Markas, dipakai hitung jarak rute pergi tanpa perlu fetch Firestore
@@ -1605,6 +1609,12 @@ MAIN CONTENT
   let titikTibaLokal = null;          // {lat, lon, waktuMs} -- dicatat saat klik "Saya Sudah Tiba", jadi acuan hitung rute pulang
 
   function titikLayakJadiJejak(coords){
+    // Fallback anti-macet: sudah lama sekali (>3 menit) tidak ada titik yang lolos --
+    // kemungkinan besar sedang di area sinyal GPS sangat buruk (indoor pabrik/tambang).
+    // Daripada jejak macet PERMANEN di 0.00 km, longgarkan sekali supaya tetap tercatat approksimasi.
+    const sudahLamaTanpaTitik = titikTerakhirValid && (Date.now() - titikTerakhirValid.waktuMs) > JEDA_MAKS_TANPA_TITIK_MS;
+    if (sudahLamaTanpaTitik) return true;
+
     if (coords.accuracy && coords.accuracy > AKURASI_MAKS_METER) return false; // sinyal GPS terlalu kasar
     if (titikTerakhirValid){
       const jarakM = hitungJarakMeter(titikTerakhirValid.lat, titikTerakhirValid.lon, coords.latitude, coords.longitude);
@@ -1794,20 +1804,38 @@ MAIN CONTENT
     const sekarangDiDalam = titikDalamWilayahKerja(lat, lon);
 
     if (statusDiDalamWilayahKerjaSaatIni === null){
-      // Pemeriksaan pertama sejak dashboard dibuka -- kalau kebetulan sudah di dalam zona, langsung check-in
+      // Pemeriksaan pertama sejak dashboard dibuka -- kalau kebetulan sudah di dalam zona, langsung check-in + nyalakan tracking
       statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
-      if (sekarangDiDalam) cekAutoCheckIn(lat, lon, false);
+      if (sekarangDiDalam){
+        cekAutoCheckIn(lat, lon, false);
+        nyalakanTrackingOtomatisJikaDiizinkan();
+      }
       return;
     }
 
     if (sekarangDiDalam && !statusDiDalamWilayahKerjaSaatIni){
-      // TRANSISI: baru saja MASUK Zona/Wilayah Kerja -> check-in otomatis sesuai jadwal shift
+      // TRANSISI: baru saja MASUK Zona/Wilayah Kerja -> check-in otomatis + nyalakan tracking penuh otomatis
+      // (supaya jarak tempuh & waktu aktif untuk FIT%/WLA mulai terakumulasi TANPA perlu tekan tombol manual)
       cekAutoCheckIn(lat, lon, false);
+      nyalakanTrackingOtomatisJikaDiizinkan();
     } else if (!sekarangDiDalam && statusDiDalamWilayahKerjaSaatIni){
       // TRANSISI: baru saja KELUAR Zona/Wilayah Kerja -> tampilkan pop-up konfirmasi check-out
+      // (tracking TIDAK langsung dimatikan di sini -- baru dimatikan kalau user pilih "Check-out/Selesai"
+      // di pop-up, supaya tidak putus kalau cuma keluar sebentar/sinyal GPS meleset di tepi zona)
       await tampilkanPopupKeluarZonaKerja();
     }
     statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
+  }
+
+  // Nyalakan tracking penuh (live position + akumulasi jarak/waktu) secara OTOMATIS --
+  // WAJIB untuk semua role='user' begitu memasuki Zona/Wilayah Kerja (bukan opsional):
+  // verifikasi K3/kelayakan personel sudah dilakukan fisik di gerbang OGS sebelum masuk,
+  // jadi setiap personel yang berada di dalam zona kerja WAJIB teridentifikasi & terlacak.
+  function nyalakanTrackingOtomatisJikaDiizinkan(){
+    if (window.__userRole !== 'user') return;
+    if (watchId !== null) return; // sudah tracking (baik manual maupun otomatis sebelumnya), jangan dobel
+    mulaiTrackingSaya();
+    setTrackingStatus('📍 Tracking otomatis AKTIF (wajib) -- terdeteksi memasuki Zona Kerja.');
   }
 
   // Dipanggil begitu geofence pasif mendeteksi user KELUAR dari Wilayah Kerja --
@@ -1899,6 +1927,9 @@ MAIN CONTENT
         statusHariIni: 'selesai'
       });
       tutupDialogCheckout();
+      // Check-out resmi -- matikan tracking otomatis juga (kalau sedang aktif), supaya konsisten
+      // dengan status "selesai kerja" dan tidak terus mengirim posisi setelah shift berakhir.
+      if (watchId !== null) hentikanTrackingSaya();
     }catch(err){
       document.getElementById('checkout-modal-status').textContent = 'Gagal: ' + err.message;
     }
@@ -3520,10 +3551,14 @@ MAIN CONTENT
       html += '<div style="font-size:9.5px; color:var(--text-dim); opacity:0.7;">(diedit)</div>';
     }
     if (m.photoUrl){
-      html += '<img src="' + m.photoUrl + '" onclick="window.open(this.src)">';
+      const urlAman = m.photoUrl.replace(/'/g, "\\'");
+      html += '<img src="' + m.photoUrl + '" onclick="window.open(this.src)" '
+        + 'onerror="window.tampilkanFallbackMedia(this, \'' + urlAman + '\', \'foto\')">';
     }
     if (m.videoUrl){
-      html += '<video src="' + m.videoUrl + '" controls style="max-width:100%; margin-top:6px;"></video>';
+      const urlAmanVid = m.videoUrl.replace(/'/g, "\\'");
+      html += '<video src="' + m.videoUrl + '" controls style="max-width:100%; margin-top:6px;" '
+        + 'onerror="window.tampilkanFallbackMedia(this, \'' + urlAmanVid + '\', \'video\')"></video>';
     }
     if (m.fileUrl){
       const namaFile = (m.fileName || 'File').replace(/</g,'&lt;');
@@ -3579,6 +3614,23 @@ MAIN CONTENT
     }catch(err){
       alert('Gagal edit pesan: ' + err.message);
     }
+  };
+
+  /**
+   * Dipanggil otomatis (via onerror) kalau foto/video di chat GAGAL dimuat --
+   * misalnya karena masalah sertifikat SSL di device tertentu (NET::ERR_CERT_AUTHORITY_INVALID)
+   * saat browser coba akses domain penyimpanan (Cloudflare R2). Daripada tampil ikon
+   * rusak/kosong yang membingungkan, tampilkan kotak fallback dengan tombol buka langsung + coba lagi.
+   */
+  window.tampilkanFallbackMedia = function(elemenGagal, url, jenis){
+    if (elemenGagal.dataset.fallbackTerpasang) return; // cegah loop kalau fallback ikut gagal render
+    elemenGagal.dataset.fallbackTerpasang = '1';
+    const kotak = document.createElement('div');
+    kotak.style.cssText = 'border:1px solid var(--red); background:#FDECEC; color:#B3363A; padding:10px 12px; margin-top:6px; font-size:11px; line-height:1.6;';
+    kotak.innerHTML = '⚠️ Gagal memuat ' + jenis + ' ini (kemungkinan masalah sertifikat/jaringan di HP Anda).<br>'
+      + '<a href="' + url + '" target="_blank" style="color:#B3363A; font-weight:700; text-decoration:underline;">🔗 Buka langsung di tab baru</a>'
+      + ' &nbsp;·&nbsp; <span onclick="window.location.reload()" style="cursor:pointer; font-weight:700; text-decoration:underline;">🔄 Muat ulang halaman</span>';
+    elemenGagal.replaceWith(kotak);
   };
 
   /**
