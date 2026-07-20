@@ -1331,15 +1331,23 @@ MAIN CONTENT
       dash.insertBefore(note, dash.firstChild);
     }
 
-    // Zona Markas & Zona Aman (evakuasi darurat) khusus role admin/VIP -- BUKAN sekadar "bukan guest"
-    ['btn-tandai-markas', 'btn-tandai-aman'].forEach(id=>{
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.disabled = !isAdminAtauVip;
-      el.style.opacity = isAdminAtauVip ? '1' : '0.4';
-      el.style.cursor = isAdminAtauVip ? 'pointer' : 'not-allowed';
-      el.title = isAdminAtauVip ? '' : 'Hanya Admin/VIP yang dapat menandai/memindahkan Zona Markas & Zona Aman';
-    });
+    // Zona Markas -- TETAP khusus Admin/VIP (pos komando operasional, lebih sensitif)
+    const elMarkas = document.getElementById('btn-tandai-markas');
+    if (elMarkas){
+      elMarkas.disabled = !isAdminAtauVip;
+      elMarkas.style.opacity = isAdminAtauVip ? '1' : '0.4';
+      elMarkas.style.cursor = isAdminAtauVip ? 'pointer' : 'not-allowed';
+      elMarkas.title = isAdminAtauVip ? '' : 'Hanya Admin/VIP yang dapat menandai/memindahkan Zona Markas';
+    }
+    // Zona Aman (evakuasi darurat) -- sekarang boleh Admin/VIP DAN user kerja (personil/supervisor/manager) juga
+    const bolehZonaAman = isAdminAtauVip || window.__userRole === 'user';
+    const elAman = document.getElementById('btn-tandai-aman');
+    if (elAman){
+      elAman.disabled = !bolehZonaAman;
+      elAman.style.opacity = bolehZonaAman ? '1' : '0.4';
+      elAman.style.cursor = bolehZonaAman ? 'pointer' : 'not-allowed';
+      elAman.title = bolehZonaAman ? '' : 'Hanya Admin/VIP/Personil yang dapat menandai Zona Aman';
+    }
 
     // Tombol Panel Admin cuma muncul untuk role 'admin'
     // ⚠️ SEMENTARA (19 Juli 2026): VIP juga bisa lihat tombol ini, sama seperti perubahan
@@ -1544,6 +1552,18 @@ MAIN CONTENT
   let trackCache = {}; // uid -> array titik {lat, lon, waktuMs} untuk hitung jarak
   let jobCountUnsub = {}; // uid -> fungsi unsubscribe listener jumlah WO selesai (riwayatRuteWO)
   let jobCountCache = {}; // uid -> jumlah WO yang sudah "Sudah Tiba" tercatat (indeks pekerjaan)
+  let jadwalKerjaUnsub = {}; // uid -> fungsi unsubscribe listener jadwalKerja hari ini
+  let jadwalKerjaCacheTampilan = {}; // uid -> {jamMasuk, jamPulangAktual, shiftTerdeteksi, statusHariIni} utk ditampilkan di daftar personel
+
+  // Langganan real-time dokumen jadwalKerja HARI INI milik seorang personel --
+  // dipakai untuk menampilkan jam Check-in/Check-out di daftar Status Personel.
+  function langgananJadwalKerjaHariIni(uid){
+    if (jadwalKerjaUnsub[uid]) return; // sudah ada listener, jangan dobel
+    const idDok = idDokumenJadwalHariIni(uid);
+    jadwalKerjaUnsub[uid] = onSnapshot(doc(db, 'jadwalKerja', idDok), (snap)=>{
+      jadwalKerjaCacheTampilan[uid] = snap.exists() ? snap.data() : null;
+    }, ()=>{ /* abaikan error izin -- guest/role lain memang tidak selalu boleh baca */ });
+  }
 
   // Ambang batas formula FIT% (Ready-to-Work) -- nilai default POC, SESUAIKAN setelah kalibrasi data lapangan asli
   // di backend fatigueEngine.js SIPATRA-SMART. Formula ini gabungan waktu aktif + jarak tempuh + indeks pekerjaan (jumlah WO selesai).
@@ -2484,7 +2504,7 @@ MAIN CONTENT
     }
 
     document.getElementById('btn-tandai-aman').addEventListener('click', ()=>{
-      if (window.__userRole !== 'admin' && window.__userRole !== 'vip') return;
+      if (window.__userRole !== 'admin' && window.__userRole !== 'vip' && window.__userRole !== 'user') return;
       modeGambarAman = true;
       resetGambarAman();
       document.getElementById('panel-tandai-aman').classList.remove('hidden');
@@ -2671,6 +2691,7 @@ MAIN CONTENT
           if (personnelPolylines[uid]) personnelPolylines[uid].setStyle({ color });
         }
         langgananJobCount(uid, p.email); // aman dipanggil berulang -- fungsi ini sendiri cek kalau sudah ada listener
+        langgananJadwalKerjaHariIni(uid); // aman dipanggil berulang juga
 
         // Hitung jarak & durasi dari cache titik yang sudah terkumpul
         const titik = trackCache[uid] || [];
@@ -2714,6 +2735,19 @@ MAIN CONTENT
           ? '<div style="font-size:10.5px; color:#fff; background:var(--red); padding:2px 6px; margin-top:4px; display:inline-block; font-weight:700;">⚠️ DALAM ZONA BAHAYA: ' + zonaDitempati.nama + (zonaDitempati.lantai !== null && zonaDitempati.lantai !== undefined ? ' (Lt.' + zonaDitempati.lantai + ')' : '') + '</div>'
           : '';
 
+        // Info Check-in/Check-out hari ini (khusus personel yang punya jadwalKerja -- role='user')
+        let infoJadwalKerja = '';
+        const jk = jadwalKerjaCacheTampilan[uid];
+        if (jk){
+          const formatJam = (ts)=> (ts && ts.toDate) ? ts.toDate().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) : null;
+          const jamMasukStr = formatJam(jk.jamMasuk) || '-';
+          const jamKeluarStr = formatJam(jk.jamPulangAktual);
+          const statusLabel = jamKeluarStr
+            ? ('Check-out ' + jamKeluarStr)
+            : '<span style="color:var(--green);">Masih bertugas</span>';
+          infoJadwalKerja = '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">🕐 Check-in ' + jamMasukStr + ' (' + (jk.shiftTerdeteksi || '-') + ') · ' + statusLabel + '</div>';
+        }
+
         const row = document.createElement('div');
         row.className = 'personnel-row';
         row.style.flexDirection = 'column';
@@ -2722,6 +2756,7 @@ MAIN CONTENT
           + '<span><span class="status-dot status-' + p.status + '"></span>' + (p.nama || p.email) + '</span>'
           + '<span>' + p.status.toUpperCase() + '</span></div>'
           + infoFit
+          + infoJadwalKerja
           + badgeZonaBahaya;
         listEl.appendChild(row);
       });
@@ -2734,8 +2769,10 @@ MAIN CONTENT
           if (personnelPolylines[uid]){ map.removeLayer(personnelPolylines[uid]); delete personnelPolylines[uid]; }
           if (trackUnsub[uid]){ trackUnsub[uid](); delete trackUnsub[uid]; }
           if (jobCountUnsub[uid]){ jobCountUnsub[uid](); delete jobCountUnsub[uid]; }
+          if (jadwalKerjaUnsub[uid]){ jadwalKerjaUnsub[uid](); delete jadwalKerjaUnsub[uid]; }
           delete trackCache[uid];
           delete jobCountCache[uid];
+          delete jadwalKerjaCacheTampilan[uid];
         }
       });
 
