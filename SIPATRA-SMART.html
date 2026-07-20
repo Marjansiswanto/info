@@ -1005,13 +1005,13 @@ MAIN CONTENT
 </div><!-- /main-content -->
 
 <!-- Banner alert -- muncul begitu ada laporan bahaya TINGKAT TINGGI yang belum ditindaklanjuti -->
-<div id="banner-bahaya-tinggi" class="hidden" style="position:sticky; top:0; z-index:80; background:var(--red); color:#fff; padding:10px 16px; font-family:var(--mono); font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+<div id="banner-bahaya-tinggi" class="hidden" style="position:sticky; top:0; z-index:1000; background:var(--red); color:#fff; padding:10px 16px; font-family:var(--mono); font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
   <span id="teks-banner-bahaya">⚠️ ADA LAPORAN BAHAYA TINGKAT TINGGI</span>
   <span style="font-size:10px; opacity:0.85;">Klik untuk lihat →</span>
 </div>
 
 <!-- ===== MODAL LAPOR BAHAYA (semua role kecuali guest) ===== -->
-<div id="modal-lapor-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; display:flex; align-items:center; justify-content:center; padding:16px;">
+<div id="modal-lapor-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
   <div class="panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
     <div class="panel-head"><h3>⚠️ Lapor Bahaya / Potensi Bahaya</h3><button id="btn-tutup-lapor-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">
@@ -1064,7 +1064,7 @@ MAIN CONTENT
 </div>
 
 <!-- ===== MODAL PANEL ANALITIK LAPORAN BAHAYA (Admin/Editor/VIP) ===== -->
-<div id="modal-panel-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; display:flex; align-items:center; justify-content:center; padding:16px;">
+<div id="modal-panel-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
   <div class="panel" style="max-width:640px; width:100%; max-height:92vh; overflow-y:auto;">
     <div class="panel-head"><h3>📊 Panel Analitik Laporan Bahaya</h3><button id="btn-tutup-panel-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
 
@@ -1111,7 +1111,7 @@ MAIN CONTENT
 </div>
 
 <!-- ===== MODAL DETAIL 1 LAPORAN BAHAYA ===== -->
-<div id="modal-detail-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:210; display:flex; align-items:center; justify-content:center; padding:16px;">
+<div id="modal-detail-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
   <div class="panel" style="max-width:460px; width:100%; max-height:90vh; overflow-y:auto;">
     <div class="panel-head"><h3>Detail Laporan Bahaya</h3><button id="btn-tutup-detail-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="isi-detail-bahaya"></div>
