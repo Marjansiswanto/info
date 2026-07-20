@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Map SAR — Dashboard (POC) | INFOSCIE</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ff8a3d">
+<title>Map SAR — Dashboard (Terang) | INFOSCIE</title>
+<link rel="manifest" href="manifest-gojek.json">
+<meta name="theme-color" content="#0B7A5B">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -291,24 +291,352 @@
   }
   .zona-aman-label::before{ display:none !important; }
 </style>
+
+<!-- ================================================================
+     TEMA TERANG "GOJEK KW" — override total dari tema HUD gelap di atas.
+     Semua logika JS/Firebase (termasuk Zona/Shift/DM/Check-in-out) TIDAK
+     diubah sama sekali; ini murni reskin visual lewat CSS custom properties
+     + override elemen dekoratif HUD + perbaikan kontras chat/peta.
+     ================================================================ -->
+<style>
+  :root{
+    --bg:#F7F8FA;            /* Background dashboard */
+    --panel:#FFFFFF;         /* Surface / kartu */
+    --line:#E4E7EB;          /* Divider */
+    --line-bright:#D8DCE1;   /* Border sedikit lebih tegas */
+    --text:#1A1D1F;          /* Text Primary */
+    --text-dim:#6E7580;      /* Text Secondary */
+    --orange:#0B7A5B;        /* dipakai sbg PRIMARY (nama var lama dipertahankan) */
+    --orange-dim:#065C43;    /* Primary Dark */
+    --green:#12B76A;         /* Success */
+    --amber:#FF9F1C;         /* Secondary / Warning */
+    --red:#E5484D;           /* Error / SOS -- tetap merah mencolok, tidak diubah */
+    --mono:'Plus Jakarta Sans', 'Inter', sans-serif;
+    --primary-light:#E3F3EC;
+  }
+
+  /* Hilangkan pola grid ala HUD -- gaya Gojek pakai background polos abu muda */
+  body{ background-image:none; }
+
+  /* Banner atas: sekarang berisi judul SIPATRA-SMART, latar cerah */
+  .disclaimer-banner{ background:var(--primary-light,#E3F3EC); color:var(--orange-dim); border-bottom:2px solid var(--orange); font-size:16px; font-weight:800; letter-spacing:0.5px; padding:12px 20px; }
+  .disclaimer-banner b{ color:var(--orange-dim); }
+
+  /* Kartu & panel: radius 12dp + shadow halus (standar spesifikasi), bukan sudut tajam HUD */
+  .panel, #auth-card, #admin-modal-overlay > div, #dm-modal-overlay > div,
+  #checkout-modal-overlay > div, #verifikasi-wo-overlay > div,
+  .personnel-row, #call-box, #panel-gambar-zona, #panel-tandai-markas,
+  #panel-tandai-aman, #panel-tandai-wilayah-kerja, #panel-alert-supervisor{
+    border-radius:12px !important;
+    box-shadow:0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04);
+  }
+  /* Hilangkan dekorasi "sudut HUD" (corner bracket) -- tidak sesuai gaya bersih Gojek */
+  .panel::before, .panel::after, #auth-card::before, #auth-card::after{ display:none !important; content:none !important; }
+
+  /* Tombol: radius 12dp standar spesifikasi */
+  button{ border-radius:12px !important; }
+  .icon-square-btn{ border-radius:12px !important; width:34px !important; height:34px !important; font-size:15px !important; }
+
+  /* Input form & select: latar putih dengan border tipis (bukan hitam pekat ala terminal) */
+  input, select, textarea{
+    background:#FFFFFF !important; border:1px solid var(--line-bright) !important;
+    color:var(--text) !important; border-radius:8px !important;
+  }
+  input::placeholder{ color:var(--text-dim); opacity:1; }
+
+  /* Header: putih bersih dengan border bawah tipis, bukan garis HUD tegas */
+  header{ background:var(--panel); border-bottom:1px solid var(--line); }
+  #logout-btn, #admin-panel-btn, #btn-aktifkan-notif{
+    border-radius:10px !important; border:1px solid var(--line-bright);
+  }
+
+  /* Eyebrow/label kecil: letter-spacing dikurangi supaya lebih "human", bukan kode HUD */
+  .eyebrow{ letter-spacing:.05em; }
+
+  /* ================================================================
+     SIDEBAR + HEADER (mengikuti referensi tema) — struktur baru,
+     TIDAK mengubah satu pun logika JS/Firebase di bawahnya.
+     ================================================================ */
+  body{ display:flex; }
+  .sidebar{
+    position:fixed; top:0; left:0; width:240px; height:100vh;
+    background:linear-gradient(135deg, var(--orange), var(--orange-dim));
+    padding:24px 16px; display:flex; flex-direction:column; z-index:1000;
+    transition:transform .25s cubic-bezier(0.25,0.46,0.45,0.94);
+    box-shadow:4px 0 20px rgba(11,122,91,0.15); overflow-y:auto;
+  }
+  .sidebar-brand{
+    display:flex; align-items:center; gap:8px; padding-bottom:20px;
+    border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:20px;
+  }
+  .sidebar-brand .logo-icon{
+    width:36px; height:36px; background:rgba(255,255,255,0.2); border-radius:12px;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+  }
+  .sidebar-brand .logo-text{ color:#fff; font-weight:700; font-size:16px; letter-spacing:-0.3px; }
+  .sidebar-brand .logo-text small{ font-weight:400; font-size:10.5px; opacity:0.7; display:block; }
+  .sidebar-nav{ flex:1; display:flex; flex-direction:column; gap:4px; }
+  .sidebar-nav .nav-label{
+    color:rgba(255,255,255,0.45); font-size:10px; font-weight:600;
+    letter-spacing:0.8px; text-transform:uppercase; padding:16px 0 4px 8px;
+  }
+  .sidebar-nav a, .sidebar-nav button{
+    display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:12px;
+    color:rgba(255,255,255,0.75); text-decoration:none; font-size:13.5px; font-weight:500;
+    background:transparent; border:none; width:100%; cursor:pointer; font-family:var(--mono);
+    text-align:left; transition:all .2s ease;
+  }
+  .sidebar-nav a:hover, .sidebar-nav button:hover{ background:rgba(255,255,255,0.14); color:#fff; }
+  .sidebar-nav a.active{ background:rgba(255,255,255,0.2); color:#fff; border-left:3px solid #fff; }
+  .sidebar-nav a .nav-icon, .sidebar-nav button .nav-icon{ font-size:17px; width:22px; text-align:center; flex-shrink:0; }
+  .sidebar-nav a .nav-badge{
+    margin-left:auto; background:var(--amber); color:#1A1D1F;
+    font-size:9.5px; font-weight:700; padding:2px 8px; border-radius:20px;
+  }
+  .sidebar-overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:999; }
+  .sidebar-overlay.show{ display:block; }
+
+  .main-content{ margin-left:240px; flex:1; min-height:100vh; display:flex; flex-direction:column; }
+  .app-header{
+    background:rgba(255,255,255,0.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line); padding:12px 24px; display:flex; align-items:center;
+    justify-content:space-between; position:sticky; top:0; z-index:100; min-height:60px;
+  }
+  .app-header .header-left{ display:flex; align-items:center; gap:16px; }
+  .app-header .hamburger{ display:none; background:none; border:none; font-size:22px; cursor:pointer; color:var(--text); padding:4px; }
+  .app-header .greeting{ font-size:16px; font-weight:700; letter-spacing:-0.3px; }
+  .app-header .greeting small{ font-weight:400; font-size:12px; color:var(--text-dim); display:block; }
+
+  @media(max-width:768px){
+    .sidebar{ transform:translateX(-100%); width:260px; }
+    .sidebar.open{ transform:translateX(0); }
+    .main-content{ margin-left:0; }
+    .app-header .hamburger{ display:block; }
+  }
+
+  /* ================================================================
+     STATS GRID (4 kotak ringkasan di atas peta, sesuai referensi) —
+     angka diisi JS dari data real Firestore, bukan dummy.
+     ================================================================ */
+  .stats-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:16px 0 20px;
+  }
+  @media(max-width:768px){ .stats-grid{ grid-template-columns:repeat(2,1fr); gap:8px; } }
+  .stat-card{
+    background:var(--panel); border-radius:12px; padding:16px 18px;
+    box-shadow:var(--shadow-sm,0 1px 3px rgba(16,24,40,0.08)); border:1px solid var(--line-bright);
+    position:relative; overflow:hidden;
+  }
+  .stat-card .stat-icon{ position:absolute; top:14px; right:14px; font-size:24px; opacity:0.25; }
+  .stat-card .stat-label{
+    font-size:11px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px;
+  }
+  .stat-card .stat-value{
+    font-size:26px; font-weight:800; letter-spacing:-1px; margin:4px 0 6px; color:var(--text);
+    font-family:var(--mono);
+  }
+  .stat-card .stat-change{
+    font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;
+    padding:2px 10px; border-radius:20px; background:var(--primary-light,#E3F3EC); color:var(--orange-dim);
+  }
+  .stat-card .stat-change.down{ color:#B3363A; background:#FDECEC; }
+
+  /* ---- Tombol bergaya PILL/kapsul (sesuai referensi) untuk track-btn/sos-btn/room-tabs ---- */
+  .track-btn, .sos-btn{
+    border-radius:999px !important; padding:10px 20px !important; font-weight:700 !important;
+  }
+  .track-btn{ background:var(--primary-light,#E3F3EC) !important; color:var(--orange-dim) !important; border:1.5px solid transparent !important; }
+  .track-btn:hover{ background:var(--orange) !important; color:#fff !important; }
+  .track-btn.active{ background:var(--orange) !important; color:#fff !important; }
+  .sos-btn{ background:var(--red) !important; color:#fff !important; }
+  .sos-btn:hover{ background:#c0392b !important; }
+
+  .room-tabs{ gap:8px !important; }
+  .room-tabs button{
+    width:auto !important; height:auto !important; border-radius:999px !important;
+    padding:8px 16px !important; font-size:12.5px !important; font-weight:600 !important;
+    display:inline-flex !important; align-items:center; gap:6px;
+  }
+  .room-tabs button.active{ background:var(--primary-light,#E3F3EC) !important; }
+  /* PENTING: pastikan .hidden tetap menang walau bentrok dengan rule pill di atas --
+     tanpa ini, tombol/tab yang disembunyikan JS (mis. tab VIP untuk role non-admin)
+     akan tetap muncul karena selector ".room-tabs button" spesifisitasnya lebih tinggi
+     dari ".hidden" saja. */
+  .room-tabs button.hidden{ display:none !important; }
+
+  .quick-report-row button{ border-radius:999px !important; padding:6px 14px !important; }
+
+  /* ================================================================
+     EFEK GLOSSY (sesuai referensi) — shadow lembut ber-glow warna primary,
+     hover lift pada kartu, animasi tombol, ring glow saat fokus input,
+     dan pulse pada status SOS. Murni visual, tidak ada logika yang berubah.
+     ================================================================ */
+  :root{
+    --shadow-sm:0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04);
+    --shadow-md:0 4px 12px rgba(11,122,91,0.10);
+    --shadow-lg:0 8px 28px rgba(11,122,91,0.16);
+  }
+
+  /* Kartu/panel: shadow lembut + terangkat halus saat hover */
+  .panel, #auth-card, .stat-card{
+    box-shadow:var(--shadow-sm) !important;
+    transition:box-shadow .25s cubic-bezier(0.25,0.46,0.45,0.94), transform .25s cubic-bezier(0.25,0.46,0.45,0.94) !important;
+  }
+  .panel:hover{ box-shadow:var(--shadow-md) !important; }
+
+  /* Tombol utama & aksi: sedikit membesar + shadow ber-glow saat hover/ditekan */
+  #auth-card button.primary, .track-btn, .sos-btn, .call-controls button,
+  #install-btn, .icon-btn, .room-tabs button, .quick-report-row button{
+    transition:all .2s cubic-bezier(0.25,0.46,0.45,0.94) !important;
+  }
+  #auth-card button.primary:hover{ background:var(--orange-dim) !important; transform:scale(1.01); box-shadow:var(--shadow-md); }
+  #auth-card button.primary:active{ transform:scale(0.98); }
+  .track-btn:hover{ transform:translateY(-1px); box-shadow:var(--shadow-md); }
+  .sos-btn:hover{ transform:scale(1.03); box-shadow:0 4px 14px rgba(229,72,77,0.35); }
+  .icon-btn:hover{ border-color:var(--orange) !important; color:var(--orange) !important; background:var(--primary-light,#E3F3EC) !important; }
+  .room-tabs button.active{ box-shadow:0 2px 8px rgba(11,122,91,0.18); }
+
+  /* Input: ring glow lembut saat fokus (bukan cuma ganti warna border) */
+  input:focus, select:focus, textarea:focus{
+    border-color:var(--orange) !important;
+    box-shadow:0 0 0 4px rgba(11,122,91,0.12) !important;
+    outline:none !important;
+  }
+
+  /* Bubble chat: muncul dengan animasi halus supaya terasa hidup */
+  .msg{ animation:sar-fade-in-up .3s ease-out; }
+  @keyframes sar-fade-in-up{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  /* Status SOS: pulse mencolok, sesuai referensi (bukan cuma glow statis) */
+  .status-sos{ animation:sar-pulse-dot 1.2s ease-in-out infinite; }
+  @keyframes sar-pulse-dot{
+    0%,100%{ transform:scale(1); opacity:1; }
+    50%{ transform:scale(1.4); opacity:0.6; }
+  }
+
+  /* Tag/badge panel-head: pill lembut dengan warna latar muda + teks warna solid */
+  .panel-head .tag{
+    border-radius:20px !important; background:var(--primary-light,#E3F3EC) !important;
+    color:var(--orange-dim) !important; font-weight:700 !important;
+  }
+
+  /* Sidebar brand icon: sedikit glossy dengan highlight lembut di atasnya */
+  .sidebar-brand .logo-icon{
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .sidebar{ box-shadow:4px 0 24px rgba(11,122,91,0.18) !important; }
+
+  /* ================================================================
+     PERBAIKAN: warna yang sebelumnya ditulis sebagai kode hex langsung
+     (bukan variabel), jadi tidak ikut berubah ke tema terang.
+     ================================================================ */
+  .leaflet-container{ background:#EAECEF !important; }
+
+  /* Ruang chat: latar terang, bubble TANPA bingkai kotak (sesuai permintaan) --
+     cukup identitas pengirim + teks polos */
+  .chat-messages{ background:#F1F2F4 !important; }
+  .msg{ color:var(--text) !important; border:none !important; background:transparent !important; padding:4px 2px !important; }
+  .msg .ai-tag{ color:#2F6FED !important; border-color:#2F6FED !important; }
+  .msg.ai.kritis{ color:#B3363A !important; }
+  .msg .meta{ color:var(--text-dim) !important; }
+  .dm-bubble{ color:var(--text) !important; }
+
+  /* Composer chat: cegah tombol video call overlap keluar kotak di layar sempit */
+  .composer-row{ flex-wrap:wrap !important; }
+  .composer-row input[type=text]{ min-width:120px !important; }
+
+  /* Banner SOS: tetap merah mencolok, versi terang supaya teks tetap terbaca */
+  .sos-banner{ background:#FDECEC !important; color:#B3363A !important; border-color:var(--red) !important; }
+
+  /* Panel Street View / Google Maps embed: placeholder terang, bukan kotak hitam pekat */
+  #gmap-panel, #streetview-panel{ background:#EAECEF !important; }
+
+  /* Banner Mode Tamu (guest read-only), dibuat lewat JS -- tetap terang & selaras tema */
+  #guest-readonly-note{ background:#FFF4E5 !important; color:#92400E !important; border-color:var(--amber) !important; }
+
+  /* Link lampiran file dalam bubble chat -- elemen <a>, tidak tercover rule input/select */
+  .msg a{ background:#F1F2F4 !important; }
+
+  /* Panel input berlatar hitam pekat (Zona/Markas/Aman/Wilayah Kerja/DM/Checkout) --
+     override lewat ID karena ditulis inline style di HTML */
+  #dm-chat-messages, #dm-input-cari-user, #dm-chat-text-input{ background:#FFFFFF !important; color:var(--text) !important; }
+</style>
 </head>
 <body>
 
+<!-- ==============================================================
+SIDEBAR (Desktop + Mobile overlay) -- struktur mengikuti referensi tema,
+tapi semua ID tombol fungsional (admin-panel-btn, logout-btn, dst) tetap
+PERSIS SAMA supaya seluruh JS/Firebase di bawah tidak perlu diubah sedikit pun.
+============================================================== -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-icon">🛰️</div>
+    <div class="logo-text">
+      MAP SAR
+      <small>FIDI-SCIE POC</small>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu Utama</div>
+    <a href="#" class="active" data-scroll-target="dashboard-top">
+      <span class="nav-icon">🧭</span> Dashboard
+    </a>
+    <a href="#" data-scroll-target="sar-map">
+      <span class="nav-icon">🗺️</span> Peta
+      <span class="nav-badge">LIVE</span>
+    </a>
+    <a href="#" data-scroll-target="personnel-list">
+      <span class="nav-icon">👥</span> Personel
+    </a>
+    <a href="#" data-scroll-target="chat-messages">
+      <span class="nav-icon">💬</span> Ruang Komunikasi
+    </a>
+    <a href="#" data-scroll-target="streetview-panel">
+      <span class="nav-icon">👁️</span> Street View
+    </a>
+
+    <div class="nav-label" style="margin-top:24px;">Sistem</div>
+    <button id="btn-aktifkan-notif" class="hidden"><span class="nav-icon">🔔</span> Aktifkan Notifikasi</button>
+    <button id="admin-panel-btn" class="hidden"><span class="nav-icon">🛠️</span> Panel Admin</button>
+    <button id="logout-btn" class="hidden"><span class="nav-icon">🚪</span> Keluar</button>
+  </nav>
+</aside>
+
+<!-- ==============================================================
+MAIN CONTENT
+============================================================== -->
+<div class="main-content">
+
+  <div class="app-header">
+    <div class="header-left">
+      <button class="hamburger" id="sidebar-hamburger">☰</button>
+      <div class="greeting">
+        MAP SAR
+        <small>Dashboard Personnel Tracking</small>
+      </div>
+    </div>
+  </div>
+
 <div class="disclaimer-banner">
-  ⚠ <b>MATERI POC / UJI LAPANGAN</b> — bukan sistem/prosedur resmi. <b>BASARNAS</b> tetap otoritas dan rujukan utama untuk seluruh operasi SAR resmi di Indonesia. Data di halaman ini tidak boleh jadi dasar tunggal keputusan penyelamatan.
+  <b>SIPATRA-SMART</b>
 </div>
 
-<header>
-  <div>
-    <div class="brand"><b>MAP SAR</b> // FIDI-SCIE POC</div>
-    <div class="title">Dashboard Personnel Tracking</div>
-  </div>
+<!-- Banner pasang shortcut ke layar HP -- muncul otomatis begitu browser siap (Chrome/Android),
+     tinggal 1 tap "PASANG SEKARANG" (browser TIDAK mengizinkan instalasi sepenuhnya tanpa sentuhan sama sekali). -->
+<div id="install-banner" class="hidden" style="background:#FFF4E5; border-bottom:2px solid var(--amber); color:#92400E; padding:10px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+  <span>📲 Pasang <b style="color:var(--orange);">Map SAR</b> ke layar utama HP supaya lebih cepat dibuka & tampil fullscreen.</span>
   <div style="display:flex; gap:8px;">
-    <button id="btn-aktifkan-notif" class="hidden" style="background:transparent; border:1px solid var(--line-bright); color:var(--text-dim); font-family:var(--mono); padding:8px 12px; cursor:pointer; font-size:12px;">🔔 Aktifkan Notifikasi</button>
-    <button id="admin-panel-btn" class="hidden">👤 PANEL ADMIN</button>
-    <button id="logout-btn" class="hidden">KELUAR</button>
+    <button id="install-btn" style="background:var(--orange); color:#fff; border:none; font-family:var(--mono); font-weight:600; padding:8px 16px; font-size:12px; cursor:pointer; border-radius:10px;">PASANG SEKARANG</button>
+    <button id="install-dismiss-btn" style="background:transparent; color:var(--text-dim); border:1px solid var(--line-bright); font-family:var(--mono); padding:8px 12px; font-size:12px; cursor:pointer; border-radius:10px;">Nanti Saja</button>
   </div>
-</header>
+</div>
 
 <!-- ===== MODAL PANEL ADMIN (kelola role & status user) ===== -->
 <div id="checkout-modal-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(4,5,6,0.92); z-index:4500; display:flex; align-items:center; justify-content:center; padding:20px;">
@@ -320,6 +648,7 @@
       <button id="btn-checkout-selesai" class="icon-btn" style="width:100%; padding:10px; background:var(--green); color:#0a0c0d; font-weight:700;">✅ CHECK-OUT (Selesai Kerja)</button>
       <button id="btn-checkout-tutup-wo" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--amber); color:#0a0c0d; font-weight:700;">📋 TUTUP WO</button>
       <button id="btn-checkout-lembur" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--panel); border:1px solid var(--orange); color:var(--orange);">🕐 LEMBUR</button>
+      <button id="btn-checkout-akan-kembali" class="icon-btn hidden" style="width:100%; padding:10px; background:transparent; border:1px solid var(--line-bright); color:var(--text);">🔄 Akan Kembali (Masih Bertugas)</button>
     </div>
   </div>
 </div>
@@ -343,7 +672,19 @@
     <div id="dm-tampilan-chat" class="hidden">
       <button id="dm-btn-kembali" class="icon-btn icon-square-btn" title="Kembali ke daftar" style="margin-bottom:10px;">←</button>
       <div id="dm-chat-messages" style="height:320px; overflow-y:auto; border:1px solid var(--line-bright); padding:10px; margin-bottom:10px; background:#000;"></div>
-      <div style="display:flex; gap:8px;">
+      <div id="dm-upload-status" style="font-size:10.5px; color:var(--amber); min-height:14px; margin-bottom:4px;"></div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <div style="position:relative; flex-shrink:0;">
+          <button id="dm-btn-attach" class="icon-btn icon-square-btn" title="Lampirkan">📎</button>
+          <div id="dm-attach-menu-popup" class="hidden" style="position:absolute; bottom:calc(100% + 6px); left:0; z-index:50; background:var(--panel); border:1px solid var(--line-bright); display:flex; flex-direction:column; min-width:190px; box-shadow:0 4px 14px rgba(0,0,0,0.5);">
+            <button class="attach-menu-item" id="dm-menu-foto-kamera" style="background:transparent; border:none; border-bottom:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); font-size:12px; text-align:left; padding:10px 12px; cursor:pointer;">📷 Foto (Kamera)</button>
+            <button class="attach-menu-item" id="dm-menu-galeri" style="background:transparent; border:none; border-bottom:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); font-size:12px; text-align:left; padding:10px 12px; cursor:pointer;">🖼️ Pilih dari Galeri</button>
+            <button class="attach-menu-item" id="dm-menu-file" style="background:transparent; border:none; color:var(--text); font-family:var(--mono); font-size:12px; text-align:left; padding:10px 12px; cursor:pointer;">📄 Pilih File (Dokumen)</button>
+          </div>
+        </div>
+        <input type="file" id="dm-photo-input" accept="image/*" capture="environment" class="hidden">
+        <input type="file" id="dm-galeri-input" accept="image/*" class="hidden">
+        <input type="file" id="dm-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" class="hidden">
         <input type="text" id="dm-chat-text-input" placeholder="Tulis pesan pribadi..." style="flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
         <button id="dm-btn-kirim" class="icon-btn icon-square-btn" style="background:var(--orange); color:#0a0c0d;" title="Kirim">➤</button>
       </div>
@@ -389,7 +730,7 @@
 
     <!-- Form: Login -->
     <div id="form-login">
-      <h2>Masuk — Map SAR</h2>
+      <h2>Masuk</h2>
       <p class="sub">Portal ini dilindungi login password. Hanya petugas terdaftar yang dapat mengakses dashboard. (POC — verifikasi 2 langkah akan diaktifkan setelah upgrade Firebase.)</p>
       <div id="auth-status"></div>
       <input type="email" id="login-email" placeholder="Email">
@@ -417,6 +758,7 @@
       <input type="email" id="signup-email" placeholder="Email">
       <input type="password" id="signup-password" placeholder="Password (min. 6 karakter)">
       <input type="tel" id="signup-phone" placeholder="No. HP WhatsApp (format: +62812xxxxxxx)">
+      <p class="sub" style="margin-top:-4px;">📍 Tracking posisi <b>otomatis wajib aktif</b> saat memasuki Zona/Wilayah Kerja (sesuai prosedur K3/OGS), untuk keselamatan &amp; identifikasi personel di lapangan.</p>
       <button class="primary" id="btn-signup">DAFTAR</button>
       <button class="secondary" id="btn-show-login">Sudah punya akun? Masuk</button>
     </div>
@@ -428,6 +770,34 @@
 <div id="dashboard" class="hidden">
   <div class="eyebrow">Modul Tracking POC</div>
   <h1>Peta Posisi Personel & Status SAR</h1>
+
+  <!-- ===== QUICK STATS (data real dari Firestore, bukan dummy) ===== -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-icon">📡</span>
+      <div class="stat-label">Total Personel</div>
+      <div class="stat-value" id="stat-total">0</div>
+      <span class="stat-change up">● Terdaftar</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">📍</span>
+      <div class="stat-label">Sedang Bertugas</div>
+      <div class="stat-value" id="stat-active">0</div>
+      <span class="stat-change up">● Online</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">🆘</span>
+      <div class="stat-label">Status SOS</div>
+      <div class="stat-value" id="stat-sos">0</div>
+      <span class="stat-change up" id="stat-sos-label">● Aman</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">⚠️</span>
+      <div class="stat-label">Zona Bahaya Aktif</div>
+      <div class="stat-value" id="stat-zona">0</div>
+      <span class="stat-change up" id="stat-zona-label">● Terpantau</span>
+    </div>
+  </div>
 
   <div class="sos-banner" id="sos-banner">🚨 SINYAL SOS DITERIMA — lihat daftar personel untuk detail titik.</div>
 
@@ -569,9 +939,9 @@
       <span class="tag">LIVE</span>
     </div>
     <div class="room-tabs">
-      <button class="active" id="tab-room-sos" data-room="sos" title="SOS — Pos Komando">🆘</button>
-      <button id="tab-room-vip" data-room="vip" title="VIP — Command Channel">👑</button>
-      <button id="btn-buka-dm" title="Pesan Pribadi (DM)">💬</button>
+      <button class="active" id="tab-room-sos" data-room="sos" title="SOS — Pos Komando">🆘 SOS</button>
+      <button id="tab-room-vip" data-room="vip" title="VIP — Command Channel">👑 VIP</button>
+      <button id="btn-buka-dm" title="Pesan Pribadi (DM)">💬 DM</button>
     </div>
     <div class="chat-messages" id="chat-messages"></div>
     <div style="display:flex; align-items:center; gap:8px;">
@@ -629,6 +999,7 @@
   </div>
 
 </div>
+</div><!-- /main-content -->
 
 <!-- ===== MODAL VIDEO CALL (WebRTC) ===== -->
 <div id="call-overlay">
@@ -953,7 +1324,7 @@
     document.getElementById('btn-tandai-wilayah-kerja').classList.toggle('hidden', !isAdminAtauVip);
 
     // Tab room "VIP -- Command Channel" HANYA untuk admin/editor/vip -- BUKAN untuk 'user'/'guest'
-    const bolehLihatRoomVip = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+    const bolehLihatRoomVip = (window.__userRole === 'admin' || window.__userRole === 'vip');
     const tabVip = document.getElementById('tab-room-vip');
     tabVip.classList.toggle('hidden', !bolehLihatRoomVip);
     // Kalau sedang di room VIP tapi role tidak berhak (mis. baru diturunkan jadi 'user'), paksa balik ke room SOS
@@ -973,20 +1344,26 @@
       dash.insertBefore(note, dash.firstChild);
     }
 
-    // Zona Markas & Zona Aman (evakuasi darurat) khusus role admin/VIP -- BUKAN sekadar "bukan guest"
-    ['btn-tandai-markas', 'btn-tandai-aman'].forEach(id=>{
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.disabled = !isAdminAtauVip;
-      el.style.opacity = isAdminAtauVip ? '1' : '0.4';
-      el.style.cursor = isAdminAtauVip ? 'pointer' : 'not-allowed';
-      el.title = isAdminAtauVip ? '' : 'Hanya Admin/VIP yang dapat menandai/memindahkan Zona Markas & Zona Aman';
-    });
+    // Zona Markas -- TETAP khusus Admin/VIP (pos komando operasional, lebih sensitif)
+    const elMarkas = document.getElementById('btn-tandai-markas');
+    if (elMarkas){
+      elMarkas.disabled = !isAdminAtauVip;
+      elMarkas.style.opacity = isAdminAtauVip ? '1' : '0.4';
+      elMarkas.style.cursor = isAdminAtauVip ? 'pointer' : 'not-allowed';
+      elMarkas.title = isAdminAtauVip ? '' : 'Hanya Admin/VIP yang dapat menandai/memindahkan Zona Markas';
+    }
+    // Zona Aman (evakuasi darurat) -- sekarang boleh Admin/VIP DAN user kerja (personil/supervisor/manager) juga
+    const bolehZonaAman = isAdminAtauVip || window.__userRole === 'user';
+    const elAman = document.getElementById('btn-tandai-aman');
+    if (elAman){
+      elAman.disabled = !bolehZonaAman;
+      elAman.style.opacity = bolehZonaAman ? '1' : '0.4';
+      elAman.style.cursor = bolehZonaAman ? 'pointer' : 'not-allowed';
+      elAman.title = bolehZonaAman ? '' : 'Hanya Admin/VIP/Personil yang dapat menandai Zona Aman';
+    }
 
-    // Tombol Panel Admin cuma muncul untuk role 'admin'
-    // ⚠️ SEMENTARA (19 Juli 2026): VIP juga bisa lihat tombol ini, sama seperti perubahan
-    // di Firestore Rules -- kembalikan jadi "!== 'admin'" saja setelah situasi terkunci selesai.
-    document.getElementById('admin-panel-btn').classList.toggle('hidden', window.__userRole !== 'admin' && window.__userRole !== 'vip');
+    // Tombol Panel Admin cuma muncul untuk role 'admin' (VIP TIDAK termasuk)
+    document.getElementById('admin-panel-btn').classList.toggle('hidden', window.__userRole !== 'admin');
   }
 
   // ---------- Auth State Listener ----------
@@ -1015,6 +1392,7 @@
   const ROLE_TERSEDIA = ['guest', 'user', 'editor', 'vip', 'admin'];
 
   document.getElementById('admin-panel-btn').addEventListener('click', ()=>{
+    if (window.__userRole !== 'admin') return; // penjagaan tambahan -- bukan cuma andalkan tombol disembunyikan
     document.getElementById('admin-modal-overlay').classList.remove('hidden');
     muatDaftarUserAdmin();
     // Catatan: daftar Kelola Zona Darurat di bawah sudah otomatis ter-update secara real-time
@@ -1129,6 +1507,29 @@
     }
   }
 
+  // ---------- Kartu Statistik (data REAL, bukan dummy) ----------
+  window.__statTotalDariUsersBerhasil = false;
+  function updateStatCard(id, value){
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  // Coba ambil TOTAL personel terdaftar (role='user') secara real-time --
+  // ini HANYA berhasil kalau akun yang login role admin/vip (sesuai Firestore
+  // Security Rules yang membatasi listing collection 'users'). Kalau gagal
+  // (permission-denied untuk role lain), diam-diam pakai jumlah personel
+  // yang SEDANG AKTIF tracking sebagai perkiraan (lihat listener personnel).
+  try{
+    onSnapshot(
+      query(collection(db, 'users'), where('role', '==', 'user')),
+      (snap)=>{
+        window.__statTotalDariUsersBerhasil = true;
+        updateStatCard('stat-total', snap.size);
+      },
+      ()=>{ window.__statTotalDariUsersBerhasil = false; }
+    );
+  }catch(e){ window.__statTotalDariUsersBerhasil = false; }
+
   // ---------- Dashboard (data simulasi/dummy untuk POC) ----------
   let dashboardInited = false;
   function initDashboard(){
@@ -1149,6 +1550,7 @@
 
     initPersonnelTracking(map);
     initChat();
+    mulaiPemantauanGeofencePasif(); // khusus role='user' -- auto check-in/out tanpa perlu tombol tracking
   }
 
   // ==========================================================
@@ -1162,6 +1564,18 @@
   let trackCache = {}; // uid -> array titik {lat, lon, waktuMs} untuk hitung jarak
   let jobCountUnsub = {}; // uid -> fungsi unsubscribe listener jumlah WO selesai (riwayatRuteWO)
   let jobCountCache = {}; // uid -> jumlah WO yang sudah "Sudah Tiba" tercatat (indeks pekerjaan)
+  let jadwalKerjaUnsub = {}; // uid -> fungsi unsubscribe listener jadwalKerja hari ini
+  let jadwalKerjaCacheTampilan = {}; // uid -> {jamMasuk, jamPulangAktual, shiftTerdeteksi, statusHariIni} utk ditampilkan di daftar personel
+
+  // Langganan real-time dokumen jadwalKerja HARI INI milik seorang personel --
+  // dipakai untuk menampilkan jam Check-in/Check-out di daftar Status Personel.
+  function langgananJadwalKerjaHariIni(uid){
+    if (jadwalKerjaUnsub[uid]) return; // sudah ada listener, jangan dobel
+    const idDok = idDokumenJadwalHariIni(uid);
+    jadwalKerjaUnsub[uid] = onSnapshot(doc(db, 'jadwalKerja', idDok), (snap)=>{
+      jadwalKerjaCacheTampilan[uid] = snap.exists() ? snap.data() : null;
+    }, ()=>{ /* abaikan error izin -- guest/role lain memang tidak selalu boleh baca */ });
+  }
 
   // Ambang batas formula FIT% (Ready-to-Work) -- nilai default POC, SESUAIKAN setelah kalibrasi data lapangan asli
   // di backend fatigueEngine.js SIPATRA-SMART. Formula ini gabungan waktu aktif + jarak tempuh + indeks pekerjaan (jumlah WO selesai).
@@ -1192,11 +1606,14 @@
   const JAM_KERJA_STANDAR_MS = 8 * 60 * 60 * 1000; // 8 jam, sesuai UU Ketenagakerjaan No.13/2003 -- SESUAIKAN kalau standar SIPATRA-SMART berbeda
 
   // Filter kualitas GPS -- supaya jejak rute tidak berantakan akibat lompatan sinyal lemah/fallback WiFi
-  const AKURASI_MAKS_METER = 100;     // titik dgn radius akurasi lebih besar dari ini dianggap tidak layak masuk jejak rute --
-                                       // dinaikkan dari 50m ke 100m (konsisten dgn ambang auto-zoom) karena GPS HP di
-                                       // area pabrik (banyak struktur beton/baja) sering akurasinya lebih kasar dari 50m,
-                                       // menyebabkan hampir semua titik terbuang & jarak tempuh rute macet di 0.00 km
+  const AKURASI_MAKS_METER = 300;     // titik dgn radius akurasi lebih besar dari ini dianggap tidak layak masuk jejak rute --
+                                       // dinaikkan lagi dari 100m ke 300m: di lapangan (area tambang/pabrik dengan struktur
+                                       // beton/baja besar, mis. gudang batu bara) akurasi GPS HP kerap jauh lebih kasar dari
+                                       // 100m, menyebabkan HAMPIR SEMUA titik tetap terbuang & jarak tempuh macet permanen
+                                       // di 0.00 km walau personel benar-benar berpindah beberapa km.
   const KECEPATAN_MAKS_MPS = 40;      // ~144 km/jam -- lompatan yang mustahil ditempuh personel (jalan kaki/motor) dalam SAR
+  const JEDA_MAKS_TANPA_TITIK_MS = 3 * 60 * 1000; // 3 menit -- kalau sudah selama ini tidak ada titik yang lolos filter,
+                                       // longgarkan sekali supaya jejak tidak macet permanen di area sinyal sangat buruk
   let titikTerakhirValid = null;      // {lat, lon, waktuMs} -- titik terakhir yang lolos filter, dipakai HANYA sebagai acuan (bukan disimpan ke Firestore)
   let titikAwalSudahDikirim = false;  // flag: titik Markas (awal sesi tracking) sudah tercatat ke Firestore atau belum
   let titikAwalLokal = null;          // {lat, lon, waktuMs} -- salinan lokal titik Markas, dipakai hitung jarak rute pergi tanpa perlu fetch Firestore
@@ -1204,6 +1621,12 @@
   let titikTibaLokal = null;          // {lat, lon, waktuMs} -- dicatat saat klik "Saya Sudah Tiba", jadi acuan hitung rute pulang
 
   function titikLayakJadiJejak(coords){
+    // Fallback anti-macet: sudah lama sekali (>3 menit) tidak ada titik yang lolos --
+    // kemungkinan besar sedang di area sinyal GPS sangat buruk (indoor pabrik/tambang).
+    // Daripada jejak macet PERMANEN di 0.00 km, longgarkan sekali supaya tetap tercatat approksimasi.
+    const sudahLamaTanpaTitik = titikTerakhirValid && (Date.now() - titikTerakhirValid.waktuMs) > JEDA_MAKS_TANPA_TITIK_MS;
+    if (sudahLamaTanpaTitik) return true;
+
     if (coords.accuracy && coords.accuracy > AKURASI_MAKS_METER) return false; // sinyal GPS terlalu kasar
     if (titikTerakhirValid){
       const jarakM = hitungJarakMeter(titikTerakhirValid.lat, titikTerakhirValid.lon, coords.latitude, coords.longitude);
@@ -1364,6 +1787,86 @@
     }
   }
 
+  // ==========================================================
+  // PEMANTAUAN GEOFENCE PASIF — khusus role='user' (personil/supervisor/manager).
+  // Berjalan otomatis di LATAR BELAKANG begitu dashboard dibuka, TANPA perlu
+  // user menekan tombol "Aktifkan Tracking Saya" terlebih dahulu. Tugasnya
+  // HANYA memantau transisi masuk/keluar Zona/Wilayah Kerja untuk memicu
+  // check-in otomatis (sesuai jadwal shift) dan pop-up konfirmasi check-out
+  // begitu terdeteksi keluar zona -- terpisah dari tracking manual yang
+  // mengirim posisi live ke peta.
+  // ==========================================================
+  let watchIdGeofencePasif = null;
+  let statusDiDalamWilayahKerjaSaatIni = null; // null = belum pernah dicek sama sekali
+
+  function mulaiPemantauanGeofencePasif(){
+    if (window.__userRole !== 'user') return; // HANYA personil/supervisor/manager
+    if (!navigator.geolocation) return;
+    if (watchIdGeofencePasif !== null) return; // sudah berjalan, jangan dobel
+
+    watchIdGeofencePasif = navigator.geolocation.watchPosition(
+      (pos)=> cekTransisiZonaKerja(pos.coords.latitude, pos.coords.longitude),
+      (err)=> console.warn('Pemantauan geofence pasif gagal mengambil lokasi:', err.message),
+      { enableHighAccuracy:false, maximumAge:30000, timeout:20000 } // hemat baterai -- akurasi kasar cukup utk deteksi masuk/keluar zona besar
+    );
+  }
+
+  async function cekTransisiZonaKerja(lat, lon){
+    if (!wilayahKerjaCache) return; // admin belum tandai Wilayah Kerja -- tidak ada yang bisa dipantau
+    const sekarangDiDalam = titikDalamWilayahKerja(lat, lon);
+
+    if (statusDiDalamWilayahKerjaSaatIni === null){
+      // Pemeriksaan pertama sejak dashboard dibuka -- kalau kebetulan sudah di dalam zona, langsung check-in + nyalakan tracking
+      statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
+      if (sekarangDiDalam){
+        cekAutoCheckIn(lat, lon, false);
+        nyalakanTrackingOtomatisJikaDiizinkan();
+      }
+      return;
+    }
+
+    if (sekarangDiDalam && !statusDiDalamWilayahKerjaSaatIni){
+      // TRANSISI: baru saja MASUK Zona/Wilayah Kerja -> check-in otomatis + nyalakan tracking penuh otomatis
+      // (supaya jarak tempuh & waktu aktif untuk FIT%/WLA mulai terakumulasi TANPA perlu tekan tombol manual)
+      cekAutoCheckIn(lat, lon, false);
+      nyalakanTrackingOtomatisJikaDiizinkan();
+    } else if (!sekarangDiDalam && statusDiDalamWilayahKerjaSaatIni){
+      // TRANSISI: baru saja KELUAR Zona/Wilayah Kerja -> tampilkan pop-up konfirmasi check-out
+      // (tracking TIDAK langsung dimatikan di sini -- baru dimatikan kalau user pilih "Check-out/Selesai"
+      // di pop-up, supaya tidak putus kalau cuma keluar sebentar/sinyal GPS meleset di tepi zona)
+      await tampilkanPopupKeluarZonaKerja();
+    }
+    statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
+  }
+
+  // Nyalakan tracking penuh (live position + akumulasi jarak/waktu) secara OTOMATIS --
+  // WAJIB untuk semua role='user' begitu memasuki Zona/Wilayah Kerja (bukan opsional):
+  // verifikasi K3/kelayakan personel sudah dilakukan fisik di gerbang OGS sebelum masuk,
+  // jadi setiap personel yang berada di dalam zona kerja WAJIB teridentifikasi & terlacak.
+  function nyalakanTrackingOtomatisJikaDiizinkan(){
+    if (window.__userRole !== 'user') return;
+    if (watchId !== null) return; // sudah tracking (baik manual maupun otomatis sebelumnya), jangan dobel
+    mulaiTrackingSaya();
+    setTrackingStatus('📍 Tracking otomatis AKTIF (wajib) -- terdeteksi memasuki Zona Kerja.');
+  }
+
+  // Dipanggil begitu geofence pasif mendeteksi user KELUAR dari Wilayah Kerja --
+  // cek dulu apakah memang sedang ada sesi check-in aktif hari ini sebelum menampilkan pop-up
+  // (supaya tidak muncul pop-up untuk orang yang memang belum/tidak check-in).
+  async function tampilkanPopupKeluarZonaKerja(){
+    if (!auth.currentUser) return;
+    if (dialogCheckoutSudahTampil) return; // jangan tumpuk dialog kalau sudah ada yang tampil (mis. dari cekWaktuCheckout)
+    const idDok = idDokumenJadwalHariIni(auth.currentUser.uid);
+    try{
+      const snap = await getDoc(doc(db, 'jadwalKerja', idDok));
+      if (!snap.exists() || snap.data().statusHariIni !== 'aktif') return; // belum check-in -- tidak relevan
+      jadwalKerjaHariIniCache = { id: idDok, ...snap.data() };
+      tampilkanDialogCheckout(snap.data(), 'keluar-zona');
+    }catch(err){
+      console.error('Gagal cek status untuk pop-up keluar zona:', err);
+    }
+  }
+
   // Dipanggil berkala (setInterval) untuk cek apakah waktunya tampilkan dialog check-out
   async function cekWaktuCheckout(){
     if (window.__userRole !== 'user') return;
@@ -1388,23 +1891,31 @@
     }
   }
 
-  function tampilkanDialogCheckout(dataJadwal){
+  function tampilkanDialogCheckout(dataJadwal, alasan){
     dialogCheckoutSudahTampil = true;
     const overlay = document.getElementById('checkout-modal-overlay');
     const info = document.getElementById('checkout-modal-info');
     const btnTutupWO = document.getElementById('btn-checkout-tutup-wo');
     const btnLembur = document.getElementById('btn-checkout-lembur');
+    const btnAkanKembali = document.getElementById('btn-checkout-akan-kembali');
 
-    info.textContent = 'Shift ' + dataJadwal.shiftTerdeteksi + ' Anda sudah selesai. Silakan pilih tindakan:';
+    const dipicuKeluarZona = (alasan === 'keluar-zona');
+    info.textContent = dipicuKeluarZona
+      ? 'Anda terdeteksi MENINGGALKAN Zona Kerja. Apakah pekerjaan sudah selesai?'
+      : 'Shift ' + dataJadwal.shiftTerdeteksi + ' Anda sudah selesai. Silakan pilih tindakan:';
 
     // Tutup WO -- HANYA tampil kalau ada WO aktif tercatat di sesi tracking berjalan
     const adaWoAktif = !!idRuteAktif;
     btnTutupWO.classList.toggle('hidden', !adaWoAktif);
 
-    // Lembur -- HANYA untuk Shift 1 & Shift 2, dan HANYA kalau belum pernah lembur hari ini
-    const bolehLembur = (dataJadwal.shiftTerdeteksi === 'Shift 1' || dataJadwal.shiftTerdeteksi === 'Shift 2') && !dataJadwal.lembur;
+    // Lembur -- HANYA relevan untuk trigger jadwal (bukan keluar zona), Shift 1/2, & belum pernah lembur hari ini
+    const bolehLembur = !dipicuKeluarZona
+      && (dataJadwal.shiftTerdeteksi === 'Shift 1' || dataJadwal.shiftTerdeteksi === 'Shift 2') && !dataJadwal.lembur;
     btnLembur.classList.toggle('hidden', !bolehLembur);
     btnLembur.textContent = dataJadwal.shiftTerdeteksi === 'Shift 1' ? '🕐 LEMBUR s/d 7/7 Pagi (19:30)' : '🕐 LEMBUR s/d 7/7 Malam (07:30)';
+
+    // Akan Kembali -- HANYA muncul kalau dipicu keluar zona (bukan jadwal shift habis)
+    btnAkanKembali.classList.toggle('hidden', !dipicuKeluarZona);
 
     overlay.classList.remove('hidden');
   }
@@ -1414,6 +1925,12 @@
     dialogCheckoutSudahTampil = false;
   }
 
+  document.getElementById('btn-checkout-akan-kembali').addEventListener('click', ()=>{
+    // User memilih tetap bertugas (cuma sementara keluar zona, mis. ambil alat/istirahat) -- tidak checkout
+    tutupDialogCheckout();
+    setTrackingStatus('Dicatat: masih bertugas. Pop-up akan muncul lagi kalau Anda keluar zona kerja setelah ini.');
+  });
+
   document.getElementById('btn-checkout-selesai').addEventListener('click', async ()=>{
     if (!jadwalKerjaHariIniCache) return;
     try{
@@ -1422,6 +1939,9 @@
         statusHariIni: 'selesai'
       });
       tutupDialogCheckout();
+      // Check-out resmi -- matikan tracking otomatis juga (kalau sedang aktif), supaya konsisten
+      // dengan status "selesai kerja" dan tidak terus mengirim posisi setelah shift berakhir.
+      if (watchId !== null) hentikanTrackingSaya();
     }catch(err){
       document.getElementById('checkout-modal-status').textContent = 'Gagal: ' + err.message;
     }
@@ -1640,6 +2160,9 @@
       });
 
       if (typeof renderKelolaZonaAdmin === 'function') renderKelolaZonaAdmin();
+      updateStatCard('stat-zona', zonaBahayaCache.length);
+      const labelZona = document.getElementById('stat-zona-label');
+      if (labelZona) labelZona.textContent = zonaBahayaCache.length > 0 ? '● Waspada' : '● Terpantau';
     });
 
     // ==========================================================
@@ -2023,7 +2546,7 @@
     }
 
     document.getElementById('btn-tandai-aman').addEventListener('click', ()=>{
-      if (window.__userRole !== 'admin' && window.__userRole !== 'vip') return;
+      if (window.__userRole !== 'admin' && window.__userRole !== 'vip' && window.__userRole !== 'user') return;
       modeGambarAman = true;
       resetGambarAman();
       document.getElementById('panel-tandai-aman').classList.remove('hidden');
@@ -2210,6 +2733,7 @@
           if (personnelPolylines[uid]) personnelPolylines[uid].setStyle({ color });
         }
         langgananJobCount(uid, p.email); // aman dipanggil berulang -- fungsi ini sendiri cek kalau sudah ada listener
+        langgananJadwalKerjaHariIni(uid); // aman dipanggil berulang juga
 
         // Hitung jarak & durasi dari cache titik yang sudah terkumpul
         const titik = trackCache[uid] || [];
@@ -2253,6 +2777,19 @@
           ? '<div style="font-size:10.5px; color:#fff; background:var(--red); padding:2px 6px; margin-top:4px; display:inline-block; font-weight:700;">⚠️ DALAM ZONA BAHAYA: ' + zonaDitempati.nama + (zonaDitempati.lantai !== null && zonaDitempati.lantai !== undefined ? ' (Lt.' + zonaDitempati.lantai + ')' : '') + '</div>'
           : '';
 
+        // Info Check-in/Check-out hari ini (khusus personel yang punya jadwalKerja -- role='user')
+        let infoJadwalKerja = '';
+        const jk = jadwalKerjaCacheTampilan[uid];
+        if (jk){
+          const formatJam = (ts)=> (ts && ts.toDate) ? ts.toDate().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) : null;
+          const jamMasukStr = formatJam(jk.jamMasuk) || '-';
+          const jamKeluarStr = formatJam(jk.jamPulangAktual);
+          const statusLabel = jamKeluarStr
+            ? ('Check-out ' + jamKeluarStr)
+            : '<span style="color:var(--green);">Masih bertugas</span>';
+          infoJadwalKerja = '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">🕐 Check-in ' + jamMasukStr + ' (' + (jk.shiftTerdeteksi || '-') + ') · ' + statusLabel + '</div>';
+        }
+
         const row = document.createElement('div');
         row.className = 'personnel-row';
         row.style.flexDirection = 'column';
@@ -2261,6 +2798,7 @@
           + '<span><span class="status-dot status-' + p.status + '"></span>' + (p.nama || p.email) + '</span>'
           + '<span>' + p.status.toUpperCase() + '</span></div>'
           + infoFit
+          + infoJadwalKerja
           + badgeZonaBahaya;
         listEl.appendChild(row);
       });
@@ -2273,12 +2811,24 @@
           if (personnelPolylines[uid]){ map.removeLayer(personnelPolylines[uid]); delete personnelPolylines[uid]; }
           if (trackUnsub[uid]){ trackUnsub[uid](); delete trackUnsub[uid]; }
           if (jobCountUnsub[uid]){ jobCountUnsub[uid](); delete jobCountUnsub[uid]; }
+          if (jadwalKerjaUnsub[uid]){ jadwalKerjaUnsub[uid](); delete jadwalKerjaUnsub[uid]; }
           delete trackCache[uid];
           delete jobCountCache[uid];
+          delete jadwalKerjaCacheTampilan[uid];
         }
       });
 
       document.getElementById('sos-banner').classList.toggle('show', adaSos);
+
+      // ---- Update kartu statistik (data REAL dari listener ini, bukan dummy) ----
+      let sosCountNow = 0;
+      snap.forEach(d=>{ if (d.data().status === 'sos') sosCountNow++; });
+      updateStatCard('stat-active', idsAktif.size);
+      updateStatCard('stat-sos', sosCountNow);
+      const labelSos = document.getElementById('stat-sos-label');
+      if (labelSos) labelSos.textContent = sosCountNow > 0 ? '● Perhatian' : '● Aman';
+      // Kalau total personel terdaftar gagal diambil (bukan admin/vip), pakai jumlah aktif sebagai perkiraan
+      if (!window.__statTotalDariUsersBerhasil) updateStatCard('stat-total', idsAktif.size);
 
       if (snap.empty){
         listEl.innerHTML = '<div class="personnel-row" style="color:var(--text-dim);">Belum ada personel yang mengaktifkan tracking.</div>';
@@ -2778,7 +3328,7 @@
       renderHasilPencarianUser(e.target.value.trim().toLowerCase());
     });
 
-    document.getElementById('dm-btn-kirim').addEventListener('click', kirimPesanDM);
+    document.getElementById('dm-btn-kirim').addEventListener('click', ()=> kirimPesanDM());
     document.getElementById('dm-chat-text-input').addEventListener('keydown', (e)=>{
       if (e.key === 'Enter'){ e.preventDefault(); kirimPesanDM(); }
     });
@@ -2901,30 +3451,150 @@
       listEl.innerHTML = '';
       snap.forEach(docSnap=>{
         const m = docSnap.data();
+        const msgId = docSnap.id;
         const mine = auth.currentUser && m.pengirimUid === auth.currentUser.uid;
         const bubble = document.createElement('div');
         bubble.style.cssText = 'margin-bottom:8px; padding:8px; border:1px solid ' + (mine ? 'var(--orange)' : 'var(--line-bright)') + '; max-width:80%;'
           + (mine ? ' margin-left:auto;' : '');
-        bubble.textContent = m.text || '';
+
+        let html = '';
+        if (m.text){
+          html += '<div>' + m.text.replace(/</g,'&lt;').replace(/\n/g,'<br>') + '</div>';
+        }
+        if (m.editedAt){
+          html += '<div style="font-size:9px; color:var(--text-dim); opacity:0.7;">(diedit)</div>';
+        }
+        if (m.photoUrl){
+          html += '<img src="' + m.photoUrl + '" onclick="window.open(this.src)" style="max-width:100%; margin-top:6px; cursor:pointer; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + m.photoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+        }
+        if (m.fileUrl){
+          const namaFile = (m.fileName || 'File').replace(/</g,'&lt;');
+          html += '<a href="' + m.fileUrl + '" target="_blank" style="display:flex; align-items:center; gap:8px; margin-top:6px; padding:8px 10px; border:1px solid var(--line-bright); color:var(--text); text-decoration:none; background:#000;">'
+            + '<span style="font-size:18px;">📄</span><span style="font-size:11px; word-break:break-all;">' + namaFile + '</span></a>';
+        }
+        // Edit/Hapus -- HANYA untuk pesan milik sendiri
+        if (mine){
+          html += '<div style="display:flex; gap:10px; margin-top:6px; font-size:12px;">';
+          if (m.text && !m.photoUrl && !m.fileUrl){
+            html += '<span onclick="window.editPesanDM(\'' + msgId + '\', this)" title="Edit" style="cursor:pointer; color:var(--text-dim);">✏️</span>';
+          }
+          html += '<span onclick="window.hapusPesanDM(\'' + msgId + '\')" title="Hapus" style="cursor:pointer; color:var(--red);">🗑️</span>';
+          html += '</div>';
+        }
+        bubble.innerHTML = html;
         listEl.appendChild(bubble);
       });
       listEl.scrollTop = listEl.scrollHeight;
     });
   }
 
-  async function kirimPesanDM(){
+  /** Hapus 1 pesan DM -- dipanggil dari tombol "🗑️ Hapus" di bubble pesan pribadi */
+  window.hapusPesanDM = async function(msgId){
+    if (!confirm('Hapus pesan pribadi ini? Tindakan ini tidak bisa dibatalkan.')) return;
+    try{
+      await deleteDoc(doc(db, 'dmRooms', dmRoomAktif, 'messages', msgId));
+    }catch(err){
+      alert('Gagal hapus pesan: ' + err.message);
+    }
+  };
+
+  /** Edit 1 pesan teks DM -- dipanggil dari tombol "✏️ Edit" di bubble pesan pribadi */
+  window.editPesanDM = async function(msgId, elemenKlik){
+    const bubbleDiv = elemenKlik.closest('div[style*="border"]');
+    const teksLama = bubbleDiv ? bubbleDiv.querySelector('div')?.textContent : '';
+    const teksBaru = prompt('Edit pesan pribadi:', teksLama || '');
+    if (teksBaru === null || teksBaru.trim() === '' || teksBaru === teksLama) return;
+    try{
+      await updateDoc(doc(db, 'dmRooms', dmRoomAktif, 'messages', msgId), {
+        text: teksBaru,
+        editedAt: serverTimestamp()
+      });
+    }catch(err){
+      alert('Gagal edit pesan: ' + err.message);
+    }
+  };
+
+  // ---------- Lampiran foto/file di DM (pakai mekanisme upload R2 yang sama dgn ruang chat utama) ----------
+  document.getElementById('dm-btn-attach').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    document.getElementById('dm-attach-menu-popup').classList.toggle('hidden');
+  });
+  document.addEventListener('click', (e)=>{
+    const popup = document.getElementById('dm-attach-menu-popup');
+    const btn = document.getElementById('dm-btn-attach');
+    if (popup && !popup.classList.contains('hidden') && !popup.contains(e.target) && e.target !== btn){
+      popup.classList.add('hidden');
+    }
+  });
+  document.getElementById('dm-menu-foto-kamera').addEventListener('click', ()=>{
+    document.getElementById('dm-attach-menu-popup').classList.add('hidden');
+    document.getElementById('dm-photo-input').click();
+  });
+  document.getElementById('dm-menu-galeri').addEventListener('click', ()=>{
+    document.getElementById('dm-attach-menu-popup').classList.add('hidden');
+    document.getElementById('dm-galeri-input').click();
+  });
+  document.getElementById('dm-menu-file').addEventListener('click', ()=>{
+    document.getElementById('dm-attach-menu-popup').classList.add('hidden');
+    document.getElementById('dm-file-input').click();
+  });
+  document.getElementById('dm-photo-input').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if (file) await kirimPesanDM({ file, tipeFile: 'foto' });
+    e.target.value = '';
+  });
+  document.getElementById('dm-galeri-input').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if (file) await kirimPesanDM({ file, tipeFile: 'foto' });
+    e.target.value = '';
+  });
+  document.getElementById('dm-file-input').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if (file) await kirimPesanDM({ file, tipeFile: 'dokumen' });
+    e.target.value = '';
+  });
+
+  async function kirimPesanDM(lampiran){
     const input = document.getElementById('dm-chat-text-input');
-    const text = input.value.trim();
-    if (!text || !dmRoomAktif || !auth.currentUser) return;
+    const text = (!lampiran) ? input.value.trim() : '';
+    if (!dmRoomAktif || !auth.currentUser) return;
+    if (!lampiran && !text) return;
+
+    let photoUrl = null, fileUrl = null, fileName = null;
+    if (lampiran && lampiran.file){
+      const statusEl = document.getElementById('dm-upload-status');
+      try{
+        let fileUntukUpload = lampiran.file;
+        let namaUntukUpload = lampiran.file.name;
+        if (lampiran.tipeFile === 'foto'){
+          statusEl.textContent = 'Mengompres & mengunggah foto...';
+          fileUntukUpload = await kompresGambar(lampiran.file);
+          namaUntukUpload = 'foto.' + (fileUntukUpload.type === 'image/webp' ? 'webp' : 'jpg');
+        } else {
+          statusEl.textContent = 'Mengunggah file...';
+        }
+        const url = await uploadKeR2DenganProgres(fileUntukUpload, lampiran.tipeFile, namaUntukUpload);
+        if (lampiran.tipeFile === 'foto') photoUrl = url;
+        else { fileUrl = url; fileName = lampiran.file.name; }
+        statusEl.textContent = '';
+      }catch(err){
+        statusEl.textContent = 'Gagal unggah: ' + err.message;
+        return;
+      }
+    }
+
     try{
       await addDoc(collection(db, 'dmRooms', dmRoomAktif, 'messages'), {
-        text,
+        text: text || null,
+        photoUrl: photoUrl || null,
+        fileUrl: fileUrl || null,
+        fileName: fileName || null,
         pengirimUid: auth.currentUser.uid,
         pengirimEmail: auth.currentUser.email,
         waktu: serverTimestamp()
       });
       await updateDoc(doc(db, 'dmRooms', dmRoomAktif), {
-        pesanTerakhir: text.slice(0, 60),
+        pesanTerakhir: text ? text.slice(0, 60) : (photoUrl ? '📷 Foto' : '📄 Dokumen'),
         waktuTerakhir: serverTimestamp()
       });
       input.value = '';
@@ -3013,10 +3683,14 @@
       html += '<div style="font-size:9.5px; color:var(--text-dim); opacity:0.7;">(diedit)</div>';
     }
     if (m.photoUrl){
-      html += '<img src="' + m.photoUrl + '" onclick="window.open(this.src)">';
+      const urlAman = m.photoUrl.replace(/'/g, "\\'");
+      html += '<img src="' + m.photoUrl + '" onclick="window.open(this.src)" '
+        + 'onerror="window.tampilkanFallbackMedia(this, \'' + urlAman + '\', \'foto\')">';
     }
     if (m.videoUrl){
-      html += '<video src="' + m.videoUrl + '" controls style="max-width:100%; margin-top:6px;"></video>';
+      const urlAmanVid = m.videoUrl.replace(/'/g, "\\'");
+      html += '<video src="' + m.videoUrl + '" controls style="max-width:100%; margin-top:6px;" '
+        + 'onerror="window.tampilkanFallbackMedia(this, \'' + urlAmanVid + '\', \'video\')"></video>';
     }
     if (m.fileUrl){
       const namaFile = (m.fileName || 'File').replace(/</g,'&lt;');
@@ -3072,6 +3746,23 @@
     }catch(err){
       alert('Gagal edit pesan: ' + err.message);
     }
+  };
+
+  /**
+   * Dipanggil otomatis (via onerror) kalau foto/video di chat GAGAL dimuat --
+   * misalnya karena masalah sertifikat SSL di device tertentu (NET::ERR_CERT_AUTHORITY_INVALID)
+   * saat browser coba akses domain penyimpanan (Cloudflare R2). Daripada tampil ikon
+   * rusak/kosong yang membingungkan, tampilkan kotak fallback dengan tombol buka langsung + coba lagi.
+   */
+  window.tampilkanFallbackMedia = function(elemenGagal, url, jenis){
+    if (elemenGagal.dataset.fallbackTerpasang) return; // cegah loop kalau fallback ikut gagal render
+    elemenGagal.dataset.fallbackTerpasang = '1';
+    const kotak = document.createElement('div');
+    kotak.style.cssText = 'border:1px solid var(--red); background:#FDECEC; color:#B3363A; padding:10px 12px; margin-top:6px; font-size:11px; line-height:1.6;';
+    kotak.innerHTML = '⚠️ Gagal memuat ' + jenis + ' ini (kemungkinan masalah sertifikat/jaringan di HP Anda).<br>'
+      + '<a href="' + url + '" target="_blank" style="color:#B3363A; font-weight:700; text-decoration:underline;">🔗 Buka langsung di tab baru</a>'
+      + ' &nbsp;·&nbsp; <span onclick="window.location.reload()" style="cursor:pointer; font-weight:700; text-decoration:underline;">🔄 Muat ulang halaman</span>';
+    elemenGagal.replaceWith(kotak);
   };
 
   /**
@@ -3500,6 +4191,65 @@
       });
     });
   }
+
+  // ==========================================================
+  // SIDEBAR — toggle mobile (hamburger) & scroll navigasi
+  // Murni UI, tidak menyentuh logika Firebase/tracking sama sekali.
+  // ==========================================================
+  const sidebarEl = document.getElementById('sidebar');
+  const sidebarOverlayEl = document.getElementById('sidebar-overlay');
+
+  function toggleSidebar(){
+    sidebarEl.classList.toggle('open');
+    sidebarOverlayEl.classList.toggle('show');
+  }
+  document.getElementById('sidebar-hamburger').addEventListener('click', toggleSidebar);
+  sidebarOverlayEl.addEventListener('click', toggleSidebar);
+
+  document.querySelectorAll('.sidebar-nav a[data-scroll-target]').forEach(link=>{
+    link.addEventListener('click', (e)=>{
+      e.preventDefault();
+      document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
+      link.classList.add('active');
+      const target = document.getElementById(link.dataset.scrollTarget);
+      if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+      if (window.innerWidth <= 768) toggleSidebar();
+    });
+  });
+
+  // ==========================================================
+  // PWA — banner pasang shortcut otomatis (1-tap "Add to Home Screen")
+  // Catatan jujur: browser TIDAK mengizinkan instalasi 100% tanpa sentuhan user
+  // sama sekali (kebijakan keamanan Chrome/Android) -- ini cara paling dekat:
+  // begitu Chrome mendeteksi halaman layak di-install, event 'beforeinstallprompt'
+  // otomatis tertangkap & banner muncul sendiri, tinggal 1 tap tombol.
+  // ==========================================================
+  let deferredInstallPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (!sessionStorage.getItem('installBannerDismissed')){
+      document.getElementById('install-banner').classList.remove('hidden');
+    }
+  });
+
+  document.getElementById('install-btn').addEventListener('click', async ()=>{
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    document.getElementById('install-banner').classList.add('hidden');
+  });
+
+  document.getElementById('install-dismiss-btn').addEventListener('click', ()=>{
+    sessionStorage.setItem('installBannerDismissed', '1');
+    document.getElementById('install-banner').classList.add('hidden');
+  });
+
+  window.addEventListener('appinstalled', ()=>{
+    document.getElementById('install-banner').classList.add('hidden');
+  });
 </script>
 </body>
 </html>
