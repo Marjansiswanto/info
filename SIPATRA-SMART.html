@@ -629,6 +629,15 @@ MAIN CONTENT
   <b>SIPATRA-SMART</b>
 </div>
 
+<!-- Banner alert -- muncul begitu ada laporan bahaya TINGKAT TINGGI yang belum ditindaklanjuti --
+     ditaruh DI DALAM main-content (bukan langsung child <body>) supaya tidak ikut terdorong ke
+     tata letak flex sidebar (body{display:flex}) yang bikin banner ini malah "berbagi" ruang
+     horizontal dengan sidebar alih-alih membentang penuh di bawah header. -->
+<div id="banner-bahaya-tinggi" class="hidden" style="position:sticky; top:0; z-index:1000; background:var(--red); color:#fff; padding:10px 16px; font-family:var(--mono); font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+  <span id="teks-banner-bahaya">⚠️ ADA LAPORAN BAHAYA TINGKAT TINGGI</span>
+  <span style="font-size:10px; opacity:0.85; white-space:nowrap;">Klik untuk lihat →</span>
+</div>
+
 <!-- Banner pasang shortcut ke layar HP -- muncul otomatis begitu browser siap (Chrome/Android),
      tinggal 1 tap "PASANG SEKARANG" (browser TIDAK mengizinkan instalasi sepenuhnya tanpa sentuhan sama sekali). -->
 <div id="install-banner" class="hidden" style="background:#FFF4E5; border-bottom:2px solid var(--amber); color:#92400E; padding:10px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
@@ -1004,12 +1013,6 @@ MAIN CONTENT
 </div>
 </div><!-- /main-content -->
 
-<!-- Banner alert -- muncul begitu ada laporan bahaya TINGKAT TINGGI yang belum ditindaklanjuti -->
-<div id="banner-bahaya-tinggi" class="hidden" style="position:sticky; top:0; z-index:1000; background:var(--red); color:#fff; padding:10px 16px; font-family:var(--mono); font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
-  <span id="teks-banner-bahaya">⚠️ ADA LAPORAN BAHAYA TINGKAT TINGGI</span>
-  <span style="font-size:10px; opacity:0.85;">Klik untuk lihat →</span>
-</div>
-
 <!-- ===== MODAL LAPOR BAHAYA (semua role kecuali guest) ===== -->
 <div id="modal-lapor-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
   <div class="panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
@@ -1117,6 +1120,16 @@ MAIN CONTENT
     <div id="isi-detail-bahaya"></div>
     <div id="peta-detail-bahaya" style="height:200px; margin-top:10px; border:1px solid var(--line-bright);"></div>
     <a id="link-gmaps-bahaya" href="#" target="_blank" class="icon-btn" style="display:block; text-align:center; margin-top:8px; padding:10px; background:var(--panel); border:1px solid var(--orange); color:var(--orange); text-decoration:none;">🗺️ Buka di Google Maps (Navigasi)</a>
+
+    <!-- Ubah status -- HANYA terlihat untuk moderator (admin/editor/vip); ditampilkan/disembunyikan via JS -->
+    <div id="blok-status-bahaya" class="hidden" style="margin-top:14px; border-top:1px solid var(--line-bright); padding-top:12px;">
+      <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Status penanganan (moderator):</div>
+      <div style="display:flex; gap:8px;">
+        <button id="btn-status-ditindak" class="icon-btn" style="flex:1; padding:9px; background:var(--panel); border:1px solid var(--amber); color:var(--amber);" title="Tandai sedang ditindaklanjuti">🔧 Ditindak</button>
+        <button id="btn-status-selesai" class="icon-btn" style="flex:1; padding:9px; background:var(--panel); border:1px solid var(--green); color:var(--green);" title="Tandai sudah selesai ditangani">✅ Selesai</button>
+      </div>
+      <div id="status-ubah-status-bahaya" style="font-size:10.5px; margin-top:6px;"></div>
+    </div>
   </div>
 </div>
 
@@ -3674,15 +3687,18 @@ MAIN CONTENT
     }
     const warnaTingkat = { tinggi: 'var(--red)', sedang: 'var(--amber)', rendah: 'var(--green)' };
     const labelTingkat = { tinggi: '🔴 TINGGI', sedang: '🟡 SEDANG', rendah: '🟢 RENDAH' };
+    const labelStatus = { baru: '🆕 Baru', ditindak: '🔧 Ditindak', selesai: '✅ Selesai' };
 
     cont.innerHTML = daftarBahayaCache.map(l=>{
       const waktu = l.waktuLapor && l.waktuLapor.toDate ? l.waktuLapor.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
-      return '<div onclick="window.bukaDetailBahaya(\'' + l.id + '\')" style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaTingkat[l.tingkat] + '; padding:8px 10px; margin-bottom:6px; cursor:pointer;">'
+      const statusL = l.status || 'baru';
+      const opacityBaris = statusL === 'selesai' ? '0.55' : '1';
+      return '<div onclick="window.bukaDetailBahaya(\'' + l.id + '\')" style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaTingkat[l.tingkat] + '; padding:8px 10px; margin-bottom:6px; cursor:pointer; opacity:' + opacityBaris + ';">'
         + '<div style="display:flex; justify-content:space-between; font-size:11px;">'
         + '<span style="font-weight:700;">' + l.kategori + '</span>'
         + '<span style="color:' + warnaTingkat[l.tingkat] + '; font-weight:700;">' + labelTingkat[l.tingkat] + '</span>'
         + '</div>'
-        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + (l.pelaporEmail || '-') + ' · ' + waktu + '</div>'
+        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + (l.pelaporEmail || '-') + ' · ' + waktu + ' · ' + labelStatus[statusL] + '</div>'
         + '</div>';
     }).join('');
   }
@@ -3693,6 +3709,7 @@ MAIN CONTENT
     if (!l) return;
     const warnaTingkat = { tinggi: 'var(--red)', sedang: 'var(--amber)', rendah: 'var(--green)' };
     const labelTingkat = { tinggi: '🔴 TINGGI', sedang: '🟡 SEDANG', rendah: '🟢 RENDAH' };
+    const labelStatus = { baru: '🆕 Baru', ditindak: '🔧 Sedang Ditindaklanjuti', selesai: '✅ Selesai Ditangani' };
     const waktu = l.waktuLapor && l.waktuLapor.toDate ? l.waktuLapor.toDate().toLocaleString('id-ID') : '-';
 
     let html = '<div style="font-size:12px; line-height:1.8;">'
@@ -3700,6 +3717,7 @@ MAIN CONTENT
       + '<div><b>Tingkat:</b> <span style="color:' + warnaTingkat[l.tingkat] + '; font-weight:700;">' + labelTingkat[l.tingkat] + '</span></div>'
       + '<div><b>Pelapor:</b> ' + (l.pelaporEmail || '-') + '</div>'
       + '<div><b>Waktu:</b> ' + waktu + '</div>'
+      + '<div><b>Status:</b> ' + labelStatus[l.status || 'baru'] + '</div>'
       + '<div style="margin-top:6px;"><b>Deskripsi:</b><br>' + (l.deskripsi || '-').replace(/</g,'&lt;') + '</div>'
       + '</div>';
     if (l.fotoUrl){
@@ -3727,8 +3745,33 @@ MAIN CONTENT
       linkEl.classList.add('hidden');
     }
 
+    // Blok ubah status -- HANYA untuk moderator (admin/editor/vip)
+    const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+    document.getElementById('blok-status-bahaya').classList.toggle('hidden', !isModerator);
+    document.getElementById('status-ubah-status-bahaya').textContent = '';
+    idLaporanBahayaDibuka = id; // dipakai tombol ubah status di bawah
+
     document.getElementById('modal-detail-bahaya-overlay').classList.remove('hidden');
   };
+
+  let idLaporanBahayaDibuka = null;
+
+  async function ubahStatusLaporanBahaya(statusBaru){
+    if (!idLaporanBahayaDibuka) return;
+    const statusEl = document.getElementById('status-ubah-status-bahaya');
+    statusEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Menyimpan...';
+    try{
+      await updateDoc(doc(db, 'laporanBahaya', idLaporanBahayaDibuka), { status: statusBaru });
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = '✅ Status diperbarui.';
+    }catch(err){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Gagal ubah status: ' + err.message;
+    }
+  }
+  document.getElementById('btn-status-ditindak').addEventListener('click', ()=> ubahStatusLaporanBahaya('ditindak'));
+  document.getElementById('btn-status-selesai').addEventListener('click', ()=> ubahStatusLaporanBahaya('selesai'));
 
   // ==========================================================
   // RUANG KOMUNIKASI — Chat (teks + foto) & Laporan Cepat
