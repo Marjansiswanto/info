@@ -1349,10 +1349,8 @@ MAIN CONTENT
       elAman.title = bolehZonaAman ? '' : 'Hanya Admin/VIP/Personil yang dapat menandai Zona Aman';
     }
 
-    // Tombol Panel Admin cuma muncul untuk role 'admin'
-    // ⚠️ SEMENTARA (19 Juli 2026): VIP juga bisa lihat tombol ini, sama seperti perubahan
-    // di Firestore Rules -- kembalikan jadi "!== 'admin'" saja setelah situasi terkunci selesai.
-    document.getElementById('admin-panel-btn').classList.toggle('hidden', window.__userRole !== 'admin' && window.__userRole !== 'vip');
+    // Tombol Panel Admin cuma muncul untuk role 'admin' (VIP TIDAK termasuk)
+    document.getElementById('admin-panel-btn').classList.toggle('hidden', window.__userRole !== 'admin');
   }
 
   // ---------- Auth State Listener ----------
@@ -1381,6 +1379,7 @@ MAIN CONTENT
   const ROLE_TERSEDIA = ['guest', 'user', 'editor', 'vip', 'admin'];
 
   document.getElementById('admin-panel-btn').addEventListener('click', ()=>{
+    if (window.__userRole !== 'admin') return; // penjagaan tambahan -- bukan cuma andalkan tombol disembunyikan
     document.getElementById('admin-modal-overlay').classList.remove('hidden');
     muatDaftarUserAdmin();
     // Catatan: daftar Kelola Zona Darurat di bawah sudah otomatis ter-update secara real-time
