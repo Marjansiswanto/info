@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
   :root{
     --bg:#0a0c0d; --panel:#111417; --line:#22282c; --line-bright:#3a4249;
@@ -825,6 +826,8 @@ MAIN CONTENT
           <button id="btn-tandai-zona" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Tandai Zona Bahaya">✏️</button>
           <button id="btn-checkin-manual" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--green); border:1px solid var(--green);" title="Check-In Manual">✅</button>
           <button id="btn-checkout-manual" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--amber); border:1px solid var(--amber);" title="Check-Out Manual">⏰</button>
+          <button id="btn-lapor-bahaya" class="track-btn icon-square-btn hidden" style="background:var(--red); color:#fff; border:1px solid var(--red);" title="Lapor Bahaya / Potensi Bahaya">⚠️</button>
+          <button id="btn-panel-bahaya" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--orange); border:1px solid var(--orange);" title="Panel Analitik Laporan Bahaya (Moderator)">📊</button>
         </div>
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -1000,6 +1003,122 @@ MAIN CONTENT
 
 </div>
 </div><!-- /main-content -->
+
+<!-- Banner alert -- muncul begitu ada laporan bahaya TINGKAT TINGGI yang belum ditindaklanjuti -->
+<div id="banner-bahaya-tinggi" class="hidden" style="position:sticky; top:0; z-index:80; background:var(--red); color:#fff; padding:10px 16px; font-family:var(--mono); font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+  <span id="teks-banner-bahaya">⚠️ ADA LAPORAN BAHAYA TINGKAT TINGGI</span>
+  <span style="font-size:10px; opacity:0.85;">Klik untuk lihat →</span>
+</div>
+
+<!-- ===== MODAL LAPOR BAHAYA (semua role kecuali guest) ===== -->
+<div id="modal-lapor-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
+    <div class="panel-head"><h3>⚠️ Lapor Bahaya / Potensi Bahaya</h3><button id="btn-tutup-lapor-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">
+      Laporkan kondisi/potensi bahaya yang Anda temui (mis. genangan air di ruang listrik, tumpahan/kebocoran oli, kabel terkelupas, dll). Lokasi otomatis diambil dari posisi Anda saat ini.
+    </div>
+    <div id="status-lapor-bahaya" style="font-size:11px; margin-bottom:8px;"></div>
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Kategori Bahaya</label>
+    <select id="input-kategori-bahaya" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+      <option value="Genangan Air di Ruang/Panel Listrik">Genangan Air di Ruang/Panel Listrik</option>
+      <option value="Tumpahan/Kebocoran Oli atau Bahan Kimia">Tumpahan/Kebocoran Oli atau Bahan Kimia</option>
+      <option value="Kebocoran Gas">Kebocoran Gas</option>
+      <option value="Kabel/Instalasi Listrik Terbuka">Kabel/Instalasi Listrik Terbuka</option>
+      <option value="Permukaan Licin/Berbahaya">Permukaan Licin/Berbahaya</option>
+      <option value="APD Tidak Sesuai/Tidak Tersedia">APD Tidak Sesuai/Tidak Tersedia</option>
+      <option value="Peralatan Rusak/Berpotensi Bahaya">Peralatan Rusak/Berpotensi Bahaya</option>
+      <option value="Lainnya">Lainnya</option>
+    </select>
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Tingkat Bahaya</label>
+    <div style="display:flex; gap:14px; margin-bottom:10px; font-size:12px;">
+      <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="radio" name="tingkat-bahaya" value="tinggi" checked> <span style="color:var(--red); font-weight:700;">🔴 Tinggi</span></label>
+      <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="radio" name="tingkat-bahaya" value="sedang"> <span style="color:var(--amber); font-weight:700;">🟡 Sedang</span></label>
+      <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="radio" name="tingkat-bahaya" value="rendah"> <span style="color:var(--green); font-weight:700;">🟢 Rendah</span></label>
+    </div>
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Deskripsi</label>
+    <textarea id="input-deskripsi-bahaya" rows="3" placeholder="Jelaskan kondisi bahaya yang ditemui..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px; resize:vertical;"></textarea>
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Foto / Video (opsional, dianjurkan)</label>
+    <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+      <button id="btn-foto-bahaya-kamera" class="icon-btn icon-square-btn" title="Ambil Foto">📷</button>
+      <button id="btn-foto-bahaya-galeri" class="icon-btn icon-square-btn" title="Pilih Foto dari Galeri">🖼️</button>
+      <button id="btn-video-bahaya-kamera" class="icon-btn icon-square-btn" title="Rekam Video">🎥</button>
+      <button id="btn-video-bahaya-galeri" class="icon-btn icon-square-btn" title="Pilih Video dari Galeri">🎬</button>
+    </div>
+    <div style="font-size:10px; color:var(--text-dim); margin-bottom:10px;">
+      Video berguna untuk kondisi yang bergerak/berubah (mis. ketinggian air sungai di Rumah Pompa) — foto tetap cukup untuk kondisi diam.
+    </div>
+    <span id="nama-foto-bahaya" style="font-size:10.5px; color:var(--text-dim); display:block; margin-bottom:10px;"></span>
+    <input type="file" id="input-foto-bahaya-kamera" accept="image/*" capture="environment" class="hidden">
+    <input type="file" id="input-foto-bahaya-galeri" accept="image/*" class="hidden">
+    <input type="file" id="input-video-bahaya-kamera" accept="video/*" capture="environment" class="hidden">
+    <input type="file" id="input-video-bahaya-galeri" accept="video/*" class="hidden">
+
+    <div id="status-lokasi-bahaya" style="font-size:10.5px; color:var(--text-dim); margin-bottom:10px;">📍 Mengambil lokasi Anda saat ini...</div>
+
+    <button id="btn-kirim-lapor-bahaya" class="icon-btn" style="width:100%; padding:10px; background:var(--red); color:#fff; font-weight:700;">🚨 KIRIM LAPORAN</button>
+  </div>
+</div>
+
+<!-- ===== MODAL PANEL ANALITIK LAPORAN BAHAYA (Admin/Editor/VIP) ===== -->
+<div id="modal-panel-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:640px; width:100%; max-height:92vh; overflow-y:auto;">
+    <div class="panel-head"><h3>📊 Panel Analitik Laporan Bahaya</h3><button id="btn-tutup-panel-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+
+    <div style="display:flex; gap:12px; margin-bottom:14px; font-size:11px;">
+      <div style="flex:1; text-align:center; border:1px solid var(--line-bright); padding:8px;">
+        <div style="color:var(--text-dim);">Total Laporan</div>
+        <div id="stat-bahaya-total" style="font-size:20px; font-weight:800;">0</div>
+      </div>
+      <div style="flex:1; text-align:center; border:1px solid var(--red); padding:8px;">
+        <div style="color:var(--red);">Tinggi</div>
+        <div id="stat-bahaya-tinggi" style="font-size:20px; font-weight:800; color:var(--red);">0</div>
+      </div>
+      <div style="flex:1; text-align:center; border:1px solid var(--amber); padding:8px;">
+        <div style="color:var(--amber);">Sedang</div>
+        <div id="stat-bahaya-sedang" style="font-size:20px; font-weight:800; color:var(--amber);">0</div>
+      </div>
+      <div style="flex:1; text-align:center; border:1px solid var(--green); padding:8px;">
+        <div style="color:var(--green);">Rendah</div>
+        <div id="stat-bahaya-rendah" style="font-size:20px; font-weight:800; color:var(--green);">0</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+      <div style="flex:1; min-width:200px;">
+        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Persentase per Kategori</div>
+        <canvas id="chart-pie-bahaya" style="max-height:220px;"></canvas>
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:11px; color:var(--text-dim);">Jumlah Laporan</span>
+          <select id="select-periode-bahaya" style="background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); font-size:10px; padding:3px 6px;">
+            <option value="harian">Per Hari (30 hari)</option>
+            <option value="bulanan">Per Bulan</option>
+            <option value="kuartal">Per Kuartal (Q1-Q4)</option>
+          </select>
+        </div>
+        <canvas id="chart-bar-bahaya" style="max-height:220px;"></canvas>
+      </div>
+    </div>
+
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Daftar Laporan (terbaru dulu)</div>
+    <div id="daftar-laporan-bahaya"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL DETAIL 1 LAPORAN BAHAYA ===== -->
+<div id="modal-detail-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:210; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:460px; width:100%; max-height:90vh; overflow-y:auto;">
+    <div class="panel-head"><h3>Detail Laporan Bahaya</h3><button id="btn-tutup-detail-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div id="isi-detail-bahaya"></div>
+    <div id="peta-detail-bahaya" style="height:200px; margin-top:10px; border:1px solid var(--line-bright);"></div>
+    <a id="link-gmaps-bahaya" href="#" target="_blank" class="icon-btn" style="display:block; text-align:center; margin-top:8px; padding:10px; background:var(--panel); border:1px solid var(--orange); color:var(--orange); text-decoration:none;">🗺️ Buka di Google Maps (Navigasi)</a>
+  </div>
+</div>
 
 <!-- ===== MODAL VIDEO CALL (WebRTC) ===== -->
 <div id="call-overlay">
@@ -1323,6 +1442,12 @@ MAIN CONTENT
     document.getElementById('btn-checkout-manual').classList.toggle('hidden', !tampilManualCheckin);
     document.getElementById('btn-tandai-wilayah-kerja').classList.toggle('hidden', !isAdminAtauVip);
 
+    // Lapor Bahaya -- semua role KECUALI guest boleh lapor
+    document.getElementById('btn-lapor-bahaya').classList.toggle('hidden', isGuest);
+    // Panel Analitik Bahaya -- khusus moderator (admin/editor/vip)
+    const isModeratorBahaya = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+    document.getElementById('btn-panel-bahaya').classList.toggle('hidden', !isModeratorBahaya);
+
     // Tab room "VIP -- Command Channel" HANYA untuk admin/editor/vip -- BUKAN untuk 'user'/'guest'
     const bolehLihatRoomVip = (window.__userRole === 'admin' || window.__userRole === 'vip');
     const tabVip = document.getElementById('tab-room-vip');
@@ -1550,6 +1675,7 @@ MAIN CONTENT
 
     initPersonnelTracking(map);
     initChat();
+    initLaporanBahaya();
     mulaiPemantauanGeofencePasif(); // khusus role='user' -- auto check-in/out tanpa perlu tombol tracking
   }
 
@@ -1624,7 +1750,14 @@ MAIN CONTENT
     // Fallback anti-macet: sudah lama sekali (>3 menit) tidak ada titik yang lolos --
     // kemungkinan besar sedang di area sinyal GPS sangat buruk (indoor pabrik/tambang).
     // Daripada jejak macet PERMANEN di 0.00 km, longgarkan sekali supaya tetap tercatat approksimasi.
-    const sudahLamaTanpaTitik = titikTerakhirValid && (Date.now() - titikTerakhirValid.waktuMs) > JEDA_MAKS_TANPA_TITIK_MS;
+    //
+    // PENTING: kalau BELUM PERNAH ADA titik yang lolos sama sekali sejak tracking dimulai
+    // (titikTerakhirValid masih null), pakai waktuMulaiTrackingSaya sebagai acuan waktu --
+    // bukan cuma titikTerakhirValid.waktuMs. Tanpa ini, fallback anti-macet TIDAK PERNAH aktif
+    // kalau titik PERTAMA pun sudah ditolak (tidak ada acuan waktu sama sekali), menyebabkan
+    // jarak tempuh macet PERMANEN di 0.00 km walau sudah menunggu berjam-jam.
+    const acuanWaktuTerakhir = titikTerakhirValid ? titikTerakhirValid.waktuMs : waktuMulaiTrackingSaya;
+    const sudahLamaTanpaTitik = acuanWaktuTerakhir && (Date.now() - acuanWaktuTerakhir) > JEDA_MAKS_TANPA_TITIK_MS;
     if (sudahLamaTanpaTitik) return true;
 
     if (coords.accuracy && coords.accuracy > AKURASI_MAKS_METER) return false; // sinyal GPS terlalu kasar
@@ -1672,6 +1805,9 @@ MAIN CONTENT
   let jadwalKerjaHariIniCache = null; // dokumen jadwalKerja hari ini milik user sendiri
   let dialogCheckoutSudahTampil = false; // cegah dialog muncul berkali-kali di render yang sama
   let intervalCekCheckout = null;
+  let intervalCekMulaiKerja = null;
+  const JENDELA_TOLERANSI_JADWAL_MENIT = 6; // toleransi setelah jam mulai shift -- cukup lebar utk interval cek 1 menit + jeda jaringan,
+                                             // tapi tetap sempit supaya tidak salah picu di luar jendela mulai shift yang sebenarnya
 
   function idDokumenJadwalHariIni(uid){
     const now = new Date();
@@ -1759,7 +1895,9 @@ MAIN CONTENT
       } else if (dataUser.polaShiftDasar === 'rotasi-3shift'){
         shiftTerdeteksi = tentukanShiftDariJam();
       } else {
-        if (dipicuManual) alert('Pola Shift Anda belum diatur admin. Hubungi admin sebelum check-in.');
+        const pesan = 'Pola Shift Anda belum diatur admin. Hubungi admin untuk mengatur Kategori Kerja & Pola Shift di Panel Admin sebelum check-in bisa berjalan.';
+        setTrackingStatus('⚠️ ' + pesan); // SEKARANG selalu terlihat, sebelumnya diam-diam untuk trigger otomatis
+        if (dipicuManual) alert(pesan);
         return; // polaShiftDasar belum diatur admin -- jangan check-in asal-asalan
       }
 
@@ -1783,6 +1921,7 @@ MAIN CONTENT
       if (dipicuManual) alert('Check-in berhasil: ' + shiftTerdeteksi);
     }catch(err){
       console.error('Gagal check-in:', err);
+      setTrackingStatus('⚠️ Gagal check-in: ' + err.message); // SEKARANG selalu terlihat, sebelumnya diam-diam untuk trigger otomatis
       if (dipicuManual) alert('Gagal check-in: ' + err.message);
     }
   }
@@ -1800,9 +1939,12 @@ MAIN CONTENT
   let statusDiDalamWilayahKerjaSaatIni = null; // null = belum pernah dicek sama sekali
   let calonStatusTransisi = null;    // status kandidat yang sedang "diuji" sebelum dianggap transisi valid
   let jumlahKonfirmasiBerturut = 0;  // berapa kali berturut-turut kandidat status itu muncul
-  const AMBANG_KONFIRMASI_TRANSISI = 2; // butuh 2 bacaan GPS berturut yang konsisten sebelum transisi dianggap valid --
-                                         // mencegah check-in/out palsu akibat GPS "meleset" sesaat di dekat batas zona
-                                         // (umum terjadi di area tambang/pabrik karena multipath sinyal dari struktur logam/beton)
+  // Ambang konfirmasi DIBEDAKAN sengaja -- MASUK zona pakai ambang LONGGAR (1x, langsung dieksekusi)
+  // supaya auto-tracking cepat aktif (risiko rendah, gampang dikoreksi kalau salah); KELUAR zona pakai
+  // ambang LEBIH KETAT (2x berturut) karena memicu pop-up check-out yang lebih mengganggu kalau salah
+  // pencet akibat GPS "meleset" sesaat di dekat batas zona (umum di area tambang/pabrik).
+  const AMBANG_KONFIRMASI_MASUK = 1;
+  const AMBANG_KONFIRMASI_KELUAR = 2;
 
   function mulaiPemantauanGeofencePasif(){
     if (window.__userRole !== 'user') return; // HANYA personil/supervisor/manager
@@ -1811,9 +1953,13 @@ MAIN CONTENT
 
     watchIdGeofencePasif = navigator.geolocation.watchPosition(
       (pos)=> cekTransisiZonaKerja(pos.coords.latitude, pos.coords.longitude),
-      (err)=> console.warn('Pemantauan geofence pasif gagal mengambil lokasi:', err.message),
-      { enableHighAccuracy:false, maximumAge:30000, timeout:20000 } // hemat baterai -- akurasi kasar cukup utk deteksi masuk/keluar zona besar
+      (err)=>{
+        console.warn('Pemantauan geofence pasif gagal mengambil lokasi:', err.message);
+        setTrackingStatus('⚠️ Geofence pasif gagal ambil lokasi: ' + err.message + ' (auto check-in/tracking butuh izin lokasi aktif)');
+      },
+      { enableHighAccuracy:true, maximumAge:15000, timeout:20000 } // akurasi TINGGI -- deteksi masuk/keluar zona butuh presisi, bukan cuma hemat baterai (akurasi kasar terbukti sering gagal total mendeteksi masuk zona)
     );
+    setTrackingStatus('👁️ Geofence pasif aktif -- memantau posisi untuk auto check-in/tracking saat masuk Zona Kerja.');
   }
 
   async function cekTransisiZonaKerja(lat, lon){
@@ -1844,9 +1990,10 @@ MAIN CONTENT
       calonStatusTransisi = sekarangDiDalam;
       jumlahKonfirmasiBerturut = 1;
     }
-    if (jumlahKonfirmasiBerturut < AMBANG_KONFIRMASI_TRANSISI) return; // masih dianggap noise GPS, tunggu bacaan berikutnya
+    const ambangDiperlukan = sekarangDiDalam ? AMBANG_KONFIRMASI_MASUK : AMBANG_KONFIRMASI_KELUAR;
+    if (jumlahKonfirmasiBerturut < ambangDiperlukan) return; // masih dianggap noise GPS, tunggu bacaan berikutnya
 
-    // Transisi TERKONFIRMASI (sudah konsisten 2x berturut) -- baru sekarang dieksekusi
+    // Transisi TERKONFIRMASI -- baru sekarang dieksekusi
     statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
     calonStatusTransisi = null; jumlahKonfirmasiBerturut = 0;
 
@@ -1888,6 +2035,60 @@ MAIN CONTENT
       tampilkanDialogCheckout(snap.data(), 'keluar-zona');
     }catch(err){
       console.error('Gagal cek status untuk pop-up keluar zona:', err);
+    }
+  }
+
+  // ==========================================================
+  // JADWAL MULAI KERJA (jaring pengaman KEDUA selain geofence) --
+  // Kalau GPS lambat/gagal mendeteksi personel masuk Zona Kerja, jadwal jam tetap bisa
+  // menyalakan tracking otomatis TEPAT di jam mulai shift sesuai Pola Shift Dasar masing-masing
+  // (mis. Shift 1 = 07:30). Check-in (jadwalKerja) TETAP baru tercatat begitu titik GPS pertama
+  // mengonfirmasi personel BENAR-BENAR berada di dalam Zona Kerja (lewat cekAutoCheckIn yang
+  // sudah berjalan otomatis di dalam updatePosisiKeFirestore) -- jadwal jam ini HANYA menyalakan
+  // "radar"-nya (GPS tracking), bukan memaksa check-in tanpa kehadiran fisik.
+  // ==========================================================
+  async function cekWaktuMulaiKerja(){
+    if (window.__userRole !== 'user') return;
+    if (!auth.currentUser) return;
+    if (watchId !== null) return; // sudah tracking (manual/otomatis sebelumnya) -- tidak perlu dicek lagi
+
+    const idDok = idDokumenJadwalHariIni(auth.currentUser.uid);
+    try{
+      const existing = await getDoc(doc(db, 'jadwalKerja', idDok));
+      if (existing.exists()) return; // sudah check-in/pernah diproses hari ini -- jangan nyalakan ulang
+
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      const dataUser = userDoc.exists() ? userDoc.data() : {};
+      if (!dataUser.polaShiftDasar) return; // belum diatur admin -- sama seperti cekAutoCheckIn, jangan asal jalan
+
+      const sekarang = new Date();
+      const menitSekarang = sekarang.getHours() * 60 + sekarang.getMinutes();
+      let shiftYangHarusMulai = null;
+
+      if (dataUser.polaShiftDasar === 'dayshift'){
+        const mulaiDayshift = 7 * 60; // 07:00 -- SESUAIKAN kalau jam masuk Dayshift PT Semen Tonasa berbeda
+        if (menitSekarang >= mulaiDayshift && menitSekarang < mulaiDayshift + JENDELA_TOLERANSI_JADWAL_MENIT){
+          shiftYangHarusMulai = 'Dayshift';
+        }
+      } else if (dataUser.polaShiftDasar === 'rotasi-3shift'){
+        for (const [nama, s] of Object.entries(DAFTAR_SHIFT)){
+          if (nama.includes('7/7')) continue; // bukan bagian rotasi-3shift biasa
+          const mulai = s.mulaiJam * 60 + s.mulaiMenit;
+          if (menitSekarang >= mulai && menitSekarang < mulai + JENDELA_TOLERANSI_JADWAL_MENIT){
+            shiftYangHarusMulai = nama;
+            break;
+          }
+        }
+      }
+      // Catatan: pola overhaul/7-7 (jadwal khusus sementara) belum ditangani di sini -- masih
+      // memakai geofence sebagai satu-satunya pemicu untuk pola itu. Bisa ditambahkan serupa nanti.
+
+      if (!shiftYangHarusMulai) return; // bukan jendela waktu mulai shift siapa pun saat ini
+
+      setTrackingStatus('⏰ Jadwal ' + shiftYangHarusMulai + ' dimulai -- mengaktifkan tracking otomatis (jaring pengaman jadwal).');
+      mulaiTrackingSaya();
+    }catch(err){
+      console.error('Gagal cek jadwal mulai kerja:', err);
     }
   }
 
@@ -2549,6 +2750,12 @@ MAIN CONTENT
     if (intervalCekCheckout) clearInterval(intervalCekCheckout);
     intervalCekCheckout = setInterval(cekWaktuCheckout, 180000);
     cekWaktuCheckout();
+
+    // Cek jadwal MULAI kerja setiap 1 menit -- jaring pengaman KEDUA selain geofence.
+    // Kalau GPS meleset/lambat mendeteksi masuk zona, jadwal jam tetap bisa memicu tracking otomatis.
+    if (intervalCekMulaiKerja) clearInterval(intervalCekMulaiKerja);
+    intervalCekMulaiKerja = setInterval(cekWaktuMulaiKerja, 60000);
+    cekWaktuMulaiKerja();
 
     // ==========================================================
     // ZONA AMAN / EVAKUASI (titik kumpul darurat -- bencana, kebakaran, kecelakaan kerja)
@@ -3235,6 +3442,293 @@ MAIN CONTENT
       setTrackingStatus('Gagal membersihkan jejak: ' + err.message);
     }
   }
+
+  // ==========================================================
+  // LAPORAN BAHAYA — form lapor (semua role kecuali guest) + panel analitik
+  // (pie/bar chart) + alert real-time untuk laporan TINGKAT TINGGI (moderator: admin/editor/vip)
+  // ==========================================================
+  let daftarBahayaCache = [];   // seluruh dokumen laporanBahaya, terbaru dulu
+  let lampiranBahayaTerpilih = null; // { file, tipe: 'foto'|'video' } -- dipilih user sebelum kirim (belum diupload)
+  let chartPieBahaya = null;
+  let chartBarBahaya = null;
+
+  function initLaporanBahaya(){
+    // ---------- Buka/tutup modal form lapor ----------
+    document.getElementById('btn-lapor-bahaya').addEventListener('click', ()=>{
+      lampiranBahayaTerpilih = null;
+      document.getElementById('nama-foto-bahaya').textContent = '';
+      document.getElementById('input-deskripsi-bahaya').value = '';
+      document.getElementById('status-lapor-bahaya').textContent = '';
+      document.getElementById('status-lokasi-bahaya').textContent = '📍 Mengambil lokasi Anda saat ini...';
+      document.getElementById('modal-lapor-bahaya-overlay').classList.remove('hidden');
+
+      // Pakai posisi live kalau tracking sedang aktif; kalau tidak, minta 1x posisi terkini
+      if (window.__posisiTerkiniSaya){
+        document.getElementById('status-lokasi-bahaya').textContent = '📍 Lokasi: ' + window.__posisiTerkiniSaya.lat.toFixed(5) + ', ' + window.__posisiTerkiniSaya.lon.toFixed(5);
+      } else if (navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          (pos)=>{
+            window.__posisiTerkiniSaya = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+            document.getElementById('status-lokasi-bahaya').textContent = '📍 Lokasi: ' + pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5);
+          },
+          (err)=>{ document.getElementById('status-lokasi-bahaya').textContent = '⚠️ Gagal ambil lokasi: ' + err.message + ' -- laporan tetap bisa dikirim tanpa koordinat.'; }
+        );
+      }
+    });
+    document.getElementById('btn-tutup-lapor-bahaya').addEventListener('click', ()=>{
+      document.getElementById('modal-lapor-bahaya-overlay').classList.add('hidden');
+    });
+
+    document.getElementById('btn-foto-bahaya-kamera').addEventListener('click', ()=> document.getElementById('input-foto-bahaya-kamera').click());
+    document.getElementById('btn-foto-bahaya-galeri').addEventListener('click', ()=> document.getElementById('input-foto-bahaya-galeri').click());
+    document.getElementById('btn-video-bahaya-kamera').addEventListener('click', ()=> document.getElementById('input-video-bahaya-kamera').click());
+    document.getElementById('btn-video-bahaya-galeri').addEventListener('click', ()=> document.getElementById('input-video-bahaya-galeri').click());
+    [['input-foto-bahaya-kamera', 'foto'], ['input-foto-bahaya-galeri', 'foto'], ['input-video-bahaya-kamera', 'video'], ['input-video-bahaya-galeri', 'video']].forEach(([id, tipe])=>{
+      document.getElementById(id).addEventListener('change', (e)=>{
+        const file = e.target.files[0];
+        if (file){
+          lampiranBahayaTerpilih = { file, tipe };
+          const ikon = tipe === 'video' ? '🎥' : '📷';
+          document.getElementById('nama-foto-bahaya').textContent = '✅ ' + ikon + ' ' + file.name;
+        }
+        e.target.value = '';
+      });
+    });
+
+    // ---------- Kirim laporan ----------
+    document.getElementById('btn-kirim-lapor-bahaya').addEventListener('click', async ()=>{
+      if (!auth.currentUser) return;
+      const kategori = document.getElementById('input-kategori-bahaya').value;
+      const tingkat = document.querySelector('input[name="tingkat-bahaya"]:checked').value;
+      const deskripsi = document.getElementById('input-deskripsi-bahaya').value.trim();
+      const statusEl = document.getElementById('status-lapor-bahaya');
+
+      if (!deskripsi){
+        statusEl.textContent = '⚠️ Deskripsi wajib diisi.';
+        statusEl.style.color = 'var(--red)';
+        return;
+      }
+
+      const btnKirim = document.getElementById('btn-kirim-lapor-bahaya');
+      btnKirim.disabled = true;
+      statusEl.style.color = 'var(--text-dim)';
+
+      try{
+        let fotoUrl = null;
+        let videoUrl = null;
+        if (lampiranBahayaTerpilih && lampiranBahayaTerpilih.tipe === 'foto'){
+          statusEl.textContent = 'Mengompres & mengunggah foto...';
+          const fileKompresi = await kompresGambar(lampiranBahayaTerpilih.file);
+          const namaUpload = 'bahaya.' + (fileKompresi.type === 'image/webp' ? 'webp' : 'jpg');
+          fotoUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', namaUpload);
+        } else if (lampiranBahayaTerpilih && lampiranBahayaTerpilih.tipe === 'video'){
+          statusEl.textContent = 'Mengunggah video... (bisa agak lama tergantung ukuran & sinyal)';
+          videoUrl = await uploadKeR2DenganProgres(lampiranBahayaTerpilih.file, 'video', lampiranBahayaTerpilih.file.name);
+        }
+
+        statusEl.textContent = 'Menyimpan laporan...';
+        await addDoc(collection(db, 'laporanBahaya'), {
+          pelaporUid: auth.currentUser.uid,
+          pelaporEmail: auth.currentUser.email,
+          kategori,
+          tingkat, // 'tinggi' | 'sedang' | 'rendah'
+          deskripsi,
+          fotoUrl: fotoUrl || null,
+          videoUrl: videoUrl || null,
+          lat: window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lat : null,
+          lon: window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lon : null,
+          status: 'baru', // 'baru' | 'ditindak' | 'selesai' -- moderator bisa ubah dari panel nanti
+          waktuLapor: serverTimestamp()
+        });
+
+        statusEl.style.color = 'var(--green)';
+        statusEl.textContent = '✅ Laporan terkirim. Terima kasih atas kepeduliannya.';
+        setTimeout(()=> document.getElementById('modal-lapor-bahaya-overlay').classList.add('hidden'), 1500);
+      }catch(err){
+        statusEl.style.color = 'var(--red)';
+        statusEl.textContent = '⚠️ Gagal kirim laporan: ' + err.message;
+      }finally{
+        btnKirim.disabled = false;
+      }
+    });
+
+    // ---------- Panel analitik (moderator) ----------
+    document.getElementById('btn-panel-bahaya').addEventListener('click', ()=>{
+      document.getElementById('modal-panel-bahaya-overlay').classList.remove('hidden');
+      renderPanelBahaya();
+    });
+    document.getElementById('btn-tutup-panel-bahaya').addEventListener('click', ()=>{
+      document.getElementById('modal-panel-bahaya-overlay').classList.add('hidden');
+    });
+    document.getElementById('select-periode-bahaya').addEventListener('change', renderChartBarBahaya);
+
+    document.getElementById('btn-tutup-detail-bahaya').addEventListener('click', ()=>{
+      document.getElementById('modal-detail-bahaya-overlay').classList.add('hidden');
+    });
+
+    // Banner alert -- klik untuk langsung buka panel (khusus moderator; personil biasa cuma lihat bannernya)
+    document.getElementById('banner-bahaya-tinggi').addEventListener('click', ()=>{
+      const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+      if (isModerator){
+        document.getElementById('modal-panel-bahaya-overlay').classList.remove('hidden');
+        renderPanelBahaya();
+      }
+    });
+
+    // ---------- Listener real-time (semua role non-guest boleh baca, untuk keperluan banner) ----------
+    const qBahaya = query(collection(db, 'laporanBahaya'), orderBy('waktuLapor', 'desc'));
+    onSnapshot(qBahaya, (snap)=>{
+      daftarBahayaCache = [];
+      snap.forEach(d=> daftarBahayaCache.push({ id: d.id, ...d.data() }));
+
+      // Banner: tampil kalau ADA laporan tingkat TINGGI yang statusnya belum 'selesai'
+      const adaTinggiBelumSelesai = daftarBahayaCache.some(l=> l.tingkat === 'tinggi' && l.status !== 'selesai');
+      const jumlahTinggi = daftarBahayaCache.filter(l=> l.tingkat === 'tinggi' && l.status !== 'selesai').length;
+      document.getElementById('banner-bahaya-tinggi').classList.toggle('hidden', !adaTinggiBelumSelesai);
+      if (adaTinggiBelumSelesai){
+        document.getElementById('teks-banner-bahaya').textContent = '⚠️ ADA ' + jumlahTinggi + ' LAPORAN BAHAYA TINGKAT TINGGI BELUM DITINDAKLANJUTI';
+      }
+
+      // Kalau panel analitik sedang terbuka, refresh isinya juga
+      if (!document.getElementById('modal-panel-bahaya-overlay').classList.contains('hidden')){
+        renderPanelBahaya();
+      }
+    }, (err)=>{
+      console.error('Gagal baca laporanBahaya:', err.message);
+    });
+  }
+
+  function renderPanelBahaya(){
+    const total = daftarBahayaCache.length;
+    const jmlTinggi = daftarBahayaCache.filter(l=> l.tingkat === 'tinggi').length;
+    const jmlSedang = daftarBahayaCache.filter(l=> l.tingkat === 'sedang').length;
+    const jmlRendah = daftarBahayaCache.filter(l=> l.tingkat === 'rendah').length;
+    document.getElementById('stat-bahaya-total').textContent = total;
+    document.getElementById('stat-bahaya-tinggi').textContent = jmlTinggi;
+    document.getElementById('stat-bahaya-sedang').textContent = jmlSedang;
+    document.getElementById('stat-bahaya-rendah').textContent = jmlRendah;
+
+    renderChartPieBahaya();
+    renderChartBarBahaya();
+    renderDaftarBahaya();
+  }
+
+  function renderChartPieBahaya(){
+    const perKategori = {};
+    daftarBahayaCache.forEach(l=>{ perKategori[l.kategori] = (perKategori[l.kategori] || 0) + 1; });
+    const labels = Object.keys(perKategori);
+    const data = Object.values(perKategori);
+    const warna = ['#0B7A5B','#e5484d','#ffb020','#4aa3ff','#3ecf8e','#b084f0','#ff6ec7','#8c9096'];
+
+    if (chartPieBahaya) chartPieBahaya.destroy();
+    chartPieBahaya = new Chart(document.getElementById('chart-pie-bahaya'), {
+      type: 'pie',
+      data: { labels, datasets: [{ data, backgroundColor: warna }] },
+      options: {
+        plugins: { legend: { position: 'bottom', labels: { color: '#1A1D1F', font: { size: 9 }, boxWidth: 10 } } }
+      }
+    });
+  }
+
+  function renderChartBarBahaya(){
+    const periode = document.getElementById('select-periode-bahaya').value;
+    const kelompok = {}; // label -> jumlah
+
+    daftarBahayaCache.forEach(l=>{
+      if (!l.waktuLapor || !l.waktuLapor.toDate) return;
+      const tgl = l.waktuLapor.toDate();
+      let label;
+      if (periode === 'harian'){
+        label = tgl.toLocaleDateString('id-ID', { day:'2-digit', month:'2-digit' });
+      } else if (periode === 'bulanan'){
+        label = tgl.toLocaleDateString('id-ID', { month:'short', year:'2-digit' });
+      } else {
+        const kuartal = Math.floor(tgl.getMonth() / 3) + 1;
+        label = 'Q' + kuartal + ' ' + tgl.getFullYear();
+      }
+      kelompok[label] = (kelompok[label] || 0) + 1;
+    });
+
+    const labels = Object.keys(kelompok);
+    const data = Object.values(kelompok);
+
+    if (chartBarBahaya) chartBarBahaya.destroy();
+    chartBarBahaya = new Chart(document.getElementById('chart-bar-bahaya'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data, backgroundColor: '#0B7A5B' }] },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#1A1D1F', font: { size: 9 } }, grid: { color: '#E4E7EB' } },
+          y: { ticks: { color: '#1A1D1F', font: { size: 9 }, stepSize: 1 }, grid: { color: '#E4E7EB' }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  function renderDaftarBahaya(){
+    const cont = document.getElementById('daftar-laporan-bahaya');
+    if (daftarBahayaCache.length === 0){
+      cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Belum ada laporan.</div>';
+      return;
+    }
+    const warnaTingkat = { tinggi: 'var(--red)', sedang: 'var(--amber)', rendah: 'var(--green)' };
+    const labelTingkat = { tinggi: '🔴 TINGGI', sedang: '🟡 SEDANG', rendah: '🟢 RENDAH' };
+
+    cont.innerHTML = daftarBahayaCache.map(l=>{
+      const waktu = l.waktuLapor && l.waktuLapor.toDate ? l.waktuLapor.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
+      return '<div onclick="window.bukaDetailBahaya(\'' + l.id + '\')" style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaTingkat[l.tingkat] + '; padding:8px 10px; margin-bottom:6px; cursor:pointer;">'
+        + '<div style="display:flex; justify-content:space-between; font-size:11px;">'
+        + '<span style="font-weight:700;">' + l.kategori + '</span>'
+        + '<span style="color:' + warnaTingkat[l.tingkat] + '; font-weight:700;">' + labelTingkat[l.tingkat] + '</span>'
+        + '</div>'
+        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + (l.pelaporEmail || '-') + ' · ' + waktu + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  /** Buka detail 1 laporan bahaya -- dipanggil dari klik baris di daftar laporan */
+  window.bukaDetailBahaya = function(id){
+    const l = daftarBahayaCache.find(x=> x.id === id);
+    if (!l) return;
+    const warnaTingkat = { tinggi: 'var(--red)', sedang: 'var(--amber)', rendah: 'var(--green)' };
+    const labelTingkat = { tinggi: '🔴 TINGGI', sedang: '🟡 SEDANG', rendah: '🟢 RENDAH' };
+    const waktu = l.waktuLapor && l.waktuLapor.toDate ? l.waktuLapor.toDate().toLocaleString('id-ID') : '-';
+
+    let html = '<div style="font-size:12px; line-height:1.8;">'
+      + '<div><b>Kategori:</b> ' + l.kategori + '</div>'
+      + '<div><b>Tingkat:</b> <span style="color:' + warnaTingkat[l.tingkat] + '; font-weight:700;">' + labelTingkat[l.tingkat] + '</span></div>'
+      + '<div><b>Pelapor:</b> ' + (l.pelaporEmail || '-') + '</div>'
+      + '<div><b>Waktu:</b> ' + waktu + '</div>'
+      + '<div style="margin-top:6px;"><b>Deskripsi:</b><br>' + (l.deskripsi || '-').replace(/</g,'&lt;') + '</div>'
+      + '</div>';
+    if (l.fotoUrl){
+      html += '<img src="' + l.fotoUrl + '" style="width:100%; margin-top:10px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + l.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+    }
+    if (l.videoUrl){
+      html += '<video src="' + l.videoUrl + '" controls style="width:100%; margin-top:10px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + l.videoUrl.replace(/'/g,"\\'") + '\', \'video\')"></video>';
+    }
+    document.getElementById('isi-detail-bahaya').innerHTML = html;
+
+    const petaEl = document.getElementById('peta-detail-bahaya');
+    const linkEl = document.getElementById('link-gmaps-bahaya');
+    if (l.lat && l.lon){
+      petaEl.classList.remove('hidden');
+      linkEl.classList.remove('hidden');
+      linkEl.href = 'https://www.google.com/maps?q=' + l.lat + ',' + l.lon;
+      petaEl.innerHTML = '';
+      setTimeout(()=>{
+        const petaMini = L.map('peta-detail-bahaya').setView([l.lat, l.lon], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(petaMini);
+        L.marker([l.lat, l.lon]).addTo(petaMini);
+      }, 50);
+    } else {
+      petaEl.classList.add('hidden');
+      linkEl.classList.add('hidden');
+    }
+
+    document.getElementById('modal-detail-bahaya-overlay').classList.remove('hidden');
+  };
 
   // ==========================================================
   // RUANG KOMUNIKASI — Chat (teks + foto) & Laporan Cepat
