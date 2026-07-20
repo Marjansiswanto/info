@@ -3592,7 +3592,11 @@ MAIN CONTENT
     const qBahaya = query(collection(db, 'laporanBahaya'), orderBy('waktuLapor', 'desc'));
     onSnapshot(qBahaya, (snap)=>{
       daftarBahayaCache = [];
-      snap.forEach(d=> daftarBahayaCache.push({ id: d.id, ...d.data() }));
+      // serverTimestamps:'estimate' -- supaya field waktuLapor SELALU ada nilai perkiraan
+      // (bukan null) sesaat setelah laporan baru dikirim, sebelum server Firestore mengonfirmasi
+      // waktu pastinya. Tanpa ini, bar chart (yang mengelompokkan per-tanggal) bisa "melewatkan"
+      // laporan yang baru saja dikirim -- menyebabkan totalnya beda dengan pie chart untuk sesaat.
+      snap.forEach(d=> daftarBahayaCache.push({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
 
       // Banner: tampil kalau ADA laporan tingkat TINGGI yang statusnya belum 'selesai'
       const adaTinggiBelumSelesai = daftarBahayaCache.some(l=> l.tingkat === 'tinggi' && l.status !== 'selesai');
