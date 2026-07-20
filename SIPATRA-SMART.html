@@ -837,6 +837,7 @@ MAIN CONTENT
           <button id="btn-checkout-manual" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--amber); border:1px solid var(--amber);" title="Check-Out Manual">⏰</button>
           <button id="btn-lapor-bahaya" class="track-btn icon-square-btn hidden" style="background:var(--red); color:#fff; border:1px solid var(--red);" title="Lapor Bahaya / Potensi Bahaya">⚠️</button>
           <button id="btn-panel-bahaya" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--orange); border:1px solid var(--orange);" title="Panel Analitik Laporan Bahaya (Moderator)">📊</button>
+          <button id="btn-riwayat-sos" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Riwayat & Verifikasi SOS (Moderator)">📟</button>
         </div>
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -1130,6 +1131,50 @@ MAIN CONTENT
       </div>
       <div id="status-ubah-status-bahaya" style="font-size:10.5px; margin-top:6px;"></div>
     </div>
+  </div>
+</div>
+
+<!-- ===== MODAL KONFIRMASI SOS (Geser untuk Kirim -- cegah salah pencet) ===== -->
+<div id="modal-konfirmasi-sos-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:5000; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:400px; width:100%; text-align:center;">
+    <div style="font-size:40px; margin-bottom:8px;">🚨</div>
+    <h3 style="color:var(--red); margin-bottom:6px;">Kirim Sinyal SOS?</h3>
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:18px; line-height:1.6;">
+      Sinyal akan langsung dilihat oleh Admin/Supervisor untuk verifikasi. Geser tombol di bawah sampai habis untuk mengirim — ini mencegah SOS terkirim gara-gara salah pencet.
+    </div>
+    <div id="slider-track-sos" style="position:relative; width:100%; height:52px; background:#2a0808; border:1px solid var(--red); border-radius:26px; overflow:hidden; user-select:none;">
+      <div id="slider-label-sos" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--red); font-family:var(--mono); font-weight:700; font-size:12px; pointer-events:none;">GESER UNTUK KIRIM SOS →</div>
+      <div id="slider-handle-sos" style="position:absolute; top:2px; left:2px; width:48px; height:48px; background:var(--red); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; cursor:grab; touch-action:none;">🚨</div>
+    </div>
+    <button id="btn-batal-konfirmasi-sos" class="icon-btn" style="width:100%; margin-top:14px; padding:9px; background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);">Batal</button>
+  </div>
+</div>
+
+<!-- ===== MODAL SOS MASUK -- muncul OTOMATIS untuk moderator (admin/editor/vip) begitu ada SOS baru ===== -->
+<div id="modal-sos-masuk-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(80,0,0,0.92); z-index:5500; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:460px; width:100%; border:2px solid var(--red); max-height:92vh; overflow-y:auto;">
+    <div style="text-align:center; font-size:32px; margin-bottom:4px;">🚨🚨🚨</div>
+    <h3 style="color:var(--red); text-align:center; margin-bottom:12px;">SOS DARURAT — MENUNGGU VERIFIKASI</h3>
+    <div id="isi-sos-masuk" style="font-size:12.5px; line-height:1.9; border:1px solid var(--line-bright); padding:10px; margin-bottom:12px;"></div>
+
+    <textarea id="catatan-verifikasi-sos" rows="2" placeholder="Catatan verifikasi (opsional, mis. hasil cek CCTV/radio)..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px; resize:vertical; font-size:11px;"></textarea>
+
+    <button id="btn-sos-forward-basarnas" class="icon-btn" style="width:100%; padding:11px; background:var(--red); color:#fff; font-weight:700; margin-bottom:8px;">✅ VERIFIKASI & TERUSKAN KE BASARNAS</button>
+    <div style="font-size:9.5px; color:var(--text-dim); margin-bottom:10px; line-height:1.5;">⚠️ Sistem ini TIDAK mengirim otomatis ke BASARNAS. Pastikan sudah menghubungi BASARNAS resmi via telepon/radio sesuai SOP <b>sebelum</b> menekan tombol ini — tombol ini hanya mencatat bahwa insiden sudah diteruskan.</div>
+
+    <div style="display:flex; gap:8px;">
+      <button id="btn-sos-batalkan-palsu" class="icon-btn" style="flex:1; padding:10px; background:var(--panel); border:1px solid var(--green); color:var(--green);">❌ Alarm Palsu</button>
+      <button id="btn-sos-tunda" class="icon-btn" style="flex:1; padding:10px; background:var(--panel); border:1px solid var(--amber); color:var(--amber);">⏳ Tunda</button>
+    </div>
+    <div id="status-aksi-sos" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL RIWAYAT SOS (Moderator) ===== -->
+<div id="modal-riwayat-sos-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:520px; width:100%; max-height:90vh; overflow-y:auto;">
+    <div class="panel-head"><h3>📟 Riwayat & Verifikasi SOS</h3><button id="btn-tutup-riwayat-sos" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div id="daftar-riwayat-sos"></div>
   </div>
 </div>
 
@@ -1460,6 +1505,8 @@ MAIN CONTENT
     // Panel Analitik Bahaya -- khusus moderator (admin/editor/vip)
     const isModeratorBahaya = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
     document.getElementById('btn-panel-bahaya').classList.toggle('hidden', !isModeratorBahaya);
+    // Riwayat & Verifikasi SOS -- juga khusus moderator (admin/editor/vip)
+    document.getElementById('btn-riwayat-sos').classList.toggle('hidden', !isModeratorBahaya);
 
     // Tab room "VIP -- Command Channel" HANYA untuk admin/editor/vip -- BUKAN untuk 'user'/'guest'
     const bolehLihatRoomVip = (window.__userRole === 'admin' || window.__userRole === 'vip');
@@ -1689,6 +1736,7 @@ MAIN CONTENT
     initPersonnelTracking(map);
     initChat();
     initLaporanBahaya();
+    initSistemSOS();
     mulaiPemantauanGeofencePasif(); // khusus role='user' -- auto check-in/out tanpa perlu tombol tracking
   }
 
@@ -3239,15 +3287,27 @@ MAIN CONTENT
 
     // Tombol SOS pribadi
     document.getElementById('btn-personal-sos').addEventListener('click', async ()=>{
-      statusPribadi = (statusPribadi === 'sos') ? 'aman' : 'sos';
-      const btn = document.getElementById('btn-personal-sos');
-      btn.textContent = statusPribadi === 'sos' ? '✅' : '🚨';
-      btn.title = statusPribadi === 'sos' ? 'Batalkan SOS' : 'SOS Saya';
-      if (watchId !== null){
-        await updatePosisiKeFirestore(null); // update status tanpa perlu posisi baru
-      } else {
-        setTrackingStatus('Aktifkan tracking dulu supaya status SOS tercatat dengan posisi.');
+      if (statusPribadi === 'sos'){
+        // Batalkan SOS sendiri -- TIDAK perlu geser konfirmasi (aksi ini aman/tidak berbahaya)
+        statusPribadi = 'aman';
+        const btn = document.getElementById('btn-personal-sos');
+        btn.textContent = '🚨';
+        btn.title = 'SOS Saya';
+        if (watchId !== null) await updatePosisiKeFirestore(null);
+        if (idInsidenSosAktifSaya){
+          try{
+            await updateDoc(doc(db, 'insidenSOS', idInsidenSosAktifSaya), {
+              status: 'dibatalkan_sendiri',
+              waktuDiproses: serverTimestamp()
+            });
+          }catch(err){ console.error('Gagal update insidenSOS saat batal sendiri:', err); }
+          idInsidenSosAktifSaya = null;
+        }
+        return;
       }
+      // Mengaktifkan SOS -- WAJIB geser konfirmasi dulu (cegah salah pencet/mainan anak)
+      document.getElementById('modal-konfirmasi-sos-overlay').classList.remove('hidden');
+      resetSliderSos();
     });
   }
 
@@ -3790,6 +3850,272 @@ MAIN CONTENT
   }
   document.getElementById('btn-status-ditindak').addEventListener('click', ()=> ubahStatusLaporanBahaya('ditindak'));
   document.getElementById('btn-status-selesai').addEventListener('click', ()=> ubahStatusLaporanBahaya('selesai'));
+
+  // ==========================================================
+  // SISTEM SOS -- internal-only secara default, verifikasi manual sebelum diteruskan ke BASARNAS.
+  // Prinsip: SOS TIDAK PERNAH otomatis terkirim ke BASARNAS. Sinyal masuk ke moderator internal
+  // (admin/editor/vip) dulu untuk verifikasi (cek CCTV/radio/kontak langsung), baru diputuskan
+  // manual apakah diteruskan (lewat telepon/radio resmi ke BASARNAS, BUKAN lewat sistem ini) atau
+  // dibatalkan sebagai alarm palsu. Sistem ini cuma MENCATAT keputusan itu, bukan mengeksekusinya.
+  // ==========================================================
+  let idInsidenSosAktifSaya = null; // id dokumen insidenSOS milik sesi SOS saya sendiri yg masih aktif
+  let daftarSemuaInsidenSOS = [];   // seluruh riwayat insidenSOS (semua status), terbaru dulu
+  let antrianSosBelumDiverifikasi = []; // subset berstatus menunggu_verifikasi, terlama dulu (utk moderator)
+  let sosDitundaSesiIni = new Set(); // id insiden yg moderator sudah klik "Tunda" -- jangan auto-popup lagi sesi ini
+  let idInsidenSosSedangDitampilkan = null;
+  let sedangGeserSliderSos = false;
+  let offsetAwalGeserSos = 0;
+  let audioContextSos = null;
+  let intervalBunyiSos = null;
+
+  function resetSliderSos(){
+    document.getElementById('slider-handle-sos').style.left = '2px';
+    document.getElementById('slider-label-sos').style.opacity = '1';
+  }
+  function batasGeserSliderSos(){
+    const track = document.getElementById('slider-track-sos');
+    const handle = document.getElementById('slider-handle-sos');
+    return track.clientWidth - handle.clientWidth - 4;
+  }
+  function mulaiGeserSliderSos(e){
+    sedangGeserSliderSos = true;
+    const handle = document.getElementById('slider-handle-sos');
+    handle.style.cursor = 'grabbing';
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    offsetAwalGeserSos = clientX - handle.offsetLeft;
+  }
+  function saatGeserSliderSos(e){
+    if (!sedangGeserSliderSos) return;
+    const handle = document.getElementById('slider-handle-sos');
+    const label = document.getElementById('slider-label-sos');
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const batas = batasGeserSliderSos();
+    const posClamped = Math.max(2, Math.min(clientX - offsetAwalGeserSos, batas));
+    handle.style.left = posClamped + 'px';
+    const persen = batas > 0 ? posClamped / batas : 0;
+    label.style.opacity = String(Math.max(0, 1 - persen));
+    if (persen >= 0.9) selesaiGeserSliderSos(true);
+  }
+  function selesaiGeserSliderSos(berhasil){
+    sedangGeserSliderSos = false;
+    document.getElementById('slider-handle-sos').style.cursor = 'grab';
+    if (berhasil){
+      document.getElementById('modal-konfirmasi-sos-overlay').classList.add('hidden');
+      kirimSinyalSOS();
+    } else {
+      resetSliderSos();
+    }
+  }
+
+  // Dipanggil begitu slider berhasil digeser sampai habis -- baru di titik ini SOS benar-benar terkirim
+  async function kirimSinyalSOS(){
+    const user = auth.currentUser;
+    if (!user) return;
+    statusPribadi = 'sos';
+    const btn = document.getElementById('btn-personal-sos');
+    btn.textContent = '✅';
+    btn.title = 'Batalkan SOS';
+
+    const lat = window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lat : null;
+    const lon = window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lon : null;
+
+    if (watchId !== null){
+      await updatePosisiKeFirestore(null); // update status 'sos' di dokumen personnel (utk marker peta)
+    } else {
+      setTrackingStatus('⚠️ Tracking belum aktif -- SOS tetap tercatat, tapi tanpa update posisi live di peta.');
+    }
+
+    try{
+      const docRef = await addDoc(collection(db, 'insidenSOS'), {
+        personilUid: user.uid,
+        personilEmail: user.email,
+        lat, lon,
+        waktu: serverTimestamp(),
+        status: 'menunggu_verifikasi',
+        catatanVerifikasi: null,
+        diprosesOleh: null,
+        waktuDiproses: null
+      });
+      idInsidenSosAktifSaya = docRef.id;
+    }catch(err){
+      setTrackingStatus('⚠️ Sinyal SOS tercatat di posisi, tapi GAGAL catat insiden: ' + err.message);
+    }
+  }
+
+  function tampilkanAntrianSOSBerikutnya(){
+    if (antrianSosBelumDiverifikasi.length === 0){
+      idInsidenSosSedangDitampilkan = null;
+      hentikanBunyiAlarmSOS();
+      return;
+    }
+    const insiden = antrianSosBelumDiverifikasi[0];
+    idInsidenSosSedangDitampilkan = insiden.id;
+    const waktu = insiden.waktu && insiden.waktu.toDate ? insiden.waktu.toDate().toLocaleString('id-ID') : '-';
+    const lokasiTeks = (insiden.lat && insiden.lon) ? (insiden.lat.toFixed(5) + ', ' + insiden.lon.toFixed(5)) : 'Tidak tersedia (belum aktifkan tracking)';
+    document.getElementById('isi-sos-masuk').innerHTML =
+      '<div><b>Personel:</b> ' + (insiden.personilEmail || '-') + '</div>' +
+      '<div><b>Lokasi:</b> ' + lokasiTeks + '</div>' +
+      '<div><b>Waktu:</b> ' + waktu + '</div>';
+    document.getElementById('catatan-verifikasi-sos').value = '';
+    document.getElementById('status-aksi-sos').textContent = '';
+    document.getElementById('modal-sos-masuk-overlay').classList.remove('hidden');
+    mulaiBunyiAlarmSOS();
+  }
+
+  function tutupModalSosMasuk(){
+    document.getElementById('modal-sos-masuk-overlay').classList.add('hidden');
+    idInsidenSosSedangDitampilkan = null;
+    hentikanBunyiAlarmSOS();
+  }
+
+  async function prosesAksiSOS(statusBaru){
+    if (!idInsidenSosSedangDitampilkan || !auth.currentUser) return;
+    const catatan = document.getElementById('catatan-verifikasi-sos').value.trim();
+    const statusEl = document.getElementById('status-aksi-sos');
+    statusEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Menyimpan...';
+    try{
+      await updateDoc(doc(db, 'insidenSOS', idInsidenSosSedangDitampilkan), {
+        status: statusBaru,
+        catatanVerifikasi: catatan || null,
+        diprosesOleh: auth.currentUser.email,
+        waktuDiproses: serverTimestamp()
+      });
+      sosDitundaSesiIni.delete(idInsidenSosSedangDitampilkan);
+      tutupModalSosMasuk();
+      antrianSosBelumDiverifikasi.shift();
+      tampilkanAntrianSOSBerikutnya();
+    }catch(err){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Gagal: ' + err.message;
+    }
+  }
+
+  // Alarm audio sederhana (beep berulang) selama modal SOS masuk terbuka -- Web Audio API,
+  // tanpa file suara eksternal. Browser bisa memblokir autoplay tanpa interaksi user sebelumnya --
+  // itu wajar/aman, moderator tetap lihat popup visualnya meski suaranya tidak keluar.
+  function mulaiBunyiAlarmSOS(){
+    hentikanBunyiAlarmSOS();
+    try{
+      if (!audioContextSos) audioContextSos = new (window.AudioContext || window.webkitAudioContext)();
+      const bunyikan = ()=>{
+        if (document.getElementById('modal-sos-masuk-overlay').classList.contains('hidden')) return;
+        const osc = audioContextSos.createOscillator();
+        const gain = audioContextSos.createGain();
+        osc.type = 'square';
+        osc.frequency.value = 880;
+        gain.gain.value = 0.15;
+        osc.connect(gain); gain.connect(audioContextSos.destination);
+        osc.start(); osc.stop(audioContextSos.currentTime + 0.25);
+      };
+      bunyikan();
+      intervalBunyiSos = setInterval(bunyikan, 1000);
+    }catch(err){ /* abaikan kalau browser blokir audio */ }
+  }
+  function hentikanBunyiAlarmSOS(){
+    if (intervalBunyiSos){ clearInterval(intervalBunyiSos); intervalBunyiSos = null; }
+  }
+
+  function renderRiwayatSOS(){
+    const cont = document.getElementById('daftar-riwayat-sos');
+    if (daftarSemuaInsidenSOS.length === 0){
+      cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Belum ada riwayat SOS.</div>';
+      return;
+    }
+    const labelStatus = {
+      menunggu_verifikasi: '🔴 Menunggu Verifikasi',
+      diteruskan_basarnas: '📡 Diteruskan ke BASARNAS',
+      palsu_dibatalkan: '❌ Alarm Palsu (Dibatalkan Moderator)',
+      dibatalkan_sendiri: '✅ Dibatalkan Sendiri oleh Personel'
+    };
+    const warnaStatus = {
+      menunggu_verifikasi: 'var(--red)',
+      diteruskan_basarnas: 'var(--orange)',
+      palsu_dibatalkan: 'var(--text-dim)',
+      dibatalkan_sendiri: 'var(--green)'
+    };
+    cont.innerHTML = daftarSemuaInsidenSOS.map(x=>{
+      const waktu = x.waktu && x.waktu.toDate ? x.waktu.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
+      let html = '<div style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaStatus[x.status] + '; padding:8px 10px; margin-bottom:6px;">'
+        + '<div style="display:flex; justify-content:space-between; font-size:11px;">'
+        + '<span style="font-weight:700;">' + (x.personilEmail || '-') + '</span>'
+        + '<span style="color:' + warnaStatus[x.status] + '; font-weight:700; font-size:10px;">' + (labelStatus[x.status] || x.status) + '</span>'
+        + '</div>'
+        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + waktu + (x.lat ? (' · 📍 ' + x.lat.toFixed(5) + ', ' + x.lon.toFixed(5)) : '') + '</div>';
+      if (x.catatanVerifikasi) html += '<div style="font-size:10px; color:var(--text-dim); margin-top:4px;"><b>Catatan:</b> ' + x.catatanVerifikasi.replace(/</g,'&lt;') + '</div>';
+      if (x.diprosesOleh) html += '<div style="font-size:9.5px; color:var(--text-dim); margin-top:2px;">Diproses oleh: ' + x.diprosesOleh + '</div>';
+      if (x.status === 'menunggu_verifikasi') html += '<button onclick="window.bukaVerifikasiSOSManual(\'' + x.id + '\')" style="margin-top:6px; width:100%; padding:6px; background:var(--red); color:#fff; border:none; font-family:var(--mono); font-size:10px; cursor:pointer;">Buka untuk Verifikasi</button>';
+      html += '</div>';
+      return html;
+    }).join('');
+  }
+
+  window.bukaVerifikasiSOSManual = function(id){
+    document.getElementById('modal-riwayat-sos-overlay').classList.add('hidden');
+    sosDitundaSesiIni.delete(id);
+    const insiden = daftarSemuaInsidenSOS.find(x=> x.id === id);
+    if (insiden) antrianSosBelumDiverifikasi = [insiden];
+    tampilkanAntrianSOSBerikutnya();
+  };
+
+  function initSistemSOS(){
+    const handle = document.getElementById('slider-handle-sos');
+    handle.addEventListener('mousedown', mulaiGeserSliderSos);
+    handle.addEventListener('touchstart', mulaiGeserSliderSos, { passive: true });
+    document.addEventListener('mousemove', saatGeserSliderSos);
+    document.addEventListener('touchmove', saatGeserSliderSos, { passive: true });
+    document.addEventListener('mouseup', ()=>{ if (sedangGeserSliderSos) selesaiGeserSliderSos(false); });
+    document.addEventListener('touchend', ()=>{ if (sedangGeserSliderSos) selesaiGeserSliderSos(false); });
+
+    document.getElementById('btn-batal-konfirmasi-sos').addEventListener('click', ()=>{
+      document.getElementById('modal-konfirmasi-sos-overlay').classList.add('hidden');
+    });
+
+    document.getElementById('btn-riwayat-sos').addEventListener('click', ()=>{
+      document.getElementById('modal-riwayat-sos-overlay').classList.remove('hidden');
+      renderRiwayatSOS();
+    });
+    document.getElementById('btn-tutup-riwayat-sos').addEventListener('click', ()=>{
+      document.getElementById('modal-riwayat-sos-overlay').classList.add('hidden');
+    });
+
+    document.getElementById('btn-sos-forward-basarnas').addEventListener('click', ()=>{
+      if (!confirm('Pastikan Anda SUDAH menghubungi BASARNAS resmi via telepon/radio sesuai SOP. Sistem ini TIDAK mengirim otomatis. Lanjutkan mencatat sebagai "Diteruskan"?')) return;
+      prosesAksiSOS('diteruskan_basarnas');
+    });
+    document.getElementById('btn-sos-batalkan-palsu').addEventListener('click', ()=> prosesAksiSOS('palsu_dibatalkan'));
+    document.getElementById('btn-sos-tunda').addEventListener('click', ()=>{
+      if (idInsidenSosSedangDitampilkan) sosDitundaSesiIni.add(idInsidenSosSedangDitampilkan);
+      tutupModalSosMasuk();
+      antrianSosBelumDiverifikasi.shift();
+      tampilkanAntrianSOSBerikutnya();
+    });
+
+    // Listener real-time -- SEMUA insiden SOS (dipakai utk riwayat + antrian auto-popup moderator)
+    const qSemuaSos = query(collection(db, 'insidenSOS'), orderBy('waktu', 'desc'));
+    onSnapshot(qSemuaSos, (snap)=>{
+      daftarSemuaInsidenSOS = [];
+      snap.forEach(d=> daftarSemuaInsidenSOS.push({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
+
+      const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+      if (isModerator){
+        antrianSosBelumDiverifikasi = daftarSemuaInsidenSOS
+          .filter(x=> x.status === 'menunggu_verifikasi' && !sosDitundaSesiIni.has(x.id))
+          .sort((a,b)=>{
+            const ta = a.waktu && a.waktu.toDate ? a.waktu.toDate().getTime() : 0;
+            const tb = b.waktu && b.waktu.toDate ? b.waktu.toDate().getTime() : 0;
+            return ta - tb; // terlama dulu
+          });
+        if (antrianSosBelumDiverifikasi.length > 0 && !idInsidenSosSedangDitampilkan){
+          tampilkanAntrianSOSBerikutnya();
+        }
+      }
+
+      if (!document.getElementById('modal-riwayat-sos-overlay').classList.contains('hidden')){
+        renderRiwayatSOS();
+      }
+    }, (err)=> console.error('Gagal baca insidenSOS:', err.message));
+  }
 
   // ==========================================================
   // RUANG KOMUNIKASI — Chat (teks + foto) & Laporan Cepat
