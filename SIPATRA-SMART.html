@@ -1798,6 +1798,11 @@ MAIN CONTENT
   // ==========================================================
   let watchIdGeofencePasif = null;
   let statusDiDalamWilayahKerjaSaatIni = null; // null = belum pernah dicek sama sekali
+  let calonStatusTransisi = null;    // status kandidat yang sedang "diuji" sebelum dianggap transisi valid
+  let jumlahKonfirmasiBerturut = 0;  // berapa kali berturut-turut kandidat status itu muncul
+  const AMBANG_KONFIRMASI_TRANSISI = 2; // butuh 2 bacaan GPS berturut yang konsisten sebelum transisi dianggap valid --
+                                         // mencegah check-in/out palsu akibat GPS "meleset" sesaat di dekat batas zona
+                                         // (umum terjadi di area tambang/pabrik karena multipath sinyal dari struktur logam/beton)
 
   function mulaiPemantauanGeofencePasif(){
     if (window.__userRole !== 'user') return; // HANYA personil/supervisor/manager
@@ -1818,6 +1823,7 @@ MAIN CONTENT
     if (statusDiDalamWilayahKerjaSaatIni === null){
       // Pemeriksaan pertama sejak dashboard dibuka -- kalau kebetulan sudah di dalam zona, langsung check-in + nyalakan tracking
       statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
+      calonStatusTransisi = null; jumlahKonfirmasiBerturut = 0;
       if (sekarangDiDalam){
         cekAutoCheckIn(lat, lon, false);
         nyalakanTrackingOtomatisJikaDiizinkan();
@@ -1825,18 +1831,36 @@ MAIN CONTENT
       return;
     }
 
-    if (sekarangDiDalam && !statusDiDalamWilayahKerjaSaatIni){
+    if (sekarangDiDalam === statusDiDalamWilayahKerjaSaatIni){
+      // Bacaan konsisten dengan status yang sudah dikonfirmasi -- bukan kandidat transisi, reset penghitung
+      calonStatusTransisi = null; jumlahKonfirmasiBerturut = 0;
+      return;
+    }
+
+    // Bacaan BEDA dari status terkonfirmasi -- kandidat transisi, perlu konfirmasi berturut dulu
+    if (calonStatusTransisi === sekarangDiDalam){
+      jumlahKonfirmasiBerturut++;
+    } else {
+      calonStatusTransisi = sekarangDiDalam;
+      jumlahKonfirmasiBerturut = 1;
+    }
+    if (jumlahKonfirmasiBerturut < AMBANG_KONFIRMASI_TRANSISI) return; // masih dianggap noise GPS, tunggu bacaan berikutnya
+
+    // Transisi TERKONFIRMASI (sudah konsisten 2x berturut) -- baru sekarang dieksekusi
+    statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
+    calonStatusTransisi = null; jumlahKonfirmasiBerturut = 0;
+
+    if (sekarangDiDalam){
       // TRANSISI: baru saja MASUK Zona/Wilayah Kerja -> check-in otomatis + nyalakan tracking penuh otomatis
       // (supaya jarak tempuh & waktu aktif untuk FIT%/WLA mulai terakumulasi TANPA perlu tekan tombol manual)
       cekAutoCheckIn(lat, lon, false);
       nyalakanTrackingOtomatisJikaDiizinkan();
-    } else if (!sekarangDiDalam && statusDiDalamWilayahKerjaSaatIni){
+    } else {
       // TRANSISI: baru saja KELUAR Zona/Wilayah Kerja -> tampilkan pop-up konfirmasi check-out
       // (tracking TIDAK langsung dimatikan di sini -- baru dimatikan kalau user pilih "Check-out/Selesai"
       // di pop-up, supaya tidak putus kalau cuma keluar sebentar/sinyal GPS meleset di tepi zona)
       await tampilkanPopupKeluarZonaKerja();
     }
-    statusDiDalamWilayahKerjaSaatIni = sekarangDiDalam;
   }
 
   // Nyalakan tracking penuh (live position + akumulasi jarak/waktu) secara OTOMATIS --
@@ -2476,6 +2500,15 @@ MAIN CONTENT
 
       // Cache dipakai auto/manual check-in -- ambil entri PERTAMA yang ditemukan
       wilayahKerjaCache = entriPertama;
+    }, (err)=>{
+      // PENTING: sebelumnya listener ini TIDAK punya penanganan error sama sekali -- kalau Firestore
+      // Rules menolak izin baca 'wilayahKerja' untuk role tertentu (mis. 'user'), kegagalannya diam-diam
+      // saja (cuma di console), wilayahKerjaCache TIDAK PERNAH terisi, dan akibatnya SELURUH sistem
+      // auto check-in/tracking mati total tanpa pemberitahuan apa pun ke user. Sekarang ditampilkan jelas:
+      console.error('Gagal baca data Wilayah Kerja:', err.message);
+      if (window.__userRole === 'user'){
+        setTrackingStatus('⚠️ Gagal memuat data Wilayah Kerja (' + err.message + ') -- auto check-in/tracking TIDAK akan berfungsi. Hubungi admin untuk cek Firestore Security Rules koleksi \'wilayahKerja\'.');
+      }
     });
 
     // ---------- Check-in / Check-out MANUAL (tombol ✅ / ⏰ di baris ikon aksi) ----------
@@ -3047,6 +3080,15 @@ MAIN CONTENT
       setTrackingStatus('Perangkat/browser tidak mendukung GPS.');
       return;
     }
+    // Hentikan sementara geofence pasif -- supaya TIDAK ada 2 navigator.geolocation.watchPosition()
+    // berjalan bersamaan (boros baterai & kuota data). Deteksi transisi zona kerja (masuk/keluar)
+    // tetap jalan normal selama tracking penuh ini aktif, karena updatePosisiKeFirestore() di bawah
+    // juga memanggil cekTransisiZonaKerja() pada tiap titik GPS baru. Geofence pasif akan otomatis
+    // dilanjutkan lagi begitu tracking penuh ini dihentikan (lihat hentikanTrackingSaya()).
+    if (watchIdGeofencePasif !== null){
+      navigator.geolocation.clearWatch(watchIdGeofencePasif);
+      watchIdGeofencePasif = null;
+    }
     setTrackingStatus('Meminta izin lokasi...');
     waktuMulaiTrackingSaya = Date.now();
     titikAwalSudahDikirim = false; // titik Markas akan dicatat ulang di fix GPS valid pertama pada sesi ini
@@ -3117,6 +3159,10 @@ MAIN CONTENT
     }catch(e){ /* abaikan kalau dokumen memang belum ada */ }
     waktuMulaiTrackingSaya = null;
     setTrackingStatus('Tracking dihentikan.');
+
+    // Lanjutkan lagi geofence pasif (role='user') supaya transisi masuk/keluar Zona Kerja
+    // berikutnya tetap terpantau, meski tracking penuh sudah tidak aktif.
+    if (window.__userRole === 'user') mulaiPemantauanGeofencePasif();
   }
 
   async function updatePosisiKeFirestore(coords){
@@ -3138,7 +3184,10 @@ MAIN CONTENT
       dataUpdate.heading = (typeof coords.heading === 'number' && !isNaN(coords.heading)) ? coords.heading : null;
       window.__posisiTerkiniSaya = { lat: coords.latitude, lon: coords.longitude };
 
-      cekAutoCheckIn(coords.latitude, coords.longitude); // tidak di-await -- jangan tunda update posisi utama
+      // Pakai cekTransisiZonaKerja (bukan cuma cekAutoCheckIn) -- supaya deteksi KELUAR zona
+      // (pop-up check-out) tetap berfungsi selama tracking penuh ini aktif, menggantikan peran
+      // geofence pasif yang sengaja dijeda (lihat mulaiTrackingSaya()) supaya tidak dobel watchPosition.
+      cekTransisiZonaKerja(coords.latitude, coords.longitude); // tidak di-await -- jangan tunda update posisi utama
 
       // Catat titik Markas (awal sesi tracking) sekali saja per sesi -- dasar hitung "jarak dari Markas"
       if (!titikAwalSudahDikirim){
