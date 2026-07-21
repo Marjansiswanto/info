@@ -584,6 +584,12 @@ PERSIS SAMA supaya seluruh JS/Firebase di bawah tidak perlu diubah sedikit pun.
     </div>
   </div>
 
+  <div id="blok-identitas-pengguna" style="padding:10px 12px; margin-bottom:16px; background:rgba(255,255,255,0.12); border-radius:12px; color:#fff;">
+    <div style="font-size:10px; opacity:0.75;">👋 Selamat datang,</div>
+    <div id="teks-nama-pengguna" style="font-size:12px; font-weight:700; word-break:break-all; margin:2px 0 6px;">-</div>
+    <span id="badge-status-pengguna" style="display:inline-block; font-size:9.5px; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(255,255,255,0.25);">-</span>
+  </div>
+
   <nav class="sidebar-nav">
     <div class="nav-label">Menu Utama</div>
     <a href="#" class="active" data-scroll-target="dashboard-top">
@@ -1142,6 +1148,9 @@ MAIN CONTENT
     <div style="font-size:11px; color:var(--text-dim); margin-bottom:18px; line-height:1.6;">
       Sinyal akan langsung dilihat oleh Admin/Supervisor untuk verifikasi. Geser tombol di bawah sampai habis untuk mengirim — ini mencegah SOS terkirim gara-gara salah pencet.
     </div>
+    <div id="peringatan-luar-zona-sos" class="hidden" style="background:#FFF4E5; border:1px solid var(--amber); color:#92400E; font-size:10.5px; padding:8px 10px; margin-bottom:14px; text-align:left; line-height:1.5;">
+      ⚠️ Anda terdeteksi berada di <b>LUAR Zona Kerja</b>. SOS tetap bisa dikirim (mis. kejadian di area parkir/perjalanan) — cuma pastikan ini bukan salah pencet.
+    </div>
     <div id="slider-track-sos" style="position:relative; width:100%; height:52px; background:#2a0808; border:1px solid var(--red); border-radius:26px; overflow:hidden; user-select:none;">
       <div id="slider-label-sos" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--red); font-family:var(--mono); font-weight:700; font-size:12px; pointer-events:none;">GESER UNTUK KIRIM SOS →</div>
       <div id="slider-handle-sos" style="position:absolute; top:2px; left:2px; width:48px; height:48px; background:var(--red); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; cursor:grab; touch-action:none;">🚨</div>
@@ -1468,15 +1477,31 @@ MAIN CONTENT
     }
 
     // Ambil role user dari Firestore (users/{uid}) untuk menentukan hak akses fitur inti
+    let dataUserUntukIdentitas = {};
     try{
       const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-      window.__userRole = userDoc.exists() ? (userDoc.data().role || 'user') : 'user';
+      dataUserUntukIdentitas = userDoc.exists() ? userDoc.data() : {};
+      window.__userRole = dataUserUntukIdentitas.role || 'user';
     }catch(err){
       window.__userRole = 'user'; // gagal baca -> anggap user biasa (aman, tidak elevate ke admin)
     }
+    tampilkanIdentitasPengguna(auth.currentUser.email, window.__userRole, dataUserUntukIdentitas.kategoriKerja);
 
     initDashboard();
     terapkanBatasanRole();
+  }
+
+  // Tampilkan ucapan selamat datang + identitas + status role di header/sidebar setelah login
+  function tampilkanIdentitasPengguna(email, role, kategoriKerja){
+    const blok = document.getElementById('blok-identitas-pengguna');
+    if (!blok) return;
+    const labelRole = {
+      admin: 'Admin', editor: 'Editor', vip: 'VIP', guest: 'Tamu (Read-only)',
+      user: kategoriKerja === 'supervisor' ? 'Supervisor' : kategoriKerja === 'manager' ? 'Manager' : 'Personil'
+    };
+    document.getElementById('teks-nama-pengguna').textContent = email || '-';
+    document.getElementById('badge-status-pengguna').textContent = labelRole[role] || role;
+    blok.classList.remove('hidden');
   }
 
   // ---------- Batasan akses berdasarkan role ----------
@@ -3306,6 +3331,11 @@ MAIN CONTENT
         return;
       }
       // Mengaktifkan SOS -- WAJIB geser konfirmasi dulu (cegah salah pencet/mainan anak)
+      // Cek posisi terhadap Zona Kerja -- HANYA peringatan tambahan, TIDAK memblokir (keputusan
+      // Pak Marjan: SOS darurat sungguhan bisa saja terjadi tepat di luar batas zona/dalam perjalanan).
+      const diLuarZona = wilayahKerjaCache && window.__posisiTerkiniSaya
+        && !titikDalamWilayahKerja(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon);
+      document.getElementById('peringatan-luar-zona-sos').classList.toggle('hidden', !diLuarZona);
       document.getElementById('modal-konfirmasi-sos-overlay').classList.remove('hidden');
       resetSliderSos();
     });
@@ -3918,6 +3948,9 @@ MAIN CONTENT
 
     const lat = window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lat : null;
     const lon = window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lon : null;
+    // Dicatat ulang di sini (bukan cuma dipakai utk peringatan tampilan) -- supaya moderator
+    // tahu konteksnya saat verifikasi: SOS dari luar Zona Kerja layak dicek lebih teliti.
+    const diLuarZona = wilayahKerjaCache && lat != null && lon != null && !titikDalamWilayahKerja(lat, lon);
 
     if (watchId !== null){
       await updatePosisiKeFirestore(null); // update status 'sos' di dokumen personnel (utk marker peta)
@@ -3930,6 +3963,7 @@ MAIN CONTENT
         personilUid: user.uid,
         personilEmail: user.email,
         lat, lon,
+        diLuarZonaKerja: diLuarZona,
         waktu: serverTimestamp(),
         status: 'menunggu_verifikasi',
         catatanVerifikasi: null,
@@ -3952,10 +3986,14 @@ MAIN CONTENT
     idInsidenSosSedangDitampilkan = insiden.id;
     const waktu = insiden.waktu && insiden.waktu.toDate ? insiden.waktu.toDate().toLocaleString('id-ID') : '-';
     const lokasiTeks = (insiden.lat && insiden.lon) ? (insiden.lat.toFixed(5) + ', ' + insiden.lon.toFixed(5)) : 'Tidak tersedia (belum aktifkan tracking)';
+    const infoZona = insiden.diLuarZonaKerja
+      ? '<div style="color:var(--amber); font-weight:700;">⚠️ Di LUAR Zona Kerja -- layak dicek lebih teliti</div>'
+      : '<div style="color:var(--green);">✅ Di dalam Zona Kerja</div>';
     document.getElementById('isi-sos-masuk').innerHTML =
       '<div><b>Personel:</b> ' + (insiden.personilEmail || '-') + '</div>' +
       '<div><b>Lokasi:</b> ' + lokasiTeks + '</div>' +
-      '<div><b>Waktu:</b> ' + waktu + '</div>';
+      '<div><b>Waktu:</b> ' + waktu + '</div>' +
+      infoZona;
     document.getElementById('catatan-verifikasi-sos').value = '';
     document.getElementById('status-aksi-sos').textContent = '';
     document.getElementById('modal-sos-masuk-overlay').classList.remove('hidden');
@@ -4041,7 +4079,7 @@ MAIN CONTENT
         + '<span style="font-weight:700;">' + (x.personilEmail || '-') + '</span>'
         + '<span style="color:' + warnaStatus[x.status] + '; font-weight:700; font-size:10px;">' + (labelStatus[x.status] || x.status) + '</span>'
         + '</div>'
-        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + waktu + (x.lat ? (' · 📍 ' + x.lat.toFixed(5) + ', ' + x.lon.toFixed(5)) : '') + '</div>';
+        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + waktu + (x.lat ? (' · 📍 ' + x.lat.toFixed(5) + ', ' + x.lon.toFixed(5)) : '') + (x.diLuarZonaKerja ? ' · <span style="color:var(--amber);">⚠️ Luar Zona Kerja</span>' : '') + '</div>';
       if (x.catatanVerifikasi) html += '<div style="font-size:10px; color:var(--text-dim); margin-top:4px;"><b>Catatan:</b> ' + x.catatanVerifikasi.replace(/</g,'&lt;') + '</div>';
       if (x.diprosesOleh) html += '<div style="font-size:9.5px; color:var(--text-dim); margin-top:2px;">Diproses oleh: ' + x.diprosesOleh + '</div>';
       if (x.status === 'menunggu_verifikasi') html += '<button onclick="window.bukaVerifikasiSOSManual(\'' + x.id + '\')" style="margin-top:6px; width:100%; padding:6px; background:var(--red); color:#fff; border:none; font-family:var(--mono); font-size:10px; cursor:pointer;">Buka untuk Verifikasi</button>';
