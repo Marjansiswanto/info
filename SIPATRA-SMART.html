@@ -1252,10 +1252,25 @@ MAIN CONTENT
     <div id="status-lapor-gangguan" style="font-size:11px; margin-bottom:8px;"></div>
 
     <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Plant / Unit</label>
-    <input type="text" id="input-plant-gangguan" placeholder="mis. Plant Unit 5" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+    <select id="input-plant-gangguan" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+      <option value="PLANT_5">PLANT 5</option>
+      <option value="PLANT_4">PLANT 4</option>
+      <option value="PLANT_2/3">PLANT 2/3</option>
+    </select>
 
     <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Area / Equipment</label>
     <input type="text" id="input-area-gangguan" placeholder="mis. Finish Mill - MCC-05A" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">No. WO <span style="color:var(--text-dim); font-weight:normal;">(opsional, isi manual dari WO SAP kalau sudah ada)</span></label>
+    <input type="text" id="input-nomor-wo-gangguan" placeholder="mis. WO-2505-0012" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:4px;">
+    <div style="font-size:10px; color:var(--amber); margin-bottom:8px;">⚠️ Cek kembali nomor WO sebelum kirim.</div>
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+      <button id="btn-foto-wo-screenshot-kamera" class="icon-btn icon-square-btn" title="Foto Screenshot WO">📷</button>
+      <button id="btn-foto-wo-screenshot-galeri" class="icon-btn icon-square-btn" title="Pilih Screenshot dari Galeri">🖼️</button>
+      <span id="nama-foto-wo-screenshot" style="font-size:10.5px; color:var(--text-dim); align-self:center;"></span>
+    </div>
+    <input type="file" id="input-foto-wo-screenshot-kamera" accept="image/*" capture="environment" class="hidden">
+    <input type="file" id="input-foto-wo-screenshot-galeri" accept="image/*" class="hidden">
 
     <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Jenis Gangguan</label>
     <select id="input-jenis-gangguan" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
@@ -1275,6 +1290,7 @@ MAIN CONTENT
     <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Deskripsi</label>
     <textarea id="input-deskripsi-gangguan" rows="3" placeholder="Jelaskan gangguan yang ditemui..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px; resize:vertical;"></textarea>
 
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Foto Kondisi Gangguan (opsional)</label>
     <div style="display:flex; gap:8px; margin-bottom:10px;">
       <button id="btn-foto-gangguan-kamera" class="icon-btn icon-square-btn" title="Ambil Foto">📷</button>
       <button id="btn-foto-gangguan-galeri" class="icon-btn icon-square-btn" title="Pilih dari Galeri">🖼️</button>
@@ -4414,6 +4430,7 @@ MAIN CONTENT
   // BUKAN integrasi API ke sistem SAP PT Semen Tonasa yang sesungguhnya.
   // ==========================================================
   let lampiranFotoGangguan = null;
+  let lampiranFotoWOScreenshot = null;
   let daftarSemuaGangguanWO = [];
   let idGangguanSedangDivalidasi = null;
   let idWOSedangDikerjakan = null;
@@ -4426,9 +4443,12 @@ MAIN CONTENT
     // ---------- Lapor Gangguan (semua role kecuali guest) ----------
     document.getElementById('btn-lapor-gangguan').addEventListener('click', ()=>{
       lampiranFotoGangguan = null;
+      lampiranFotoWOScreenshot = null;
       document.getElementById('nama-foto-gangguan').textContent = '';
-      document.getElementById('input-plant-gangguan').value = '';
+      document.getElementById('nama-foto-wo-screenshot').textContent = '';
+      document.getElementById('input-plant-gangguan').selectedIndex = 0;
       document.getElementById('input-area-gangguan').value = '';
+      document.getElementById('input-nomor-wo-gangguan').value = '';
       document.getElementById('input-deskripsi-gangguan').value = '';
       document.getElementById('status-lapor-gangguan').textContent = '';
       document.getElementById('modal-lapor-gangguan-overlay').classList.remove('hidden');
@@ -4448,11 +4468,24 @@ MAIN CONTENT
         e.target.value = '';
       });
     });
+    document.getElementById('btn-foto-wo-screenshot-kamera').addEventListener('click', ()=> document.getElementById('input-foto-wo-screenshot-kamera').click());
+    document.getElementById('btn-foto-wo-screenshot-galeri').addEventListener('click', ()=> document.getElementById('input-foto-wo-screenshot-galeri').click());
+    [['input-foto-wo-screenshot-kamera'], ['input-foto-wo-screenshot-galeri']].forEach(([id])=>{
+      document.getElementById(id).addEventListener('change', (e)=>{
+        const file = e.target.files[0];
+        if (file){
+          lampiranFotoWOScreenshot = file;
+          document.getElementById('nama-foto-wo-screenshot').textContent = '✅ ' + file.name;
+        }
+        e.target.value = '';
+      });
+    });
 
     document.getElementById('btn-kirim-lapor-gangguan').addEventListener('click', async ()=>{
       if (!auth.currentUser) return;
       const plant = document.getElementById('input-plant-gangguan').value.trim();
       const area = document.getElementById('input-area-gangguan').value.trim();
+      const nomorWO = document.getElementById('input-nomor-wo-gangguan').value.trim();
       const jenis = document.getElementById('input-jenis-gangguan').value;
       const prioritas = document.querySelector('input[name="prioritas-gangguan"]:checked').value;
       const deskripsi = document.getElementById('input-deskripsi-gangguan').value.trim();
@@ -4477,11 +4510,21 @@ MAIN CONTENT
           fotoUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', namaUpload);
         }
 
+        let fotoWOScreenshotUrl = null;
+        if (lampiranFotoWOScreenshot){
+          statusEl.textContent = 'Mengunggah screenshot WO...';
+          const fileKompresiWO = await kompresGambar(lampiranFotoWOScreenshot);
+          const namaUploadWO = 'wo-screenshot.' + (fileKompresiWO.type === 'image/webp' ? 'webp' : 'jpg');
+          fotoWOScreenshotUrl = await uploadKeR2DenganProgres(fileKompresiWO, 'foto', namaUploadWO);
+        }
+
         statusEl.textContent = 'Menyimpan laporan...';
         await addDoc(collection(db, 'gangguanWO'), {
           pelaporUid: auth.currentUser.uid,
           pelaporEmail: auth.currentUser.email,
           plant, area, jenis, prioritas, deskripsi,
+          nomorWO: nomorWO || null,
+          fotoWOScreenshotUrl: fotoWOScreenshotUrl || null,
           fotoUrl: fotoUrl || null,
           lat: window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lat : null,
           lon: window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lon : null,
@@ -4705,13 +4748,19 @@ MAIN CONTENT
     const waktu = g.waktuLapor && g.waktuLapor.toDate ? g.waktuLapor.toDate().toLocaleString('id-ID') : '-';
     let html = '<div><b>Plant:</b> ' + g.plant + '</div>'
       + '<div><b>Area:</b> ' + g.area + '</div>'
+      + (g.nomorWO ? ('<div><b>No. WO:</b> ' + g.nomorWO + '</div>') : '')
       + '<div><b>Jenis:</b> ' + g.jenis + '</div>'
       + '<div><b>Prioritas:</b> <span style="color:' + warnaPrioritas[g.prioritas] + '; font-weight:700;">' + labelPrioritas[g.prioritas] + '</span></div>'
       + '<div><b>Dilaporkan oleh:</b> ' + g.pelaporEmail + '</div>'
       + '<div><b>Waktu:</b> ' + waktu + '</div>'
       + '<div style="margin-top:6px;"><b>Deskripsi:</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
+    if (g.fotoWOScreenshotUrl){
+      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:8px;">📄 Screenshot WO:</div>'
+        + '<img src="' + g.fotoWOScreenshotUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoWOScreenshotUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+    }
     if (g.fotoUrl){
-      html += '<img src="' + g.fotoUrl + '" style="width:100%; margin-top:10px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:8px;">📷 Foto Kondisi:</div>'
+        + '<img src="' + g.fotoUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
     }
     document.getElementById('isi-detail-gangguan').innerHTML = html;
 
@@ -4829,7 +4878,7 @@ MAIN CONTENT
         + '<span style="font-weight:700;">' + g.plant + ' - ' + g.area + '</span>'
         + '<span style="color:' + warnaStatus[g.status] + '; font-weight:700; font-size:9.5px;">' + labelStatus[g.status] + '</span>'
         + '</div>'
-        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + g.jenis + ' · ' + waktu + (g.personilEmail ? (' · 👤 ' + g.personilEmail) : '') + (g.sapSync ? ' · ☁️ SAP' : '') + '</div>'
+        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + g.jenis + (g.nomorWO ? (' · 📄 ' + g.nomorWO) : '') + ' · ' + waktu + (g.personilEmail ? (' · 👤 ' + g.personilEmail) : '') + (g.sapSync ? ' · ☁️ SAP' : '') + '</div>'
         + '</div>';
     }).join('');
   }
@@ -4841,6 +4890,7 @@ MAIN CONTENT
     document.getElementById('isi-progress-wo').innerHTML =
       '<div><b>Plant:</b> ' + g.plant + '</div>' +
       '<div><b>Area:</b> ' + g.area + '</div>' +
+      (g.nomorWO ? ('<div><b>No. WO:</b> ' + g.nomorWO + '</div>') : '') +
       '<div><b>Jenis:</b> ' + g.jenis + '</div>' +
       '<div><b>Deskripsi:</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
     document.getElementById('input-catatan-wo').value = g.catatanPekerjaan || '';
