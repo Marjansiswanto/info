@@ -4949,12 +4949,46 @@ MAIN CONTENT
     const g = daftarSemuaGangguanWO.find(x=> x.id === id);
     if (!g) return;
     idWOSedangDikerjakan = id;
-    document.getElementById('isi-progress-wo').innerHTML =
-      '<div><b>Plant:</b> ' + g.plant + '</div>' +
-      '<div><b>Area:</b> ' + g.area + '</div>' +
-      (g.nomorWO ? ('<div><b>No. WO:</b> ' + g.nomorWO + '</div>') : '') +
-      '<div><b>Jenis:</b> ' + g.jenis + '</div>' +
-      '<div><b>Deskripsi:</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
+
+    // Hitung jarak dari posisi saya saat ini ke lokasi gangguan (kalau kedua posisi tersedia)
+    let infoJarak = '';
+    if (g.lat && g.lon && window.__posisiTerkiniSaya){
+      const jarakM = hitungJarakMeter(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon, g.lat, g.lon);
+      const jarakKm = (jarakM / 1000).toFixed(2);
+      const estMenit = Math.max(1, Math.round((jarakM / 1000) / 30 * 60)); // asumsi kasar ~30 km/jam di area pabrik
+      infoJarak = '<div style="background:#eff6ff; border:1px solid #1e40af; padding:8px 10px; margin:8px 0; font-size:11px; color:#1e40af;">'
+        + '📍 <b>' + jarakKm + ' km</b> dari posisi Anda · Estimasi tempuh ~' + estMenit + ' menit</div>';
+    }
+
+    let html = '<div><b>Plant:</b> ' + g.plant + '</div>'
+      + '<div><b>Area:</b> ' + g.area + '</div>'
+      + (g.nomorWO ? ('<div><b>No. WO:</b> ' + g.nomorWO + '</div>') : '')
+      + '<div><b>Jenis:</b> ' + g.jenis + '</div>'
+      + '<div><b>Dilaporkan oleh:</b> ' + (g.pelaporEmail || '-') + '</div>'
+      + infoJarak
+      + '<div style="margin-top:4px;"><b>Deskripsi:</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
+    if (g.fotoWOScreenshotUrl){
+      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:8px;">📄 Screenshot WO dari Operator:</div>'
+        + '<img src="' + g.fotoWOScreenshotUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoWOScreenshotUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+    }
+    if (g.fotoUrl){
+      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:8px;">📷 Foto Kondisi dari Operator:</div>'
+        + '<img src="' + g.fotoUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+    }
+    document.getElementById('isi-progress-wo').innerHTML = html;
+
+    // Tombol Navigasi (Google Maps) + DM ke Operator -- selalu ditampilkan kalau datanya tersedia
+    const navDMHtml = (g.lat && g.lon ? '<a href="https://www.google.com/maps/dir/?api=1&destination=' + g.lat + ',' + g.lon + '" target="_blank" class="icon-btn" style="flex:1; text-align:center; padding:9px; background:var(--panel); border:1px solid #1e40af; color:#1e40af; text-decoration:none; display:block;">🧭 Navigasi</a>' : '')
+      + (g.pelaporUid ? '<button onclick="window.mulaiDMKeOperatorWO(\'' + g.pelaporUid + '\', \'' + (g.pelaporEmail||'').replace(/'/g,"") + '\')" class="icon-btn" style="flex:1; padding:9px; background:var(--panel); border:1px solid var(--green); color:var(--green);">💬 DM Operator</button>' : '');
+    let blokNavDM = document.getElementById('blok-nav-dm-wo');
+    if (!blokNavDM){
+      blokNavDM = document.createElement('div');
+      blokNavDM.id = 'blok-nav-dm-wo';
+      blokNavDM.style.cssText = 'display:flex; gap:8px; margin:10px 0;';
+      document.getElementById('isi-progress-wo').insertAdjacentElement('afterend', blokNavDM);
+    }
+    blokNavDM.innerHTML = navDMHtml;
+
     document.getElementById('input-catatan-wo').value = g.catatanPekerjaan || '';
     document.getElementById('nama-foto-wo').textContent = '';
     lampiranFotoWO = null;
@@ -4969,6 +5003,10 @@ MAIN CONTENT
     document.getElementById('modal-progress-wo-overlay').classList.remove('hidden');
   }
   window.bukaProgressWO = bukaProgressWO;
+  window.mulaiDMKeOperatorWO = function(uid, nama){
+    document.getElementById('modal-progress-wo-overlay').classList.add('hidden');
+    window.mulaiDMKe(uid, nama);
+  };
 
   // ---------- "WO Saya" (Pelapor) -- daftar laporan gangguan milik sendiri + pelacakan visual ----------
   const labelStatusWOGlobal = {
@@ -5285,7 +5323,10 @@ MAIN CONTENT
   }
 
   function bolehMulaiDMBaru(){
-    return window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip';
+    // Diperluas (sebelumnya cuma admin/editor/vip) -- personil perlu bisa mulai DM ke
+    // operator pelapor untuk koordinasi WO. CATATAN: Firestore Rules utk dmRooms/{roomId}
+    // (allow create) JUGA perlu diperbarui agar cocok -- lihat blok rules terbaru.
+    return window.__userRole && window.__userRole !== 'guest';
   }
 
   function initDM(){
