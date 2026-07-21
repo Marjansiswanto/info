@@ -844,6 +844,8 @@ MAIN CONTENT
           <button id="btn-lapor-bahaya" class="track-btn icon-square-btn hidden" style="background:var(--red); color:#fff; border:1px solid var(--red);" title="Lapor Bahaya / Potensi Bahaya">⚠️</button>
           <button id="btn-panel-bahaya" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--orange); border:1px solid var(--orange);" title="Panel Analitik Laporan Bahaya (Moderator)">📊</button>
           <button id="btn-riwayat-sos" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Riwayat & Verifikasi SOS (Moderator)">📟</button>
+          <button id="btn-lapor-gangguan" class="track-btn icon-square-btn hidden" style="background:#1e40af; color:#fff; border:1px solid #1e40af;" title="Lapor Gangguan (Work Order)">🔧</button>
+          <button id="btn-panel-wo" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Panel Work Order (Supervisor)">🗂️</button>
         </div>
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -1184,6 +1186,129 @@ MAIN CONTENT
   <div class="panel" style="max-width:520px; width:100%; max-height:90vh; overflow-y:auto;">
     <div class="panel-head"><h3>📟 Riwayat & Verifikasi SOS</h3><button id="btn-tutup-riwayat-sos" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="daftar-riwayat-sos"></div>
+  </div>
+</div>
+
+<!-- Banner alert -- muncul begitu ada laporan gangguan baru menunggu validasi supervisor -->
+<div id="banner-gangguan-baru" class="hidden" style="position:sticky; top:0; z-index:1000; background:#1e40af; color:#fff; padding:10px 16px; font-family:var(--mono); font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+  <span id="teks-banner-gangguan">🔧 ADA LAPORAN GANGGUAN BARU — MENUNGGU VALIDASI</span>
+  <span style="font-size:10px; opacity:0.85; white-space:nowrap;">Klik untuk lihat →</span>
+</div>
+
+<!-- ===== MODAL LAPOR GANGGUAN (semua role kecuali guest -- "Operator Produksi") ===== -->
+<div id="modal-lapor-gangguan-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto; border-top:3px solid #1e40af;">
+    <div class="panel-head"><h3 style="color:#1e40af;">🔧 Lapor Gangguan</h3><button id="btn-tutup-lapor-gangguan" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">
+      Laporkan gangguan/kerusakan peralatan. Supervisor akan menerima notifikasi untuk validasi & dispatch personil terdekat.
+    </div>
+    <div id="status-lapor-gangguan" style="font-size:11px; margin-bottom:8px;"></div>
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Plant / Unit</label>
+    <input type="text" id="input-plant-gangguan" placeholder="mis. Plant Unit 5" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Area / Equipment</label>
+    <input type="text" id="input-area-gangguan" placeholder="mis. Finish Mill - MCC-05A" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Jenis Gangguan</label>
+    <select id="input-jenis-gangguan" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+      <option value="Listrik">Listrik</option>
+      <option value="Mekanik">Mekanik</option>
+      <option value="Instrumentasi">Instrumentasi</option>
+      <option value="Lainnya">Lainnya</option>
+    </select>
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Prioritas</label>
+    <div style="display:flex; gap:14px; margin-bottom:10px; font-size:12px;">
+      <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="radio" name="prioritas-gangguan" value="tinggi" checked> <span style="color:var(--red); font-weight:700;">🔴 Tinggi</span></label>
+      <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="radio" name="prioritas-gangguan" value="sedang"> <span style="color:var(--amber); font-weight:700;">🟡 Sedang</span></label>
+      <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="radio" name="prioritas-gangguan" value="rendah"> <span style="color:var(--green); font-weight:700;">🟢 Rendah</span></label>
+    </div>
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Deskripsi</label>
+    <textarea id="input-deskripsi-gangguan" rows="3" placeholder="Jelaskan gangguan yang ditemui..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px; resize:vertical;"></textarea>
+
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+      <button id="btn-foto-gangguan-kamera" class="icon-btn icon-square-btn" title="Ambil Foto">📷</button>
+      <button id="btn-foto-gangguan-galeri" class="icon-btn icon-square-btn" title="Pilih dari Galeri">🖼️</button>
+      <span id="nama-foto-gangguan" style="font-size:10.5px; color:var(--text-dim); align-self:center;"></span>
+    </div>
+    <input type="file" id="input-foto-gangguan-kamera" accept="image/*" capture="environment" class="hidden">
+    <input type="file" id="input-foto-gangguan-galeri" accept="image/*" class="hidden">
+
+    <button id="btn-kirim-lapor-gangguan" class="icon-btn" style="width:100%; padding:10px; background:#1e40af; color:#fff; font-weight:700;">🔧 KIRIM LAPORAN GANGGUAN</button>
+  </div>
+</div>
+
+<!-- ===== MODAL VALIDASI & DISPATCH (Supervisor: admin/editor/vip) ===== -->
+<div id="modal-validasi-gangguan-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:500px; width:100%; max-height:92vh; overflow-y:auto; border-top:3px solid #1e40af;">
+    <div class="panel-head"><h3 style="color:#1e40af;">🔧 Validasi Gangguan & Dispatch</h3><button id="btn-tutup-validasi-gangguan" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div id="isi-detail-gangguan" style="font-size:12.5px; line-height:1.8; border:1px solid var(--line-bright); padding:10px; margin-bottom:12px;"></div>
+
+    <div id="blok-tombol-validasi">
+      <div style="display:flex; gap:8px;">
+        <button id="btn-tolak-gangguan" class="icon-btn" style="flex:1; padding:10px; background:var(--panel); border:1px solid var(--red); color:var(--red);">❌ Tolak</button>
+        <button id="btn-validasi-gangguan" class="icon-btn" style="flex:1; padding:10px; background:#1e40af; color:#fff; font-weight:700;">✅ Validasi & Cari Personil</button>
+      </div>
+    </div>
+
+    <div id="blok-rekomendasi-dispatch" class="hidden">
+      <div style="font-size:11px; color:var(--text-dim); margin:12px 0 6px;">📡 Rekomendasi Personil (berdasarkan jarak terdekat & FIT% -- bukan AI, murni perhitungan aturan dari data real-time)</div>
+      <div id="daftar-rekomendasi-personil"></div>
+    </div>
+    <div id="status-aksi-gangguan" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL PANEL WORK ORDER (Riwayat & Status -- Supervisor) ===== -->
+<div id="modal-panel-wo-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:560px; width:100%; max-height:90vh; overflow-y:auto; border-top:3px solid #1e40af;">
+    <div class="panel-head"><h3 style="color:#1e40af;">🗂️ Panel Work Order</h3><button id="btn-tutup-panel-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="display:flex; gap:10px; margin-bottom:14px; font-size:11px;">
+      <div style="flex:1; text-align:center; border:1px solid var(--line-bright); padding:8px;">
+        <div style="color:var(--text-dim);">Total</div>
+        <div id="stat-wo-total" style="font-size:18px; font-weight:800;">0</div>
+      </div>
+      <div style="flex:1; text-align:center; border:1px solid #1e40af; padding:8px;">
+        <div style="color:#1e40af;">Aktif</div>
+        <div id="stat-wo-aktif" style="font-size:18px; font-weight:800; color:#1e40af;">0</div>
+      </div>
+      <div style="flex:1; text-align:center; border:1px solid var(--green); padding:8px;">
+        <div style="color:var(--green);">Selesai</div>
+        <div id="stat-wo-selesai" style="font-size:18px; font-weight:800; color:var(--green);">0</div>
+      </div>
+    </div>
+    <div id="daftar-panel-wo"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL DETAIL WO (progress, checklist SHE, dokumentasi -- Personil yang ditugaskan) ===== -->
+<div id="modal-progress-wo-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4900; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:480px; width:100%; max-height:92vh; overflow-y:auto; border-top:3px solid #1e40af;">
+    <div class="panel-head"><h3 style="color:#1e40af;">Pelaksanaan Work Order</h3><button id="btn-tutup-progress-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div id="isi-progress-wo" style="font-size:12.5px; line-height:1.8; margin-bottom:10px;"></div>
+
+    <div id="blok-terima-tolak-wo" class="hidden" style="display:flex; gap:8px; margin-bottom:12px;">
+      <button id="btn-tolak-wo" class="icon-btn" style="flex:1; padding:11px; background:var(--panel); border:1px solid var(--red); color:var(--red);">❌ TOLAK</button>
+      <button id="btn-terima-wo" class="icon-btn" style="flex:1; padding:11px; background:var(--green); color:#fff; font-weight:700;">✅ TERIMA</button>
+    </div>
+
+    <div id="blok-pengerjaan-wo" class="hidden">
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Catatan / Temuan</label>
+    <textarea id="input-catatan-wo" rows="2" placeholder="Catatan pekerjaan..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px; resize:vertical; font-size:11px;"></textarea>
+
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <button id="btn-foto-wo-kamera" class="icon-btn icon-square-btn" title="Ambil Foto Dokumentasi">📷</button>
+      <span id="nama-foto-wo" style="font-size:10.5px; color:var(--text-dim); align-self:center;"></span>
+    </div>
+    <input type="file" id="input-foto-wo-kamera" accept="image/*" capture="environment" class="hidden">
+
+    <button id="btn-selesai-wo" class="icon-btn" style="width:100%; padding:11px; background:var(--green); color:#fff; font-weight:700; margin-bottom:8px;">✅ SELESAI PEKERJAAN</button>
+    <button id="btn-sap-sync-wo" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--panel); border:1px solid #1e40af; color:#1e40af;">☁️ Tandai Sudah Disinkronkan ke SAP (Manual)</button>
+    <div style="font-size:9px; color:var(--text-dim); margin-top:4px; text-align:center;">⚠️ Ini pencatatan manual -- BUKAN integrasi API otomatis ke SAP sungguhan.</div>
+    </div>
+    <div id="status-progress-wo" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
   </div>
 </div>
 
@@ -1532,6 +1657,10 @@ MAIN CONTENT
     document.getElementById('btn-panel-bahaya').classList.toggle('hidden', !isModeratorBahaya);
     // Riwayat & Verifikasi SOS -- juga khusus moderator (admin/editor/vip)
     document.getElementById('btn-riwayat-sos').classList.toggle('hidden', !isModeratorBahaya);
+    // Lapor Gangguan (Work Order) -- semua role KECUALI guest ("Operator Produksi")
+    document.getElementById('btn-lapor-gangguan').classList.toggle('hidden', isGuest);
+    // Panel Work Order -- khusus moderator (admin/editor/vip, berperan sebagai "Supervisor")
+    document.getElementById('btn-panel-wo').classList.toggle('hidden', !isModeratorBahaya);
 
     // Tab room "VIP -- Command Channel" HANYA untuk admin/editor/vip -- BUKAN untuk 'user'/'guest'
     const bolehLihatRoomVip = (window.__userRole === 'admin' || window.__userRole === 'vip');
@@ -1762,6 +1891,7 @@ MAIN CONTENT
     initChat();
     initLaporanBahaya();
     initSistemSOS();
+    initSistemWO();
     mulaiPemantauanGeofencePasif(); // khusus role='user' -- auto check-in/out tanpa perlu tombol tracking
   }
 
@@ -1774,6 +1904,7 @@ MAIN CONTENT
   let personnelPolylines = {}; // uid -> L.polyline
   let trackUnsub = {}; // uid -> fungsi unsubscribe listener trackPoints
   let trackCache = {}; // uid -> array titik {lat, lon, waktuMs} untuk hitung jarak
+  let daftarPersonelAktifCache = {}; // uid -> {email, nama, lat, lon, status, fitPersen} -- dipakai modul Dispatch WO
   let jobCountUnsub = {}; // uid -> fungsi unsubscribe listener jumlah WO selesai (riwayatRuteWO)
   let jobCountCache = {}; // uid -> jumlah WO yang sudah "Sudah Tiba" tercatat (indeks pekerjaan)
   let jadwalKerjaUnsub = {}; // uid -> fungsi unsubscribe listener jadwalKerja hari ini
@@ -3096,6 +3227,12 @@ MAIN CONTENT
           }
         }
 
+        // Cache global (dipakai modul Dispatch WO -- rekomendasi personil terdekat & FIT% terbaik)
+        daftarPersonelAktifCache[uid] = {
+          email: p.email, nama: p.nama || p.email, lat: p.lat, lon: p.lon,
+          status: p.status, fitPersen: (p.mulaiTracking ? hitungFitPersen(Date.now() - p.mulaiTracking, parseFloat(jarakKm), jobCountCache[uid] || 0) : null)
+        };
+
         // Cek apakah posisi personel ini berada di dalam salah satu zona bahaya yang tersimpan
         const zonaAktif = ambilZonaBahaya();
         const zonaDitempati = zonaAktif.find(z => titikDalamPoligon(p.lat, p.lon, z.titik));
@@ -3141,6 +3278,7 @@ MAIN CONTENT
           delete trackCache[uid];
           delete jobCountCache[uid];
           delete jadwalKerjaCacheTampilan[uid];
+          delete daftarPersonelAktifCache[uid];
         }
       });
 
@@ -4154,6 +4292,399 @@ MAIN CONTENT
       }
     }, (err)=> console.error('Gagal baca insidenSOS:', err.message));
   }
+
+  // ==========================================================
+  // WORK ORDER / GANGGUAN -- Lapor Gangguan -> Validasi Supervisor -> Rekomendasi Dispatch
+  // (rule-based: jarak + FIT%, BUKAN AI/Machine Learning sungguhan) -> Personil Terima/Tolak
+  // -> Pengerjaan -> Selesai -> (opsional) tandai manual sudah disinkronkan ke SAP.
+  // CATATAN JUJUR: "Dispatch" di sini murni perhitungan jarak+FIT% dari data real-time yang
+  // sudah ada, BUKAN AI/Machine Learning. "Sinkronisasi SAP" murni pencatatan manual (checkbox),
+  // BUKAN integrasi API ke sistem SAP PT Semen Tonasa yang sesungguhnya.
+  // ==========================================================
+  let lampiranFotoGangguan = null;
+  let daftarSemuaGangguanWO = [];
+  let idGangguanSedangDivalidasi = null;
+  let idWOSedangDikerjakan = null;
+  let lampiranFotoWO = null;
+  let woDitutupManualSesiIni = new Set(); // id WO yg personil sudah tutup manual -- jangan auto-buka lagi sesi ini
+
+  function initSistemWO(){
+    // ---------- Lapor Gangguan (semua role kecuali guest) ----------
+    document.getElementById('btn-lapor-gangguan').addEventListener('click', ()=>{
+      lampiranFotoGangguan = null;
+      document.getElementById('nama-foto-gangguan').textContent = '';
+      document.getElementById('input-plant-gangguan').value = '';
+      document.getElementById('input-area-gangguan').value = '';
+      document.getElementById('input-deskripsi-gangguan').value = '';
+      document.getElementById('status-lapor-gangguan').textContent = '';
+      document.getElementById('modal-lapor-gangguan-overlay').classList.remove('hidden');
+    });
+    document.getElementById('btn-tutup-lapor-gangguan').addEventListener('click', ()=>{
+      document.getElementById('modal-lapor-gangguan-overlay').classList.add('hidden');
+    });
+    document.getElementById('btn-foto-gangguan-kamera').addEventListener('click', ()=> document.getElementById('input-foto-gangguan-kamera').click());
+    document.getElementById('btn-foto-gangguan-galeri').addEventListener('click', ()=> document.getElementById('input-foto-gangguan-galeri').click());
+    [['input-foto-gangguan-kamera'], ['input-foto-gangguan-galeri']].forEach(([id])=>{
+      document.getElementById(id).addEventListener('change', (e)=>{
+        const file = e.target.files[0];
+        if (file){
+          lampiranFotoGangguan = file;
+          document.getElementById('nama-foto-gangguan').textContent = '✅ ' + file.name;
+        }
+        e.target.value = '';
+      });
+    });
+
+    document.getElementById('btn-kirim-lapor-gangguan').addEventListener('click', async ()=>{
+      if (!auth.currentUser) return;
+      const plant = document.getElementById('input-plant-gangguan').value.trim();
+      const area = document.getElementById('input-area-gangguan').value.trim();
+      const jenis = document.getElementById('input-jenis-gangguan').value;
+      const prioritas = document.querySelector('input[name="prioritas-gangguan"]:checked').value;
+      const deskripsi = document.getElementById('input-deskripsi-gangguan').value.trim();
+      const statusEl = document.getElementById('status-lapor-gangguan');
+
+      if (!plant || !area || !deskripsi){
+        statusEl.style.color = 'var(--red)';
+        statusEl.textContent = '⚠️ Plant, Area, dan Deskripsi wajib diisi.';
+        return;
+      }
+
+      const btnKirim = document.getElementById('btn-kirim-lapor-gangguan');
+      btnKirim.disabled = true;
+      statusEl.style.color = 'var(--text-dim)';
+
+      try{
+        let fotoUrl = null;
+        if (lampiranFotoGangguan){
+          statusEl.textContent = 'Mengompres & mengunggah foto...';
+          const fileKompresi = await kompresGambar(lampiranFotoGangguan);
+          const namaUpload = 'gangguan.' + (fileKompresi.type === 'image/webp' ? 'webp' : 'jpg');
+          fotoUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', namaUpload);
+        }
+
+        statusEl.textContent = 'Menyimpan laporan...';
+        await addDoc(collection(db, 'gangguanWO'), {
+          pelaporUid: auth.currentUser.uid,
+          pelaporEmail: auth.currentUser.email,
+          plant, area, jenis, prioritas, deskripsi,
+          fotoUrl: fotoUrl || null,
+          lat: window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lat : null,
+          lon: window.__posisiTerkiniSaya ? window.__posisiTerkiniSaya.lon : null,
+          status: 'menunggu_validasi',
+          waktuLapor: serverTimestamp(),
+          divalidasiOleh: null, waktuValidasi: null,
+          personilUid: null, personilEmail: null, waktuDispatch: null,
+          catatanPekerjaan: null, fotoSelesaiUrl: null, waktuSelesai: null,
+          sapSync: false, waktuSapSync: null
+        });
+
+        statusEl.style.color = 'var(--green)';
+        statusEl.textContent = '✅ Laporan gangguan terkirim ke Supervisor.';
+        setTimeout(()=> document.getElementById('modal-lapor-gangguan-overlay').classList.add('hidden'), 1500);
+      }catch(err){
+        statusEl.style.color = 'var(--red)';
+        statusEl.textContent = '⚠️ Gagal kirim laporan: ' + err.message;
+      }finally{
+        btnKirim.disabled = false;
+      }
+    });
+
+    // ---------- Validasi & Dispatch (moderator = "Supervisor") ----------
+    document.getElementById('btn-tutup-validasi-gangguan').addEventListener('click', ()=>{
+      document.getElementById('modal-validasi-gangguan-overlay').classList.add('hidden');
+    });
+    document.getElementById('btn-tolak-gangguan').addEventListener('click', async ()=>{
+      if (!idGangguanSedangDivalidasi || !auth.currentUser) return;
+      try{
+        await updateDoc(doc(db, 'gangguanWO', idGangguanSedangDivalidasi), {
+          status: 'ditolak', divalidasiOleh: auth.currentUser.email, waktuValidasi: serverTimestamp()
+        });
+        document.getElementById('modal-validasi-gangguan-overlay').classList.add('hidden');
+      }catch(err){ alert('Gagal tolak: ' + err.message); }
+    });
+    document.getElementById('btn-validasi-gangguan').addEventListener('click', async ()=>{
+      if (!idGangguanSedangDivalidasi || !auth.currentUser) return;
+      const gangguan = daftarSemuaGangguanWO.find(g=> g.id === idGangguanSedangDivalidasi);
+      if (!gangguan) return;
+      try{
+        await updateDoc(doc(db, 'gangguanWO', idGangguanSedangDivalidasi), {
+          status: 'menunggu_dispatch', divalidasiOleh: auth.currentUser.email, waktuValidasi: serverTimestamp()
+        });
+        document.getElementById('blok-tombol-validasi').classList.add('hidden');
+        document.getElementById('blok-rekomendasi-dispatch').classList.remove('hidden');
+        tampilkanRekomendasiPersonil(gangguan);
+      }catch(err){ alert('Gagal validasi: ' + err.message); }
+    });
+
+    // ---------- Panel WO (moderator) ----------
+    document.getElementById('btn-panel-wo').addEventListener('click', ()=>{
+      document.getElementById('modal-panel-wo-overlay').classList.remove('hidden');
+      renderPanelWO();
+    });
+    document.getElementById('btn-tutup-panel-wo').addEventListener('click', ()=>{
+      document.getElementById('modal-panel-wo-overlay').classList.add('hidden');
+    });
+
+    // Banner klik -> buka gangguan tertua yang masih menunggu validasi (khusus moderator)
+    document.getElementById('banner-gangguan-baru').addEventListener('click', ()=>{
+      const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+      if (!isModerator) return;
+      const antrian = daftarSemuaGangguanWO.filter(g=> g.status === 'menunggu_validasi').sort((a,b)=>{
+        const ta = a.waktuLapor && a.waktuLapor.toDate ? a.waktuLapor.toDate().getTime() : 0;
+        const tb = b.waktuLapor && b.waktuLapor.toDate ? b.waktuLapor.toDate().getTime() : 0;
+        return ta - tb;
+      });
+      if (antrian[0]) bukaValidasiGangguan(antrian[0].id);
+    });
+
+    // ---------- Personil: Terima/Tolak WO + Pengerjaan ----------
+    document.getElementById('btn-tutup-progress-wo').addEventListener('click', ()=>{
+      if (idWOSedangDikerjakan) woDitutupManualSesiIni.add(idWOSedangDikerjakan);
+      document.getElementById('modal-progress-wo-overlay').classList.add('hidden');
+      idWOSedangDikerjakan = null;
+    });
+    document.getElementById('btn-terima-wo').addEventListener('click', async ()=>{
+      if (!idWOSedangDikerjakan) return;
+      try{
+        await updateDoc(doc(db, 'gangguanWO', idWOSedangDikerjakan), { status: 'dikerjakan' });
+      }catch(err){ alert('Gagal terima WO: ' + err.message); }
+    });
+    document.getElementById('btn-tolak-wo').addEventListener('click', async ()=>{
+      if (!idWOSedangDikerjakan) return;
+      if (!confirm('Tolak Work Order ini? Supervisor perlu menugaskan ulang ke personil lain.')) return;
+      try{
+        woDitutupManualSesiIni.add(idWOSedangDikerjakan);
+        await updateDoc(doc(db, 'gangguanWO', idWOSedangDikerjakan), {
+          status: 'menunggu_dispatch', personilUid: null, personilEmail: null
+        });
+        document.getElementById('modal-progress-wo-overlay').classList.add('hidden');
+        idWOSedangDikerjakan = null;
+      }catch(err){ alert('Gagal tolak WO: ' + err.message); }
+    });
+    document.getElementById('btn-foto-wo-kamera').addEventListener('click', ()=> document.getElementById('input-foto-wo-kamera').click());
+    document.getElementById('input-foto-wo-kamera').addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if (file){
+        lampiranFotoWO = file;
+        document.getElementById('nama-foto-wo').textContent = '✅ ' + file.name;
+      }
+      e.target.value = '';
+    });
+    document.getElementById('btn-selesai-wo').addEventListener('click', async ()=>{
+      if (!idWOSedangDikerjakan) return;
+      const catatan = document.getElementById('input-catatan-wo').value.trim();
+      const statusEl = document.getElementById('status-progress-wo');
+      statusEl.style.color = 'var(--text-dim)';
+      statusEl.textContent = 'Menyimpan...';
+      try{
+        let fotoSelesaiUrl = null;
+        if (lampiranFotoWO){
+          statusEl.textContent = 'Mengunggah foto dokumentasi...';
+          const fileKompresi = await kompresGambar(lampiranFotoWO);
+          const namaUpload = 'wo-selesai.' + (fileKompresi.type === 'image/webp' ? 'webp' : 'jpg');
+          fotoSelesaiUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', namaUpload);
+        }
+        await updateDoc(doc(db, 'gangguanWO', idWOSedangDikerjakan), {
+          status: 'selesai', catatanPekerjaan: catatan || null,
+          fotoSelesaiUrl: fotoSelesaiUrl || null, waktuSelesai: serverTimestamp()
+        });
+        statusEl.style.color = 'var(--green)';
+        statusEl.textContent = '✅ Pekerjaan ditandai selesai.';
+        document.getElementById('btn-selesai-wo').classList.add('hidden');
+      }catch(err){
+        statusEl.style.color = 'var(--red)';
+        statusEl.textContent = '⚠️ Gagal: ' + err.message;
+      }
+    });
+    document.getElementById('btn-sap-sync-wo').addEventListener('click', async ()=>{
+      if (!idWOSedangDikerjakan || !auth.currentUser) return;
+      if (!confirm('Tandai WO ini sudah disinkronkan ke SAP PM secara MANUAL? (Ini bukan integrasi otomatis -- pastikan sudah benar-benar dientri ke SAP dulu.)')) return;
+      try{
+        await updateDoc(doc(db, 'gangguanWO', idWOSedangDikerjakan), {
+          sapSync: true, waktuSapSync: serverTimestamp(), disinkronOleh: auth.currentUser.email
+        });
+        document.getElementById('btn-sap-sync-wo').classList.add('hidden');
+      }catch(err){ alert('Gagal: ' + err.message); }
+    });
+
+    // ---------- Listener real-time (semua dokumen gangguanWO) ----------
+    const qGangguan = query(collection(db, 'gangguanWO'), orderBy('waktuLapor', 'desc'));
+    onSnapshot(qGangguan, (snap)=>{
+      daftarSemuaGangguanWO = [];
+      snap.forEach(d=> daftarSemuaGangguanWO.push({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
+
+      const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+      const jumlahMenunggu = daftarSemuaGangguanWO.filter(g=> g.status === 'menunggu_validasi').length;
+      if (isModerator){
+        document.getElementById('banner-gangguan-baru').classList.toggle('hidden', jumlahMenunggu === 0);
+        if (jumlahMenunggu > 0){
+          document.getElementById('teks-banner-gangguan').textContent = '🔧 ADA ' + jumlahMenunggu + ' LAPORAN GANGGUAN BARU -- MENUNGGU VALIDASI';
+        }
+      }
+
+      // Untuk personil: auto-buka modal kalau ada WO ditugaskan/dikerjakan miliknya yang belum dibuka
+      if (auth.currentUser && window.__userRole === 'user'){
+        const woSaya = daftarSemuaGangguanWO.find(g=>
+          g.personilUid === auth.currentUser.uid
+          && (g.status === 'ditugaskan' || g.status === 'dikerjakan')
+          && !woDitutupManualSesiIni.has(g.id)
+        );
+        if (woSaya && idWOSedangDikerjakan !== woSaya.id){
+          bukaProgressWO(woSaya.id);
+        }
+      }
+
+      if (!document.getElementById('modal-panel-wo-overlay').classList.contains('hidden')){
+        renderPanelWO();
+      }
+    }, (err)=> console.error('Gagal baca gangguanWO:', err.message));
+  }
+
+  function bukaValidasiGangguan(id){
+    const g = daftarSemuaGangguanWO.find(x=> x.id === id);
+    if (!g) return;
+    idGangguanSedangDivalidasi = id;
+    const labelPrioritas = { tinggi: '🔴 TINGGI', sedang: '🟡 SEDANG', rendah: '🟢 RENDAH' };
+    const warnaPrioritas = { tinggi: 'var(--red)', sedang: 'var(--amber)', rendah: 'var(--green)' };
+    const waktu = g.waktuLapor && g.waktuLapor.toDate ? g.waktuLapor.toDate().toLocaleString('id-ID') : '-';
+    let html = '<div><b>Plant:</b> ' + g.plant + '</div>'
+      + '<div><b>Area:</b> ' + g.area + '</div>'
+      + '<div><b>Jenis:</b> ' + g.jenis + '</div>'
+      + '<div><b>Prioritas:</b> <span style="color:' + warnaPrioritas[g.prioritas] + '; font-weight:700;">' + labelPrioritas[g.prioritas] + '</span></div>'
+      + '<div><b>Dilaporkan oleh:</b> ' + g.pelaporEmail + '</div>'
+      + '<div><b>Waktu:</b> ' + waktu + '</div>'
+      + '<div style="margin-top:6px;"><b>Deskripsi:</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
+    if (g.fotoUrl){
+      html += '<img src="' + g.fotoUrl + '" style="width:100%; margin-top:10px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+    }
+    document.getElementById('isi-detail-gangguan').innerHTML = html;
+
+    const sudahDivalidasi = g.status !== 'menunggu_validasi';
+    document.getElementById('blok-tombol-validasi').classList.toggle('hidden', sudahDivalidasi);
+    document.getElementById('blok-rekomendasi-dispatch').classList.toggle('hidden', !sudahDivalidasi || g.status === 'ditolak');
+    if (sudahDivalidasi && g.status !== 'ditolak') tampilkanRekomendasiPersonil(g);
+    document.getElementById('status-aksi-gangguan').textContent = '';
+    document.getElementById('modal-validasi-gangguan-overlay').classList.remove('hidden');
+  }
+  window.bukaValidasiGangguan = bukaValidasiGangguan;
+
+  // Rekomendasi personil -- RULE-BASED (jarak terdekat + FIT% tertinggi dari data real-time
+  // yang sudah kita lacak), BUKAN AI/Machine Learning sungguhan.
+  function tampilkanRekomendasiPersonil(gangguan){
+    const cont = document.getElementById('daftar-rekomendasi-personil');
+    if (!gangguan.lat || !gangguan.lon){
+      cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Lokasi gangguan tidak tersedia -- tidak bisa hitung jarak. Pilih personil manual dari Panel Admin.</div>';
+      return;
+    }
+    const kandidat = Object.entries(daftarPersonelAktifCache)
+      .filter(([uid, p])=> p.lat && p.lon && p.status !== 'sos')
+      .map(([uid, p])=>{
+        const jarakM = hitungJarakMeter(gangguan.lat, gangguan.lon, p.lat, p.lon);
+        return { uid, ...p, jarakM };
+      })
+      .sort((a, b)=>{
+        const skorA = a.jarakM - (a.fitPersen != null ? a.fitPersen : 50) * 5;
+        const skorB = b.jarakM - (b.fitPersen != null ? b.fitPersen : 50) * 5;
+        return skorA - skorB;
+      })
+      .slice(0, 3);
+
+    if (kandidat.length === 0){
+      cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Tidak ada personil yang sedang aktif tracking saat ini.</div>';
+      return;
+    }
+
+    cont.innerHTML = kandidat.map((k, i)=>{
+      const fitTeks = k.fitPersen != null ? ('💪 FIT ' + k.fitPersen + '%') : 'FIT belum tersedia';
+      const fitWarna = k.fitPersen == null ? 'var(--text-dim)' : (k.fitPersen >= 70 ? 'var(--green)' : (k.fitPersen >= 40 ? 'var(--amber)' : 'var(--red)'));
+      const label = i === 0 ? '⭐ REKOMENDASI UTAMA' : 'Alternatif';
+      return '<div style="border:1px solid ' + (i === 0 ? '#1e40af' : 'var(--line-bright)') + '; padding:10px; margin-bottom:8px;">'
+        + '<div style="font-size:9.5px; color:' + (i === 0 ? '#1e40af' : 'var(--text-dim)') + '; font-weight:700; margin-bottom:4px;">' + label + '</div>'
+        + '<div style="font-weight:700; font-size:12px;">' + k.nama + '</div>'
+        + '<div style="font-size:10.5px; color:var(--text-dim); margin:2px 0;">📍 ' + (k.jarakM / 1000).toFixed(2) + ' km · <span style="color:' + fitWarna + ';">' + fitTeks + '</span></div>'
+        + '<button onclick="window.dispatchKePersonil(\'' + k.uid + '\', \'' + k.email.replace(/'/g,"") + '\')" style="width:100%; margin-top:6px; padding:7px; background:' + (i === 0 ? '#1e40af' : 'var(--panel)') + '; color:' + (i === 0 ? '#fff' : '#1e40af') + '; border:1px solid #1e40af; font-family:var(--mono); font-size:11px; cursor:pointer;">' + (i === 0 ? 'DISPATCH' : 'Pilih') + '</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  window.dispatchKePersonil = async function(personilUid, personilEmail){
+    if (!idGangguanSedangDivalidasi) return;
+    const statusEl = document.getElementById('status-aksi-gangguan');
+    statusEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Mendispatch...';
+    try{
+      await updateDoc(doc(db, 'gangguanWO', idGangguanSedangDivalidasi), {
+        status: 'ditugaskan', personilUid, personilEmail, waktuDispatch: serverTimestamp()
+      });
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = '✅ WO berhasil didispatch ke ' + personilEmail;
+      setTimeout(()=> document.getElementById('modal-validasi-gangguan-overlay').classList.add('hidden'), 1200);
+    }catch(err){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Gagal dispatch: ' + err.message;
+    }
+  };
+
+  function renderPanelWO(){
+    const total = daftarSemuaGangguanWO.length;
+    const aktif = daftarSemuaGangguanWO.filter(g=> ['menunggu_validasi','menunggu_dispatch','ditugaskan','dikerjakan'].includes(g.status)).length;
+    const selesai = daftarSemuaGangguanWO.filter(g=> g.status === 'selesai').length;
+    document.getElementById('stat-wo-total').textContent = total;
+    document.getElementById('stat-wo-aktif').textContent = aktif;
+    document.getElementById('stat-wo-selesai').textContent = selesai;
+
+    const labelStatus = {
+      menunggu_validasi: '🆕 Menunggu Validasi', ditolak: '❌ Ditolak',
+      menunggu_dispatch: '🔍 Menunggu Dispatch', ditugaskan: '📨 Ditugaskan (Belum Diterima)',
+      dikerjakan: '🔧 Dikerjakan', selesai: '✅ Selesai'
+    };
+    const warnaStatus = {
+      menunggu_validasi: '#1e40af', ditolak: 'var(--text-dim)', menunggu_dispatch: 'var(--amber)',
+      ditugaskan: 'var(--amber)', dikerjakan: '#1e40af', selesai: 'var(--green)'
+    };
+
+    const cont = document.getElementById('daftar-panel-wo');
+    if (daftarSemuaGangguanWO.length === 0){
+      cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Belum ada laporan gangguan.</div>';
+      return;
+    }
+    cont.innerHTML = daftarSemuaGangguanWO.map(g=>{
+      const waktu = g.waktuLapor && g.waktuLapor.toDate ? g.waktuLapor.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
+      const fungsiKlik = (g.status === 'menunggu_validasi' || g.status === 'menunggu_dispatch' || g.status === 'ditolak') ? 'bukaValidasiGangguan' : 'bukaProgressWO';
+      return '<div onclick="window.' + fungsiKlik + '(\'' + g.id + '\')" style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaStatus[g.status] + '; padding:8px 10px; margin-bottom:6px; cursor:pointer;">'
+        + '<div style="display:flex; justify-content:space-between; font-size:11px;">'
+        + '<span style="font-weight:700;">' + g.plant + ' - ' + g.area + '</span>'
+        + '<span style="color:' + warnaStatus[g.status] + '; font-weight:700; font-size:9.5px;">' + labelStatus[g.status] + '</span>'
+        + '</div>'
+        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + g.jenis + ' · ' + waktu + (g.personilEmail ? (' · 👤 ' + g.personilEmail) : '') + (g.sapSync ? ' · ☁️ SAP' : '') + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function bukaProgressWO(id){
+    const g = daftarSemuaGangguanWO.find(x=> x.id === id);
+    if (!g) return;
+    idWOSedangDikerjakan = id;
+    document.getElementById('isi-progress-wo').innerHTML =
+      '<div><b>Plant:</b> ' + g.plant + '</div>' +
+      '<div><b>Area:</b> ' + g.area + '</div>' +
+      '<div><b>Jenis:</b> ' + g.jenis + '</div>' +
+      '<div><b>Deskripsi:</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
+    document.getElementById('input-catatan-wo').value = g.catatanPekerjaan || '';
+    document.getElementById('nama-foto-wo').textContent = '';
+    lampiranFotoWO = null;
+    document.getElementById('status-progress-wo').textContent = '';
+
+    const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+    document.getElementById('blok-terima-tolak-wo').classList.toggle('hidden', g.status !== 'ditugaskan');
+    document.getElementById('blok-pengerjaan-wo').classList.toggle('hidden', g.status === 'ditugaskan');
+    document.getElementById('btn-selesai-wo').classList.toggle('hidden', g.status === 'selesai');
+    document.getElementById('btn-sap-sync-wo').classList.toggle('hidden', !(g.status === 'selesai' && isModerator && !g.sapSync));
+
+    document.getElementById('modal-progress-wo-overlay').classList.remove('hidden');
+  }
+  window.bukaProgressWO = bukaProgressWO;
 
   // ==========================================================
   // RUANG KOMUNIKASI — Chat (teks + foto) & Laporan Cepat
