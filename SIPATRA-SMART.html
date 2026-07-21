@@ -708,6 +708,13 @@ MAIN CONTENT
   <span style="font-size:10px; opacity:0.85; white-space:nowrap;">Klik untuk lihat →</span>
 </div>
 
+<!-- Banner alert -- muncul begitu ada laporan gangguan baru menunggu validasi supervisor (WO).
+     Sama seperti banner bahaya di atas -- WAJIB di dalam main-content, bukan langsung child <body>. -->
+<div id="banner-gangguan-baru" class="hidden" style="position:sticky; top:0; z-index:1000; background:#1e40af; color:#fff; padding:10px 16px; font-family:var(--mono); font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+  <span id="teks-banner-gangguan">🔧 ADA LAPORAN GANGGUAN BARU — MENUNGGU VALIDASI</span>
+  <span style="font-size:10px; opacity:0.85; white-space:nowrap;">Klik untuk lihat →</span>
+</div>
+
 <!-- Banner pasang shortcut ke layar HP -- muncul otomatis begitu browser siap (Chrome/Android),
      tinggal 1 tap "PASANG SEKARANG" (browser TIDAK mengizinkan instalasi sepenuhnya tanpa sentuhan sama sekali). -->
 <div id="install-banner" class="hidden" style="background:#FFF4E5; border-bottom:2px solid var(--amber); color:#92400E; padding:10px 20px; font-size:12.5px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
@@ -912,7 +919,7 @@ MAIN CONTENT
           <button id="btn-wo-saya-pelapor" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Lacak WO Saya">📦</button>
           <button id="btn-panel-wo" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Panel Work Order (Supervisor)">🗂️</button>
           <button id="btn-executive-dashboard" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Executive Dashboard">📈</button>
-          <button id="btn-wo-saya-personil" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="WO Saya (Belum Ada)">🔧</button>
+          <button id="btn-wo-saya-personil" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="WO Saya (Belum Ada)">🔔</button>
         </div>
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -1254,12 +1261,6 @@ MAIN CONTENT
     <div class="panel-head"><h3>📟 Riwayat & Verifikasi SOS</h3><button id="btn-tutup-riwayat-sos" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="daftar-riwayat-sos"></div>
   </div>
-</div>
-
-<!-- Banner alert -- muncul begitu ada laporan gangguan baru menunggu validasi supervisor -->
-<div id="banner-gangguan-baru" class="hidden" style="position:sticky; top:0; z-index:1000; background:#1e40af; color:#fff; padding:10px 16px; font-family:var(--mono); font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px;">
-  <span id="teks-banner-gangguan">🔧 ADA LAPORAN GANGGUAN BARU — MENUNGGU VALIDASI</span>
-  <span style="font-size:10px; opacity:0.85; white-space:nowrap;">Klik untuk lihat →</span>
 </div>
 
 <!-- ===== MODAL LAPOR GANGGUAN (semua role kecuali guest -- "Operator Produksi") ===== -->
