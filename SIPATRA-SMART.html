@@ -629,6 +629,7 @@
      override lewat ID karena ditulis inline style di HTML */
   #dm-chat-messages, #dm-input-cari-user, #dm-chat-text-input{ background:#FFFFFF !important; color:var(--text) !important; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -783,7 +784,10 @@ MAIN CONTENT
   <div style="background:var(--panel); border:1px solid var(--line-bright); max-width:720px; width:100%; max-height:85vh; overflow-y:auto; padding:20px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
       <h3 style="margin:0; font-size:15px; color:var(--orange);">Panel Admin — Kelola User</h3>
-      <button id="admin-modal-close" class="icon-btn">✕</button>
+      <div style="display:flex; gap:6px;">
+        <button id="btn-gear-visibilitas-peta" class="icon-btn icon-square-btn" title="Pengaturan Jadwal Tampil di Peta">⚙️</button>
+        <button id="admin-modal-close" class="icon-btn">✕</button>
+      </div>
     </div>
     <div id="admin-user-status" style="font-size:11.5px; margin-bottom:10px;"></div>
     <input type="text" id="admin-user-search" placeholder="🔍 Cari email/nama user..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
@@ -846,6 +850,12 @@ MAIN CONTENT
       <input type="email" id="signup-email" placeholder="Email">
       <input type="password" id="signup-password" placeholder="Password (min. 6 karakter)">
       <input type="tel" id="signup-phone" placeholder="No. HP WhatsApp (format: +62812xxxxxxx)">
+      <label style="font-size:11px; color:var(--text-dim); display:block; margin:8px 0 4px;">📸 Foto Selfie (wajib -- untuk verifikasi identitas kalau nanti ganti HP)</label>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+        <button type="button" id="btn-ambil-selfie-signup" class="secondary" style="width:auto; padding:8px 14px;">📷 Ambil Foto</button>
+        <span id="nama-selfie-signup" style="font-size:10.5px; color:var(--text-dim);"></span>
+      </div>
+      <input type="file" id="input-selfie-signup" accept="image/*" capture="user" class="hidden">
       <p class="sub" style="margin-top:-4px;">📍 Tracking posisi <b>otomatis wajib aktif</b> saat memasuki Zona/Wilayah Kerja (sesuai prosedur K3/OGS), untuk keselamatan &amp; identifikasi personel di lapangan.</p>
       <button class="primary" id="btn-signup">DAFTAR</button>
       <button class="secondary" id="btn-show-login">Sudah punya akun? Masuk</button>
@@ -909,6 +919,7 @@ MAIN CONTENT
           <button id="btn-toggle-tracking" class="track-btn icon-square-btn" title="Aktifkan Tracking Saya">📍</button>
           <button id="btn-sudah-tiba" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--green); border:1px solid var(--green);" title="Saya Sudah Tiba di Lokasi WO">🏁</button>
           <button id="btn-personal-sos" class="sos-btn icon-square-btn" title="SOS Saya">🚨</button>
+          <button id="btn-gear-visibilitas-saya" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);" title="Atur Jadwal Tampil di Peta (Saya)">⚙️</button>
           <button id="btn-bersihkan-jejak" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);" title="Bersihkan Jejak Saya">🗑</button>
           <button id="btn-tandai-zona" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Tandai Zona Bahaya">✏️</button>
           <button id="btn-checkin-manual" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--green); border:1px solid var(--green);" title="Check-In Manual">✅</button>
@@ -1485,6 +1496,108 @@ MAIN CONTENT
   </div>
 </div>
 
+<!-- ===== MODAL PENGATURAN GLOBAL: Jadwal Tampil di Peta (default semua personil -- Admin) ===== -->
+<div id="modal-gear-visibilitas-peta-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:5000; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:400px; width:100%;">
+    <div class="panel-head"><h3>⚙️ Jadwal Tampil di Peta (Default)</h3><button id="btn-tutup-gear-visibilitas-peta" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="font-size:11px; color:var(--text-dim); margin:10px 0;">Personil otomatis TIDAK tampil di peta live di luar jam ini -- kecuali personil mengatur jadwal sendiri (override) di akunnya masing-masing. Kosongkan untuk selalu tampil (24 jam).</div>
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Mulai Tampil</label>
+    <input type="time" id="input-jam-mulai-global" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Selesai Tampil</label>
+    <input type="time" id="input-jam-selesai-global" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+    <button id="btn-simpan-visibilitas-global" class="icon-btn" style="width:100%; padding:10px; background:var(--orange); color:#000; font-weight:700;">SIMPAN PENGATURAN DEFAULT</button>
+    <div id="status-visibilitas-global" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL PENGATURAN PRIBADI: Jadwal Tampil di Peta (override milik sendiri -- personil) ===== -->
+<div id="modal-gear-visibilitas-saya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:5000; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:400px; width:100%;">
+    <div class="panel-head"><h3>⚙️ Jadwal Tampil di Peta (Saya)</h3><button id="btn-tutup-gear-visibilitas-saya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="font-size:11px; color:var(--text-dim); margin:10px 0;">Atur jam Anda sendiri tampil di peta live (menggantikan jadwal default dari admin). Kosongkan untuk ikut jadwal default admin.</div>
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Mulai Tampil</label>
+    <input type="time" id="input-jam-mulai-pribadi" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Selesai Tampil</label>
+    <input type="time" id="input-jam-selesai-pribadi" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+    <button id="btn-simpan-visibilitas-pribadi" class="icon-btn" style="width:100%; padding:10px; background:var(--green); color:#fff; font-weight:700;">SIMPAN JADWAL SAYA</button>
+    <button id="btn-hapus-visibilitas-pribadi" class="icon-btn" style="width:100%; padding:9px; margin-top:6px; background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);">Hapus (Ikut Jadwal Default Admin)</button>
+    <div id="status-visibilitas-pribadi" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL MENUNGGU PERSETUJUAN (ditampilkan di PERANGKAT BARU yang mencoba login) ===== -->
+<div id="modal-menunggu-persetujuan-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9000; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:400px; width:100%; text-align:center; padding:24px;">
+    <div style="font-size:40px; margin-bottom:10px;">🔐</div>
+    <h3 style="margin-bottom:8px;">Menunggu Persetujuan</h3>
+    <div style="font-size:11.5px; color:var(--text-dim); line-height:1.6; margin-bottom:16px;">
+      Perangkat ini belum pernah dipakai untuk akun ini. Kami sudah kirim notifikasi ke perangkat Anda yang lain (yang sudah dipercaya) -- silakan buka & Setujui di sana.
+    </div>
+    <div style="font-size:24px; margin-bottom:12px;">⏳</div>
+    <div id="status-menunggu-persetujuan" style="font-size:11px; color:var(--text-dim); margin-bottom:14px;">Menunggu respons...</div>
+
+    <div style="border-top:1px solid var(--line-bright); padding-top:14px; margin-bottom:14px;">
+      <div style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;">Tidak punya perangkat lain? Verifikasi lewat email terdaftar:</div>
+      <button id="btn-mulai-otp-email" class="icon-btn" style="width:100%; padding:10px; background:var(--panel); border:1px solid var(--green); color:var(--green);">📧 Verifikasi lewat Email</button>
+
+      <div id="blok-input-otp-email" class="hidden" style="margin-top:10px;">
+        <div id="status-otp-email" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;"></div>
+        <input type="text" id="input-kode-otp-email" placeholder="Masukkan 6 digit kode" maxlength="6" inputmode="numeric" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:10px; box-sizing:border-box; margin-bottom:8px; text-align:center; font-size:18px; letter-spacing:4px;">
+        <button id="btn-submit-otp-email" class="icon-btn" style="width:100%; padding:10px; background:var(--green); color:#fff; font-weight:700;">Verifikasi Kode</button>
+      </div>
+    </div>
+
+    <button id="btn-batal-menunggu-persetujuan" class="icon-btn" style="width:100%; padding:10px; background:transparent; border:1px solid var(--line-bright); color:var(--text-dim);">Batal & Keluar</button>
+  </div>
+</div>
+
+<!-- ===== MODAL MINTA PERSETUJUAN (ditampilkan di PERANGKAT LAMA yang sudah dipercaya) ===== -->
+<div id="modal-persetujuan-login-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(80,0,0,0.92); z-index:9100; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:420px; width:100%; border:2px solid var(--amber);">
+    <div style="text-align:center; font-size:32px; margin-bottom:6px;">🔐</div>
+    <h3 style="text-align:center; color:var(--amber); margin-bottom:12px;">Ada Percobaan Login Baru</h3>
+    <div id="isi-persetujuan-login" style="font-size:12px; line-height:1.8; border:1px solid var(--line-bright); padding:10px; margin-bottom:14px;"></div>
+    <div style="font-size:10.5px; color:var(--text-dim); margin-bottom:14px; text-align:center;">Kalau ini BUKAN Anda, tekan Tolak -- akun Anda tetap aman.</div>
+    <div style="display:flex; gap:8px;">
+      <button id="btn-tolak-login-baru" class="icon-btn" style="flex:1; padding:11px; background:var(--panel); border:1px solid var(--red); color:var(--red);">❌ TOLAK</button>
+      <button id="btn-setujui-login-baru" class="icon-btn" style="flex:1; padding:11px; background:var(--green); color:#fff; font-weight:700;">✅ SETUJUI</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL GANTI HP/PERANGKAT DENGAN VERIFIKASI FOTO (Admin -- gaya prosedur bank) ===== -->
+<div id="modal-ganti-hp-verifikasi-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:5200; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:460px; width:100%; max-height:92vh; overflow-y:auto;">
+    <div class="panel-head"><h3>🔄 Prosedur Ganti HP/Nomor</h3><button id="btn-tutup-ganti-hp-verifikasi" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:12px;">
+      Dipakai kalau HP/nomor personil rusak/hilang sehingga tidak bisa terima notifikasi/persetujuan. Bandingkan foto lama vs baru SEBELUM konfirmasi -- pastikan orangnya sama (mirip prosedur bank ganti nomor HP).
+    </div>
+    <div id="info-akun-ganti-hp" style="font-size:12px; margin-bottom:10px;"></div>
+
+    <div style="display:flex; gap:10px; margin-bottom:12px;">
+      <div style="flex:1;">
+        <div style="font-size:10px; color:var(--text-dim); margin-bottom:4px;">Foto Terdaftar (Lama)</div>
+        <img id="foto-selfie-lama" src="" style="width:100%; border:1px solid var(--line-bright); aspect-ratio:1; object-fit:cover;" onerror="this.src=''; this.alt='Belum ada foto selfie terdaftar';">
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:10px; color:var(--text-dim); margin-bottom:4px;">Foto Baru (dari personil, verifikasi sekarang)</div>
+        <div id="preview-foto-selfie-baru" style="width:100%; border:1px dashed var(--line-bright); aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--text-dim); background:#000;">Belum ada foto</div>
+      </div>
+    </div>
+    <button id="btn-ambil-selfie-baru-admin" class="icon-btn" style="width:100%; padding:8px; margin-bottom:10px;">📷 Ambil/Pilih Foto Baru</button>
+    <input type="file" id="input-selfie-baru-admin" accept="image/*" class="hidden">
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Nomor HP Baru</label>
+    <input type="tel" id="input-nomor-hp-baru-admin" placeholder="+62812xxxxxxx" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Catatan Verifikasi (wajib -- mis. "Cocok, sudah video call konfirmasi")</label>
+    <textarea id="input-catatan-verifikasi-admin" rows="2" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px; resize:vertical;"></textarea>
+
+    <button id="btn-konfirmasi-ganti-hp" class="icon-btn" style="width:100%; padding:11px; background:var(--green); color:#fff; font-weight:700;">✅ KONFIRMASI -- FOTO COCOK, GANTI HP/NOMOR</button>
+    <div id="status-ganti-hp-verifikasi" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
+  </div>
+</div>
+
 <!-- ===== MODAL VIDEO CALL (WebRTC) ===== -->
 <div id="call-overlay">
   <div id="call-box">
@@ -1635,7 +1748,7 @@ MAIN CONTENT
     sendPasswordResetEmail, onAuthStateChanged, setPersistence, browserSessionPersistence
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
-    getFirestore, doc, setDoc, getDoc, getDocs, updateDoc,
+    getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion,
     collection, addDoc, onSnapshot, query, orderBy, where, serverTimestamp,
     deleteDoc
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -1686,17 +1799,37 @@ MAIN CONTENT
   document.getElementById('btn-show-login').addEventListener('click', ()=> showForm('form-login'));
 
   // ---------- Signup ----------
+  let fileSelfieSignup = null;
+  document.getElementById('btn-ambil-selfie-signup').addEventListener('click', ()=> document.getElementById('input-selfie-signup').click());
+  document.getElementById('input-selfie-signup').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if (file){
+      fileSelfieSignup = file;
+      document.getElementById('nama-selfie-signup').textContent = '✅ ' + file.name;
+    }
+    e.target.value = '';
+  });
+
   document.getElementById('btn-signup').addEventListener('click', async ()=>{
     const email = document.getElementById('signup-email').value.trim();
     const pass = document.getElementById('signup-password').value;
     const phone = document.getElementById('signup-phone').value.trim();
+    if (!fileSelfieSignup){
+      setStatus('signup-status', '⚠️ Foto selfie wajib diambil -- dipakai untuk verifikasi identitas kalau nanti ganti HP.', 'err');
+      return;
+    }
     setStatus('signup-status', 'Memproses pendaftaran...', 'info');
     try{
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      // Simpan nomor HP (untuk keperluan verifikasi 2 langkah via Telegram nanti) + role default 'guest'.
-      // Semua pendaftaran baru berstatus 'guest' (read-only) sampai Pak Marjan menaikkan role-nya manual lewat Firestore Console.
+      setStatus('signup-status', 'Mengunggah foto selfie...', 'info');
+      const fileKompresi = await kompresGambar(fileSelfieSignup);
+      const namaUpload = 'selfie-daftar.' + (fileKompresi.type === 'image/webp' ? 'webp' : 'jpg');
+      const fotoSelfieUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', namaUpload);
+      // Simpan nomor HP + foto selfie (jadi acuan identitas -- "1 akun, 1 foto, 1 nomor HP")
+      // + role default 'guest'. Semua pendaftaran baru berstatus 'guest' (read-only) sampai
+      // Pak Marjan menaikkan role-nya manual lewat Panel Admin.
       await setDoc(doc(db, 'users', cred.user.uid), {
-        email, phone, role: 'guest', status: 'active', dibuatPada: Date.now()
+        email, phone, fotoSelfieUrl, role: 'guest', status: 'active', dibuatPada: Date.now()
       });
       // Langsung masuk dashboard -- tanpa verifikasi 2 langkah untuk tahap POC ini
       tampilkanDashboard();
@@ -1762,6 +1895,28 @@ MAIN CONTENT
   window.__userRole = 'user'; // default aman sebelum role terbaca dari Firestore
 
   async function tampilkanDashboard(){
+    // Ambil role user dari Firestore (users/{uid}) untuk menentukan hak akses fitur inti --
+    // dipindah ke PALING ATAS (sebelum dashboard ditampilkan) supaya bisa dipakai cek
+    // penguncian perangkat di bawah (guest dikecualikan dari penguncian).
+    let dataUserUntukIdentitas = {};
+    try{
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      dataUserUntukIdentitas = userDoc.exists() ? userDoc.data() : {};
+      window.__userRole = dataUserUntukIdentitas.role || 'user';
+    }catch(err){
+      window.__userRole = 'user'; // gagal baca -> anggap user biasa (aman, tidak elevate ke admin)
+    }
+
+    // ---------- Penguncian Perangkat: 1 HP/browser cuma boleh terikat ke 1 akun ----------
+    // CATATAN JUJUR: ini terikat ke BROWSER/localStorage, BUKAN nomor SIM/IMEI (web app
+    // TIDAK BISA baca SIM sama sekali -- itu dikunci OS). Bisa dilewati dgn ganti browser/
+    // mode Incognito/hapus data browser. Ini pengaman TERBAIK yang bisa dibuat lewat web,
+    // bukan penguncian sekeras aplikasi native.
+    if (window.__userRole !== 'guest'){
+      const bolehLanjut = await cekDanKunciPerangkat(auth.currentUser.uid, auth.currentUser.email);
+      if (!bolehLanjut) return; // diblokir -- pesan & signOut sudah ditangani di dalam cekDanKunciPerangkat()
+    }
+
     document.getElementById('auth-gate').classList.add('hidden');
     document.getElementById('dashboard').classList.remove('hidden');
     document.getElementById('logout-btn').classList.remove('hidden');
@@ -1774,15 +1929,6 @@ MAIN CONTENT
       document.getElementById('btn-aktifkan-notif').classList.remove('hidden');
     }
 
-    // Ambil role user dari Firestore (users/{uid}) untuk menentukan hak akses fitur inti
-    let dataUserUntukIdentitas = {};
-    try{
-      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-      dataUserUntukIdentitas = userDoc.exists() ? userDoc.data() : {};
-      window.__userRole = dataUserUntukIdentitas.role || 'user';
-    }catch(err){
-      window.__userRole = 'user'; // gagal baca -> anggap user biasa (aman, tidak elevate ke admin)
-    }
     window.__userKategoriKerja = dataUserUntukIdentitas.kategoriKerja || null; // 'supervisor'/'manager'/dll -- dipakai utk hak akses Panel WO/Executive Dashboard
     window.__userJenisManager = dataUserUntukIdentitas.jenisManager || null; // 'produksi'/'non-produksi' -- dipakai utk hak akses Manual Dispatch dari Jadwal
     tampilkanIdentitasPengguna(auth.currentUser.email, window.__userRole, dataUserUntukIdentitas.kategoriKerja);
@@ -1790,6 +1936,196 @@ MAIN CONTENT
     initStatTotalPersonel();
     initDashboard();
     terapkanBatasanRole();
+    initPemantauPersetujuanLogin();
+  }
+
+  // Cek & kunci perangkat -- return true kalau boleh lanjut, false kalau diblokir/ditolak.
+  // Device ID disimpan di localStorage (bertahan lintas sesi di browser yang sama, TAPI
+  // hilang kalau data browser dihapus/ganti browser/Incognito).
+  //
+  // Alur (2 lapis):
+  // 1. Kalau perangkat ini SUDAH terikat ke AKUN LAIN -- blokir keras (kebijakan "1 HP = 1 akun").
+  // 2. Kalau akun INI sudah punya "perangkat terpercaya" yang BEDA dari perangkat sekarang --
+  //    jangan langsung izinkan (itu celah keamanan kalau password bocor) -- minta PERSETUJUAN
+  //    dari perangkat terpercaya itu dulu (gaya "Approve Login" Google/Microsoft).
+  async function cekDanKunciPerangkat(uid, email){
+    let deviceId = localStorage.getItem('sipatra_device_id');
+    if (!deviceId){
+      deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem('sipatra_device_id', deviceId);
+    }
+    try{
+      // Lapis 1: perangkat ini terikat ke akun LAIN?
+      const snapPerangkat = await getDoc(doc(db, 'perangkatTerdaftar', deviceId));
+      if (snapPerangkat.exists() && snapPerangkat.data().uid !== uid){
+        alert('⚠️ PERANGKAT INI SUDAH TERIKAT ke akun lain (' + (snapPerangkat.data().email || 'akun lain') + ').\n\n'
+          + 'Kebijakan sistem: 1 HP/browser cuma boleh dipakai 1 akun.\n\n'
+          + 'Kalau ini keliru (mis. HP baru/ganti pemilik), hubungi Admin untuk RESET PERANGKAT di Panel Admin.');
+        await signOut(auth);
+        return false;
+      }
+
+      // Lapis 2: akun INI sudah punya perangkat terpercaya yang BEDA dari perangkat sekarang?
+      const snapUser = await getDoc(doc(db, 'users', uid));
+      const perangkatTerpercaya = snapUser.exists() ? snapUser.data().perangkatIdTerakhir : null;
+      if (perangkatTerpercaya && perangkatTerpercaya !== deviceId){
+        return await mintaPersetujuanPerangkatBaru(uid, email, deviceId);
+      }
+
+      // Belum ada perangkat terpercaya sebelumnya (login pertama kali), atau memang perangkat
+      // yang sama -- langsung klaim/perbarui ikatannya, tidak perlu persetujuan.
+      await setDoc(doc(db, 'perangkatTerdaftar', deviceId), { uid, email, waktuDaftar: serverTimestamp() });
+      await setDoc(doc(db, 'users', uid), { perangkatIdTerakhir: deviceId }, { merge: true });
+      return true;
+    }catch(err){
+      console.error('Gagal cek penguncian perangkat (dibiarkan lanjut supaya tidak memblokir kerja karena error jaringan):', err.message);
+      return true; // JANGAN blokir orang kerja hanya gara-gara error jaringan/permission sesaat
+    }
+  }
+
+  // Minta persetujuan dari perangkat terpercaya (gaya "Approve Login" Google/Microsoft).
+  // Return Promise<boolean> -- true kalau disetujui, false kalau ditolak/timeout/dibatalkan.
+  function mintaPersetujuanPerangkatBaru(uid, email, deviceIdBaru){
+    return new Promise(async (resolve)=>{
+      let sudahSelesai = false;
+      let unsubRequest = null;
+      let timeoutId = null;
+
+      function selesaikan(hasil){
+        if (sudahSelesai) return;
+        sudahSelesai = true;
+        if (unsubRequest) unsubRequest();
+        if (timeoutId) clearTimeout(timeoutId);
+        document.getElementById('modal-menunggu-persetujuan-overlay').classList.add('hidden');
+        resolve(hasil);
+      }
+
+      try{
+        const infoPerangkat = (navigator.userAgent || 'Perangkat tidak dikenal').slice(0, 80);
+        const reqRef = await addDoc(collection(db, 'permintaanLoginPerangkatBaru'), {
+          uid, email, deviceIdBaru, infoPerangkat,
+          status: 'menunggu',
+          waktuPermintaan: serverTimestamp()
+        });
+
+        // Beri tahu perangkat terpercaya (push notification) -- jaga-jaga kalau app-nya tidak
+        // sedang dibuka di sana saat ini.
+        kirimNotifikasiKeUid(uid, '🔐 Login Baru Perlu Persetujuan', 'Ada percobaan login dari perangkat baru. Buka aplikasi untuk Setujui/Tolak.');
+
+        document.getElementById('status-menunggu-persetujuan').textContent = 'Menunggu respons...';
+        document.getElementById('modal-menunggu-persetujuan-overlay').classList.remove('hidden');
+
+        document.getElementById('btn-batal-menunggu-persetujuan').onclick = async ()=>{
+          try{ await updateDoc(doc(db, 'permintaanLoginPerangkatBaru', reqRef.id), { status: 'dibatalkan' }); }catch(e){}
+          await signOut(auth);
+          selesaikan(false);
+        };
+
+        // ---------- Jalur alternatif: Verifikasi lewat Email OTP (EmailJS) ----------
+        // Dipakai kalau personil TIDAK punya perangkat kedua untuk approve manual --
+        // kirim kode 6 digit ke email terdaftar, personil ketik balik untuk konfirmasi.
+        let kodeOTPDibuat = null;
+        document.getElementById('btn-mulai-otp-email').onclick = async ()=>{
+          const statusOtpEl = document.getElementById('status-otp-email');
+          const btnMulaiOtp = document.getElementById('btn-mulai-otp-email');
+          kodeOTPDibuat = String(Math.floor(100000 + Math.random() * 900000)); // kode 6 digit
+          btnMulaiOtp.disabled = true;
+          statusOtpEl.style.color = 'var(--text-dim)';
+          statusOtpEl.textContent = 'Mengirim kode ke email Anda...';
+          try{
+            if (!window.emailjs) throw new Error('EmailJS belum siap dimuat, coba lagi sesaat.');
+            window.emailjs.init('qhLS7zyqcX1YN2lNQ');
+            await window.emailjs.send('service_k3fpnf4', 'template_chbe7q8', {
+              kode_otp: kodeOTPDibuat, to_email: email
+            });
+            document.getElementById('blok-input-otp-email').classList.remove('hidden');
+            btnMulaiOtp.classList.add('hidden');
+            statusOtpEl.style.color = 'var(--green)';
+            statusOtpEl.textContent = '✅ Kode terkirim ke ' + email + '. Cek inbox (& folder spam).';
+          }catch(err){
+            statusOtpEl.style.color = 'var(--red)';
+            statusOtpEl.textContent = '⚠️ Gagal kirim email: ' + err.message;
+            btnMulaiOtp.disabled = false;
+          }
+        };
+        document.getElementById('btn-submit-otp-email').onclick = async ()=>{
+          const statusOtpEl = document.getElementById('status-otp-email');
+          const inputKode = document.getElementById('input-kode-otp-email').value.trim();
+          if (!kodeOTPDibuat || inputKode !== kodeOTPDibuat){
+            statusOtpEl.style.color = 'var(--red)';
+            statusOtpEl.textContent = '⚠️ Kode salah, coba lagi.';
+            return;
+          }
+          statusOtpEl.style.color = 'var(--text-dim)';
+          statusOtpEl.textContent = 'Memverifikasi...';
+          try{
+            // Update status ke 'disetujui' -- listener onSnapshot di bawah akan otomatis
+            // menangkap ini dan menyelesaikan proses (klaim perangkat + lanjut ke dashboard),
+            // PERSIS seperti kalau disetujui dari perangkat lain -- tidak perlu duplikasi logika.
+            await updateDoc(doc(db, 'permintaanLoginPerangkatBaru', reqRef.id), { status: 'disetujui', disetujuiVia: 'otp-email' });
+          }catch(err){
+            statusOtpEl.style.color = 'var(--red)';
+            statusOtpEl.textContent = '⚠️ Gagal verifikasi: ' + err.message;
+          }
+        };
+
+        unsubRequest = onSnapshot(doc(db, 'permintaanLoginPerangkatBaru', reqRef.id), async (snap)=>{
+          if (!snap.exists()) return;
+          const st = snap.data().status;
+          if (st === 'disetujui'){
+            try{
+              await setDoc(doc(db, 'perangkatTerdaftar', deviceIdBaru), { uid, email, waktuDaftar: serverTimestamp() });
+              await setDoc(doc(db, 'users', uid), { perangkatIdTerakhir: deviceIdBaru }, { merge: true });
+            }catch(e){ /* tetap lanjutkan meski gagal update -- yg penting sudah disetujui */ }
+            selesaikan(true);
+          } else if (st === 'ditolak'){
+            alert('❌ Login dari perangkat ini DITOLAK dari perangkat terpercaya Anda.');
+            await signOut(auth);
+            selesaikan(false);
+          }
+        });
+
+        // Batas waktu tunggu 3 menit -- supaya tidak menggantung selamanya kalau tidak direspons
+        timeoutId = setTimeout(async ()=>{
+          document.getElementById('status-menunggu-persetujuan').textContent = 'Waktu habis, tidak ada respons.';
+          try{ await updateDoc(doc(db, 'permintaanLoginPerangkatBaru', reqRef.id), { status: 'kedaluwarsa' }); }catch(e){}
+          await signOut(auth);
+          selesaikan(false);
+        }, 3 * 60 * 1000);
+      }catch(err){
+        console.error('Gagal membuat permintaan persetujuan perangkat:', err.message);
+        selesaikan(true); // jangan blokir kerja kalau infrastrukturnya sendiri gagal
+      }
+    });
+  }
+
+  // Dipasang di perangkat TERPERCAYA -- dengarkan permintaan persetujuan utk akun sendiri,
+  // tampilkan popup Setujui/Tolak begitu ada percobaan login dari perangkat lain.
+  function initPemantauPersetujuanLogin(){
+    if (!auth.currentUser) return;
+    const qPermintaan = query(
+      collection(db, 'permintaanLoginPerangkatBaru'),
+      where('uid', '==', auth.currentUser.uid),
+      where('status', '==', 'menunggu')
+    );
+    onSnapshot(qPermintaan, (snap)=>{
+      snap.forEach(docSnap=>{
+        const d = docSnap.data();
+        document.getElementById('isi-persetujuan-login').innerHTML =
+          '<div><b>Akun:</b> ' + d.email + '</div>'
+          + '<div><b>Perangkat:</b> ' + (d.infoPerangkat || '-') + '</div>'
+          + '<div><b>Waktu:</b> ' + (d.waktuPermintaan && d.waktuPermintaan.toDate ? d.waktuPermintaan.toDate().toLocaleString('id-ID') : 'baru saja') + '</div>';
+        document.getElementById('btn-setujui-login-baru').onclick = async ()=>{
+          await updateDoc(doc(db, 'permintaanLoginPerangkatBaru', docSnap.id), { status: 'disetujui' });
+          document.getElementById('modal-persetujuan-login-overlay').classList.add('hidden');
+        };
+        document.getElementById('btn-tolak-login-baru').onclick = async ()=>{
+          await updateDoc(doc(db, 'permintaanLoginPerangkatBaru', docSnap.id), { status: 'ditolak' });
+          document.getElementById('modal-persetujuan-login-overlay').classList.add('hidden');
+        };
+        document.getElementById('modal-persetujuan-login-overlay').classList.remove('hidden');
+      });
+    }, (err)=> console.error('Gagal memantau permintaan persetujuan login:', err.message));
   }
 
   // Tampilkan ucapan selamat datang + identitas + status role di header/sidebar setelah login
@@ -1835,6 +2171,7 @@ MAIN CONTENT
     document.getElementById('btn-riwayat-sos').classList.toggle('hidden', !isModeratorBahaya);
     // Lapor Gangguan (Work Order) -- semua role KECUALI guest ("Operator Produksi")
     document.getElementById('btn-lapor-gangguan').classList.toggle('hidden', isGuest);
+    document.getElementById('btn-gear-visibilitas-saya').classList.toggle('hidden', window.__userRole !== 'user');
     document.getElementById('btn-wo-saya-pelapor').classList.toggle('hidden', isGuest);
     // Panel Work Order -- khusus moderator (admin/editor/vip, berperan sebagai "Supervisor")
     document.getElementById('btn-panel-wo').classList.toggle('hidden', !isModeratorBahaya);
@@ -1901,7 +2238,15 @@ MAIN CONTENT
     }
   });
 
-  document.getElementById('logout-btn').addEventListener('click', ()=> signOut(auth));
+  document.getElementById('logout-btn').addEventListener('click', async ()=>{
+    // Kalau tracking sedang aktif, hentikan dulu (ini yang MENGHAPUS marker personil dari
+    // peta live) SEBELUM benar-benar logout -- supaya tidak ada marker "hantu" yang
+    // nyangkut di peta padahal orangnya sudah logout.
+    if (watchId !== null){
+      try{ await hentikanTrackingSaya(); }catch(e){ /* tetap lanjut logout meski gagal hapus marker */ }
+    }
+    signOut(auth);
+  });
 
   // ==========================================================
   // PANEL ADMIN — lihat semua user, ubah role & status (aktif/suspend)
@@ -2107,6 +2452,36 @@ MAIN CONTENT
           }
         });
 
+        const btnResetPerangkat = document.createElement('button');
+        btnResetPerangkat.textContent = '📱 Reset Perangkat';
+        btnResetPerangkat.className = 'icon-btn';
+        btnResetPerangkat.style.cssText = 'width:auto; padding:6px 12px; font-size:11px; border-color:var(--amber); color:var(--amber);';
+        btnResetPerangkat.title = 'Lepas ikatan HP/browser dari akun ini (perlu kalau personil ganti HP)';
+        btnResetPerangkat.addEventListener('click', async ()=>{
+          if (!u.perangkatIdTerakhir){
+            alert('Akun ini belum pernah terikat ke perangkat manapun.');
+            return;
+          }
+          if (!confirm('Lepas ikatan perangkat dari akun ' + (u.email||uid) + '? Personil bisa login ulang di HP baru setelah ini.')) return;
+          btnResetPerangkat.textContent = '...';
+          try{
+            await deleteDoc(doc(db, 'perangkatTerdaftar', u.perangkatIdTerakhir));
+            await updateDoc(doc(db, 'users', uid), { perangkatIdTerakhir: null });
+            btnResetPerangkat.textContent = '✓ Direset';
+            setTimeout(()=>{ btnResetPerangkat.textContent = '📱 Reset Perangkat'; }, 1500);
+          }catch(err){
+            alert('Gagal reset: ' + err.message);
+            btnResetPerangkat.textContent = '📱 Reset Perangkat';
+          }
+        });
+
+        const btnGantiHPVerifikasi = document.createElement('button');
+        btnGantiHPVerifikasi.textContent = '🔄 Ganti HP (Verifikasi Foto)';
+        btnGantiHPVerifikasi.className = 'icon-btn';
+        btnGantiHPVerifikasi.style.cssText = 'width:auto; padding:6px 12px; font-size:11px; border-color:var(--green); color:var(--green);';
+        btnGantiHPVerifikasi.title = 'Prosedur ganti HP/nomor rusak -- wajib verifikasi foto selfie dulu (gaya prosedur bank)';
+        btnGantiHPVerifikasi.addEventListener('click', ()=> window.bukaGantiPerangkatVerifikasi(uid, u));
+
         detailWrap.appendChild(roleSelect);
         detailWrap.appendChild(statusSelect);
         detailWrap.appendChild(kategoriSelect);
@@ -2115,11 +2490,228 @@ MAIN CONTENT
         detailWrap.appendChild(spesialisasiSelect);
         detailWrap.appendChild(jenisManagerSelect);
         detailWrap.appendChild(btnSimpan);
+        detailWrap.appendChild(btnResetPerangkat);
+        detailWrap.appendChild(btnGantiHPVerifikasi);
         return row;
   }
 
   document.getElementById('admin-user-search').addEventListener('input', (e)=>{
     renderDaftarUserAdmin(e.target.value);
+  });
+
+  // ==========================================================
+  // GANTI HP/NOMOR DENGAN VERIFIKASI FOTO -- prosedur gaya bank: admin bandingkan foto
+  // selfie lama vs baru secara VISUAL (keputusan manusia, BUKAN pencocokan wajah otomatis --
+  // deteksi wajah AI/biometrik sungguhan butuh layanan KYC berbayar, di luar cakupan ini)
+  // sebelum konfirmasi ganti nomor HP & reset ikatan perangkat lama.
+  // ==========================================================
+  let uidSedangDiverifikasiGantiHP = null;
+  let fileSelfieBaruAdmin = null;
+
+  window.bukaGantiPerangkatVerifikasi = function(uid, u){
+    uidSedangDiverifikasiGantiHP = uid;
+    fileSelfieBaruAdmin = null;
+    document.getElementById('info-akun-ganti-hp').innerHTML = '<b>' + (u.email || uid) + '</b><br><span style="color:var(--text-dim); font-size:10.5px;">No. HP saat ini: ' + (u.phone || '-') + '</span>';
+    document.getElementById('foto-selfie-lama').src = u.fotoSelfieUrl || '';
+    document.getElementById('preview-foto-selfie-baru').innerHTML = 'Belum ada foto';
+    document.getElementById('input-nomor-hp-baru-admin').value = u.phone || '';
+    document.getElementById('input-catatan-verifikasi-admin').value = '';
+    document.getElementById('status-ganti-hp-verifikasi').textContent = '';
+    document.getElementById('modal-ganti-hp-verifikasi-overlay').classList.remove('hidden');
+  };
+
+  document.getElementById('btn-tutup-ganti-hp-verifikasi').addEventListener('click', ()=>{
+    document.getElementById('modal-ganti-hp-verifikasi-overlay').classList.add('hidden');
+  });
+  document.getElementById('btn-ambil-selfie-baru-admin').addEventListener('click', ()=>{
+    document.getElementById('input-selfie-baru-admin').click();
+  });
+  document.getElementById('input-selfie-baru-admin').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if (file){
+      fileSelfieBaruAdmin = file;
+      const url = URL.createObjectURL(file);
+      document.getElementById('preview-foto-selfie-baru').innerHTML = '<img src="' + url + '" style="width:100%; height:100%; object-fit:cover;">';
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('btn-konfirmasi-ganti-hp').addEventListener('click', async ()=>{
+    const statusEl = document.getElementById('status-ganti-hp-verifikasi');
+    const nomorBaru = document.getElementById('input-nomor-hp-baru-admin').value.trim();
+    const catatan = document.getElementById('input-catatan-verifikasi-admin').value.trim();
+
+    if (!fileSelfieBaruAdmin){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Foto baru wajib diambil dulu untuk dibandingkan.';
+      return;
+    }
+    if (!nomorBaru){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Nomor HP baru wajib diisi.';
+      return;
+    }
+    if (!catatan){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Catatan verifikasi wajib diisi (bukti admin sudah cek kecocokan foto).';
+      return;
+    }
+    if (!confirm('Pastikan foto LAMA dan BARU benar-benar orang yang sama sebelum lanjut. Yakin konfirmasi ganti HP/nomor?')) return;
+
+    statusEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Mengunggah foto & menyimpan...';
+    try{
+      const fileKompresi = await kompresGambar(fileSelfieBaruAdmin);
+      const namaUpload = 'selfie-verifikasi.' + (fileKompresi.type === 'image/webp' ? 'webp' : 'jpg');
+      const fotoSelfieBaruUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', namaUpload);
+
+      const userSnap = await getDoc(doc(db, 'users', uidSedangDiverifikasiGantiHP));
+      const dataLama = userSnap.exists() ? userSnap.data() : {};
+
+      // Kalau ada ikatan perangkat lama, lepaskan -- supaya HP baru bisa login segar (tanpa
+      // perlu approve dari HP lama yang sudah rusak/hilang)
+      if (dataLama.perangkatIdTerakhir){
+        try{ await deleteDoc(doc(db, 'perangkatTerdaftar', dataLama.perangkatIdTerakhir)); }catch(e){}
+      }
+
+      await updateDoc(doc(db, 'users', uidSedangDiverifikasiGantiHP), {
+        phone: nomorBaru,
+        fotoSelfieUrl: fotoSelfieBaruUrl,
+        perangkatIdTerakhir: null,
+        riwayatVerifikasiGantiHP: arrayUnion({
+          waktuVerifikasi: Date.now(),
+          diverifikasiOleh: auth.currentUser.email,
+          catatan,
+          nomorLama: dataLama.phone || null,
+          fotoSelfieUrlLama: dataLama.fotoSelfieUrl || null
+        })
+      });
+
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = '✅ Berhasil. Personil bisa login HP baru tanpa perlu approval (perangkat lama sudah direset).';
+      setTimeout(()=>{
+        document.getElementById('modal-ganti-hp-verifikasi-overlay').classList.add('hidden');
+        muatDaftarUserAdmin(); // refresh daftar supaya foto/nomor terbaru langsung terlihat
+      }, 1800);
+    }catch(err){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Gagal: ' + err.message;
+    }
+  });
+
+  // ==========================================================
+  // JADWAL TAMPIL DI PETA -- global (default semua personil, diatur Admin) + pribadi
+  // (override milik masing-masing personil). Personil yang di luar jam ini TIDAK ditampilkan
+  // di peta live (meski tracking-nya tetap aktif di baliknya) -- lihat pemakaiannya di
+  // initPersonnelTrackingLanjutan (fungsi personilBolehTampilSekarang()).
+  // ==========================================================
+  window.__visibilitasGlobalDefault = { jamMulai: null, jamSelesai: null };
+
+  // Dengarkan pengaturan global secara real-time -- dipakai semua orang saat render peta
+  onSnapshot(doc(db, 'pengaturanSistem', 'visibilitasPeta'), (snap)=>{
+    if (snap.exists()){
+      window.__visibilitasGlobalDefault = { jamMulai: snap.data().jamMulai || null, jamSelesai: snap.data().jamSelesai || null };
+    }
+  }, (err)=> console.error('Gagal baca pengaturan visibilitasPeta:', err.message));
+
+  // Cek apakah waktu SEKARANG ada di dalam rentang [jamMulai, jamSelesai] -- menangani kasus
+  // rentang yang "membungkus tengah malam" (mis. 22:00 - 06:00).
+  function waktuSekarangDalamRentang(jamMulai, jamSelesai){
+    if (!jamMulai || !jamSelesai) return true; // tidak diatur -- anggap selalu boleh tampil
+    const now = new Date();
+    const menitSekarang = now.getHours() * 60 + now.getMinutes();
+    const [hM, mM] = jamMulai.split(':').map(Number);
+    const [hS, mS] = jamSelesai.split(':').map(Number);
+    const menitMulai = hM * 60 + mM, menitSelesai = hS * 60 + mS;
+    if (menitMulai <= menitSelesai){
+      return menitSekarang >= menitMulai && menitSekarang <= menitSelesai;
+    }
+    return menitSekarang >= menitMulai || menitSekarang <= menitSelesai; // rentang membungkus tengah malam
+  }
+
+  // Dipakai di render peta/daftar personil -- true kalau personil ini BOLEH tampil sekarang.
+  // Prioritas: override pribadi personil (kalau diisi) > default global dari admin.
+  function personilBolehTampilSekarang(dataPersonil){
+    const jamMulai = dataPersonil.jamMulaiTampil || window.__visibilitasGlobalDefault.jamMulai;
+    const jamSelesai = dataPersonil.jamSelesaiTampil || window.__visibilitasGlobalDefault.jamSelesai;
+    return waktuSekarangDalamRentang(jamMulai, jamSelesai);
+  }
+
+  // ---------- Gear Admin: pengaturan global ----------
+  document.getElementById('btn-gear-visibilitas-peta').addEventListener('click', async ()=>{
+    document.getElementById('status-visibilitas-global').textContent = '';
+    try{
+      const snap = await getDoc(doc(db, 'pengaturanSistem', 'visibilitasPeta'));
+      const data = snap.exists() ? snap.data() : {};
+      document.getElementById('input-jam-mulai-global').value = data.jamMulai || '';
+      document.getElementById('input-jam-selesai-global').value = data.jamSelesai || '';
+    }catch(e){ /* biarkan kosong kalau gagal baca */ }
+    document.getElementById('modal-gear-visibilitas-peta-overlay').classList.remove('hidden');
+  });
+  document.getElementById('btn-tutup-gear-visibilitas-peta').addEventListener('click', ()=>{
+    document.getElementById('modal-gear-visibilitas-peta-overlay').classList.add('hidden');
+  });
+  document.getElementById('btn-simpan-visibilitas-global').addEventListener('click', async ()=>{
+    const statusEl = document.getElementById('status-visibilitas-global');
+    statusEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Menyimpan...';
+    try{
+      await setDoc(doc(db, 'pengaturanSistem', 'visibilitasPeta'), {
+        jamMulai: document.getElementById('input-jam-mulai-global').value || null,
+        jamSelesai: document.getElementById('input-jam-selesai-global').value || null,
+        diubahOleh: auth.currentUser.email,
+        waktuDiubah: serverTimestamp()
+      });
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = '✅ Tersimpan.';
+    }catch(err){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Gagal: ' + err.message;
+    }
+  });
+
+  // ---------- Gear Personil: pengaturan pribadi (override) -- disimpan di dokumen personnel/{uid} ----------
+  document.getElementById('btn-gear-visibilitas-saya').addEventListener('click', async ()=>{
+    document.getElementById('status-visibilitas-pribadi').textContent = '';
+    try{
+      const snap = await getDoc(doc(db, 'personnel', auth.currentUser.uid));
+      const data = snap.exists() ? snap.data() : {};
+      document.getElementById('input-jam-mulai-pribadi').value = data.jamMulaiTampil || '';
+      document.getElementById('input-jam-selesai-pribadi').value = data.jamSelesaiTampil || '';
+    }catch(e){ /* biarkan kosong kalau gagal baca / dokumen belum ada (belum pernah tracking) */ }
+    document.getElementById('modal-gear-visibilitas-saya-overlay').classList.remove('hidden');
+  });
+  document.getElementById('btn-tutup-gear-visibilitas-saya').addEventListener('click', ()=>{
+    document.getElementById('modal-gear-visibilitas-saya-overlay').classList.add('hidden');
+  });
+  document.getElementById('btn-simpan-visibilitas-pribadi').addEventListener('click', async ()=>{
+    const statusEl = document.getElementById('status-visibilitas-pribadi');
+    statusEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Menyimpan...';
+    try{
+      await setDoc(doc(db, 'personnel', auth.currentUser.uid), {
+        jamMulaiTampil: document.getElementById('input-jam-mulai-pribadi').value || null,
+        jamSelesaiTampil: document.getElementById('input-jam-selesai-pribadi').value || null
+      }, { merge: true });
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = '✅ Tersimpan. (Kalau belum pernah aktifkan tracking, pengaturan ini baru berlaku setelah tracking pertama kali diaktifkan.)';
+    }catch(err){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Gagal: ' + err.message;
+    }
+  });
+  document.getElementById('btn-hapus-visibilitas-pribadi').addEventListener('click', async ()=>{
+    const statusEl = document.getElementById('status-visibilitas-pribadi');
+    try{
+      await setDoc(doc(db, 'personnel', auth.currentUser.uid), { jamMulaiTampil: null, jamSelesaiTampil: null }, { merge: true });
+      document.getElementById('input-jam-mulai-pribadi').value = '';
+      document.getElementById('input-jam-selesai-pribadi').value = '';
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = '✅ Dihapus -- sekarang ikut jadwal default admin.';
+    }catch(err){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Gagal: ' + err.message;
+    }
   });
 
   // ---------- Kartu Statistik (data REAL, bukan dummy) ----------
@@ -3475,6 +4067,16 @@ MAIN CONTENT
         const uid = docSnap.id;
         idsAktif.add(uid);
         if (!p.lat || !p.lon) return;
+
+        // Jadwal Tampil di Peta -- personil di luar jam yang diatur (default admin atau override
+        // pribadi) TIDAK dirender di peta/daftar sama sekali, meski datanya tetap ada di Firestore.
+        if (!personilBolehTampilSekarang(p)){
+          if (personnelMarkers[uid]){
+            map.removeLayer(personnelMarkers[uid]);
+            delete personnelMarkers[uid];
+          }
+          return;
+        }
 
         const color = p.status === 'sos' ? '#e05f5f' : (p.status === 'hilang' ? '#e0b73a' : '#5fd68a');
 
