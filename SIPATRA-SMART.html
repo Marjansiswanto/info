@@ -172,6 +172,25 @@
   .gmail-dropdown-item:hover{ background:#f1f3f4; }
   .gmail-dropdown-item.active{ background:#e8f0fe; color:#1e40af; font-weight:700; }
 
+  /* ===== Stepper pelacakan WO -- gaya timeline vertikal Shopee/GoSend ===== */
+  .stepper-wo{ position:relative; padding-left:14px; }
+  .stepper-wo-item{ position:relative; padding-left:26px; padding-bottom:26px; }
+  .stepper-wo-item:last-child{ padding-bottom:0; }
+  .stepper-wo-dot{
+    position:absolute; left:0; top:0; width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:11px;
+    background:var(--line-bright); color:var(--text-dim); z-index:2; flex-shrink:0;
+  }
+  .stepper-wo-item.done .stepper-wo-dot{ background:#1e40af; color:#fff; }
+  .stepper-wo-item.rejected .stepper-wo-dot{ background:var(--red); color:#fff; }
+  .stepper-wo-item:not(:last-child)::before{
+    content:''; position:absolute; left:10px; top:22px; bottom:-4px; width:2px; background:var(--line-bright);
+  }
+  .stepper-wo-item.done:not(:last-child)::before{ background:#1e40af; }
+  .stepper-wo-label{ font-size:12px; font-weight:700; color:var(--text); }
+  .stepper-wo-item:not(.done):not(.rejected) .stepper-wo-label{ color:var(--text-dim); font-weight:400; }
+  .stepper-wo-sub{ font-size:10px; color:var(--text-dim); margin-top:2px; }
+
   /* Header biru solid gaya Gmail -- dipakai khusus modul Work Order & Lapor Gangguan */
   .panel-head-wo{
     display:flex; justify-content:space-between; align-items:center; padding:14px 16px;
@@ -890,6 +909,7 @@ MAIN CONTENT
           <button id="btn-panel-bahaya" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--orange); border:1px solid var(--orange);" title="Panel Analitik Laporan Bahaya (Moderator)">📊</button>
           <button id="btn-riwayat-sos" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Riwayat & Verifikasi SOS (Moderator)">📟</button>
           <button id="btn-lapor-gangguan" class="track-btn icon-square-btn hidden" style="background:#1e40af; color:#fff; border:1px solid #1e40af;" title="Lapor Gangguan (Work Order)">🔧</button>
+          <button id="btn-wo-saya-pelapor" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Lacak WO Saya">📦</button>
           <button id="btn-panel-wo" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Panel Work Order (Supervisor)">🗂️</button>
           <button id="btn-executive-dashboard" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Executive Dashboard">📈</button>
           <button id="btn-wo-saya-personil" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="WO Saya (Belum Ada)">🔧</button>
@@ -1428,6 +1448,24 @@ MAIN CONTENT
   </div>
 </div>
 
+<!-- ===== MODAL DAFTAR WO SAYA (Pelapor -- lihat semua laporan gangguan yang PERNAH saya buat) ===== -->
+<div id="modal-daftar-wo-saya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
+    <div class="panel-head panel-head-wo"><h3>📦 WO Saya</h3><button id="btn-tutup-daftar-wo-saya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Semua laporan gangguan yang pernah Anda buat. Ketuk salah satu untuk lihat status & progresnya.</div>
+    <div id="daftar-wo-saya-list"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL LACAK WO (stepper visual gaya Shopee/GoSend) ===== -->
+<div id="modal-tracking-wo-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:440px; width:100%; max-height:92vh; overflow-y:auto;">
+    <div class="panel-head panel-head-wo"><h3>📦 Lacak WO</h3><button id="btn-tutup-tracking-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div id="ringkasan-tracking-wo" style="padding:14px 16px 0;"></div>
+    <div id="isi-tracking-wo" class="stepper-wo" style="padding:16px;"></div>
+  </div>
+</div>
+
 <!-- ===== MODAL VIDEO CALL (WebRTC) ===== -->
 <div id="call-overlay">
   <div id="call-box">
@@ -1776,6 +1814,7 @@ MAIN CONTENT
     document.getElementById('btn-riwayat-sos').classList.toggle('hidden', !isModeratorBahaya);
     // Lapor Gangguan (Work Order) -- semua role KECUALI guest ("Operator Produksi")
     document.getElementById('btn-lapor-gangguan').classList.toggle('hidden', isGuest);
+    document.getElementById('btn-wo-saya-pelapor').classList.toggle('hidden', isGuest);
     // Panel Work Order -- khusus moderator (admin/editor/vip, berperan sebagai "Supervisor")
     document.getElementById('btn-panel-wo').classList.toggle('hidden', !isModeratorBahaya);
     document.getElementById('btn-executive-dashboard').classList.toggle('hidden', !isModeratorBahaya);
@@ -4438,6 +4477,7 @@ MAIN CONTENT
   let woDitutupManualSesiIni = new Set(); // id WO yg personil sudah tutup manual -- jangan auto-buka lagi sesi ini
   let tabAktifWO = 'prioritas'; // 'prioritas' | 'semua' -- tab gaya Gmail di Panel WO
   let filterStatusWO = ''; // '' = semua status, atau salah satu nilai status WO
+  let idWOSedangDilacak = null; // id WO yg sedang ditampilkan di modal stepper "Lacak WO"
 
   function initSistemWO(){
     // ---------- Lapor Gangguan (semua role kecuali guest) ----------
@@ -4531,7 +4571,7 @@ MAIN CONTENT
           status: 'menunggu_validasi',
           waktuLapor: serverTimestamp(),
           divalidasiOleh: null, waktuValidasi: null,
-          personilUid: null, personilEmail: null, waktuDispatch: null,
+          personilUid: null, personilEmail: null, waktuDispatch: null, waktuDiterima: null,
           catatanPekerjaan: null, fotoSelesaiUrl: null, waktuSelesai: null,
           sapSync: false, waktuSapSync: null
         });
@@ -4579,6 +4619,16 @@ MAIN CONTENT
     document.getElementById('btn-panel-wo').addEventListener('click', ()=>{
       document.getElementById('modal-panel-wo-overlay').classList.remove('hidden');
       renderPanelWO();
+    });
+    document.getElementById('btn-wo-saya-pelapor').addEventListener('click', ()=>{
+      document.getElementById('modal-daftar-wo-saya-overlay').classList.remove('hidden');
+      renderDaftarWOSaya();
+    });
+    document.getElementById('btn-tutup-daftar-wo-saya').addEventListener('click', ()=>{
+      document.getElementById('modal-daftar-wo-saya-overlay').classList.add('hidden');
+    });
+    document.getElementById('btn-tutup-tracking-wo').addEventListener('click', ()=>{
+      document.getElementById('modal-tracking-wo-overlay').classList.add('hidden');
     });
     document.getElementById('btn-tutup-panel-wo').addEventListener('click', ()=>{
       document.getElementById('modal-panel-wo-overlay').classList.add('hidden');
@@ -4632,7 +4682,12 @@ MAIN CONTENT
     document.getElementById('btn-terima-wo').addEventListener('click', async ()=>{
       if (!idWOSedangDikerjakan) return;
       try{
-        await updateDoc(doc(db, 'gangguanWO', idWOSedangDikerjakan), { status: 'dikerjakan' });
+        const gangguanTerkait = daftarSemuaGangguanWO.find(g=> g.id === idWOSedangDikerjakan);
+        await updateDoc(doc(db, 'gangguanWO', idWOSedangDikerjakan), { status: 'dikerjakan', waktuDiterima: serverTimestamp() });
+        if (gangguanTerkait && gangguanTerkait.pelaporUid){
+          kirimNotifikasiKeUid(gangguanTerkait.pelaporUid, '✅ WO Diterima Personil',
+            (gangguanTerkait.plant + ' - ' + gangguanTerkait.area) + ' sedang dikerjakan oleh ' + (auth.currentUser.email || 'personil') + '.');
+        }
       }catch(err){ alert('Gagal terima WO: ' + err.message); }
     });
     document.getElementById('btn-tolak-wo').addEventListener('click', async ()=>{
@@ -4735,6 +4790,13 @@ MAIN CONTENT
 
       if (!document.getElementById('modal-panel-wo-overlay').classList.contains('hidden')){
         renderPanelWO();
+      }
+      if (!document.getElementById('modal-daftar-wo-saya-overlay').classList.contains('hidden')){
+        renderDaftarWOSaya();
+      }
+      if (idWOSedangDilacak && !document.getElementById('modal-tracking-wo-overlay').classList.contains('hidden')){
+        const gTerbaru = daftarSemuaGangguanWO.find(x=> x.id === idWOSedangDilacak);
+        if (gTerbaru) tampilkanTrackingWO(gTerbaru);
       }
     }, (err)=> console.error('Gagal baca gangguanWO:', err.message));
   }
@@ -4907,6 +4969,84 @@ MAIN CONTENT
     document.getElementById('modal-progress-wo-overlay').classList.remove('hidden');
   }
   window.bukaProgressWO = bukaProgressWO;
+
+  // ---------- "WO Saya" (Pelapor) -- daftar laporan gangguan milik sendiri + pelacakan visual ----------
+  const labelStatusWOGlobal = {
+    menunggu_validasi: '🆕 Menunggu Validasi', ditolak: '❌ Ditolak',
+    menunggu_dispatch: '🔍 Menunggu Dispatch', ditugaskan: '📨 Ditugaskan (Belum Diterima)',
+    dikerjakan: '🔧 Dikerjakan', selesai: '✅ Selesai'
+  };
+  const warnaStatusWOGlobal = {
+    menunggu_validasi: '#1e40af', ditolak: 'var(--text-dim)', menunggu_dispatch: 'var(--amber)',
+    ditugaskan: 'var(--amber)', dikerjakan: '#1e40af', selesai: 'var(--green)'
+  };
+
+  function renderDaftarWOSaya(){
+    if (!auth.currentUser) return;
+    const cont = document.getElementById('daftar-wo-saya-list');
+    const punyaSaya = daftarSemuaGangguanWO.filter(g=> g.pelaporUid === auth.currentUser.uid);
+    if (punyaSaya.length === 0){
+      cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Anda belum pernah membuat laporan gangguan.</div>';
+      return;
+    }
+    cont.innerHTML = punyaSaya.map(g=>{
+      const waktu = g.waktuLapor && g.waktuLapor.toDate ? g.waktuLapor.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
+      return '<div onclick="window.bukaTrackingWOById(\'' + g.id + '\')" style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaStatusWOGlobal[g.status] + '; padding:8px 10px; margin-bottom:6px; cursor:pointer;">'
+        + '<div style="display:flex; justify-content:space-between; font-size:11px;">'
+        + '<span style="font-weight:700;">' + g.plant + ' - ' + g.area + '</span>'
+        + '<span style="color:' + warnaStatusWOGlobal[g.status] + '; font-weight:700; font-size:9.5px;">' + labelStatusWOGlobal[g.status] + '</span>'
+        + '</div>'
+        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + g.jenis + (g.nomorWO ? (' · 📄 ' + g.nomorWO) : '') + ' · ' + waktu + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  // Wrapper lookup -- selalu ambil dari daftarSemuaGangguanWO TERBARU (closure), bukan salinan
+  // global yang bisa basi kalau langsung expose array-nya ke window.
+  window.bukaTrackingWOById = function(id){
+    tampilkanTrackingWO(daftarSemuaGangguanWO.find(x=> x.id === id));
+  };
+
+  // Tampilkan pelacakan visual gaya Shopee/GoSend -- garis waktu vertikal per tahap status
+  function tampilkanTrackingWO(g){
+    if (!g) return;
+    idWOSedangDilacak = g.id;
+
+    document.getElementById('ringkasan-tracking-wo').innerHTML =
+      '<div style="font-weight:700; font-size:13px;">' + g.plant + ' - ' + g.area + '</div>'
+      + '<div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">' + g.jenis + (g.nomorWO ? (' · 📄 ' + g.nomorWO) : '') + '</div>';
+
+    const fmt = (ts)=> ts && ts.toDate ? ts.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : null;
+
+    // Susunan tahap: kalau ditolak, alur berhenti di situ dengan tanda merah -- tidak lanjut ke tahap dispatch dst.
+    let tahap;
+    if (g.status === 'ditolak'){
+      tahap = [
+        { label: 'Dilaporkan', waktu: fmt(g.waktuLapor), done: true },
+        { label: 'Ditolak Supervisor', waktu: fmt(g.waktuValidasi), done: true, rejected: true }
+      ];
+    } else {
+      tahap = [
+        { label: 'Dilaporkan', waktu: fmt(g.waktuLapor), done: true },
+        { label: 'Divalidasi Supervisor', waktu: fmt(g.waktuValidasi), done: !!g.waktuValidasi },
+        { label: 'Ditugaskan ke Personil' + (g.personilEmail ? (' (' + g.personilEmail + ')') : ''), waktu: fmt(g.waktuDispatch), done: !!g.waktuDispatch },
+        { label: 'Diterima & Dikerjakan Personil', waktu: fmt(g.waktuDiterima), done: !!g.waktuDiterima },
+        { label: 'Selesai', waktu: fmt(g.waktuSelesai), done: !!g.waktuSelesai }
+      ];
+    }
+
+    document.getElementById('isi-tracking-wo').innerHTML = tahap.map(t=>{
+      const kelas = t.rejected ? 'rejected' : (t.done ? 'done' : '');
+      const ikon = t.rejected ? '✕' : (t.done ? '✓' : '');
+      return '<div class="stepper-wo-item ' + kelas + '">'
+        + '<div class="stepper-wo-dot">' + ikon + '</div>'
+        + '<div class="stepper-wo-label">' + t.label + '</div>'
+        + (t.waktu ? '<div class="stepper-wo-sub">' + t.waktu + '</div>' : '<div class="stepper-wo-sub">Menunggu...</div>')
+        + '</div>';
+    }).join('');
+
+    document.getElementById('modal-tracking-wo-overlay').classList.remove('hidden');
+  }
+  window.tampilkanTrackingWO = tampilkanTrackingWO;
 
   // ==========================================================
   // EXECUTIVE DASHBOARD -- ringkasan manajemen (admin/editor/vip), data REAL dari
