@@ -145,6 +145,42 @@
     animation: kedipAlarmWO 1s infinite;
   }
 
+  /* ===== Elemen gaya Gmail/Outlook -- tab pil, tombol filter, dropdown menu ===== */
+  .gmail-tabs{
+    display:inline-flex; background:#f1f3f4; border-radius:20px; padding:3px; gap:2px;
+  }
+  .gmail-tab-pill{
+    border:none; background:transparent; padding:8px 16px; border-radius:18px;
+    font-family:var(--mono); font-size:11px; font-weight:700; cursor:pointer;
+    color:#5f6368; transition:all 0.15s;
+  }
+  .gmail-tab-pill.active{
+    background:#fff; color:#1e40af; box-shadow:0 1px 3px rgba(0,0,0,0.2);
+  }
+  .gmail-filter-btn{
+    background:#f1f3f4; border:none; border-radius:16px; padding:8px 14px;
+    font-family:var(--mono); font-size:10.5px; font-weight:700; color:#5f6368; cursor:pointer;
+  }
+  .gmail-filter-btn:hover{ background:#e8eaed; }
+  .gmail-dropdown{
+    position:absolute; top:115%; right:0; background:#fff; border-radius:8px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.25); min-width:190px; z-index:20; overflow:hidden;
+  }
+  .gmail-dropdown-item{
+    padding:10px 14px; font-size:11px; color:#1A1D1F; cursor:pointer; font-family:var(--mono);
+  }
+  .gmail-dropdown-item:hover{ background:#f1f3f4; }
+  .gmail-dropdown-item.active{ background:#e8f0fe; color:#1e40af; font-weight:700; }
+
+  /* Header biru solid gaya Gmail -- dipakai khusus modul Work Order & Lapor Gangguan */
+  .panel-head-wo{
+    display:flex; justify-content:space-between; align-items:center; padding:14px 16px;
+    background:#1e40af; color:#fff;
+  }
+  .panel-head-wo h3{ color:#fff !important; margin:0; }
+  .panel-head-wo .icon-btn{ background:rgba(255,255,255,0.15); border:none; color:#fff; }
+  .panel-head-wo .icon-btn:hover{ background:rgba(255,255,255,0.28); }
+
   .sos-banner{
     background:#2a0808; border:1px solid var(--red); color:#ffb3b3; padding:12px 16px;
     font-size:12.5px; margin-bottom:16px; display:none;
@@ -855,6 +891,7 @@ MAIN CONTENT
           <button id="btn-riwayat-sos" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Riwayat & Verifikasi SOS (Moderator)">📟</button>
           <button id="btn-lapor-gangguan" class="track-btn icon-square-btn hidden" style="background:#1e40af; color:#fff; border:1px solid #1e40af;" title="Lapor Gangguan (Work Order)">🔧</button>
           <button id="btn-panel-wo" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Panel Work Order (Supervisor)">🗂️</button>
+          <button id="btn-executive-dashboard" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Executive Dashboard">📈</button>
           <button id="btn-wo-saya-personil" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="WO Saya (Belum Ada)">🔧</button>
         </div>
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
@@ -1207,8 +1244,8 @@ MAIN CONTENT
 
 <!-- ===== MODAL LAPOR GANGGUAN (semua role kecuali guest -- "Operator Produksi") ===== -->
 <div id="modal-lapor-gangguan-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto; border-top:3px solid #1e40af;">
-    <div class="panel-head"><h3 style="color:#1e40af;">🔧 Lapor Gangguan</h3><button id="btn-tutup-lapor-gangguan" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+  <div class="panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
+    <div class="panel-head panel-head-wo"><h3>🔧 Lapor Gangguan</h3><button id="btn-tutup-lapor-gangguan" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">
       Laporkan gangguan/kerusakan peralatan. Supervisor akan menerima notifikasi untuk validasi & dispatch personil terdekat.
     </div>
@@ -1252,8 +1289,8 @@ MAIN CONTENT
 
 <!-- ===== MODAL VALIDASI & DISPATCH (Supervisor: admin/editor/vip) ===== -->
 <div id="modal-validasi-gangguan-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:500px; width:100%; max-height:92vh; overflow-y:auto; border-top:3px solid #1e40af;">
-    <div class="panel-head"><h3 style="color:#1e40af;">🔧 Validasi Gangguan & Dispatch</h3><button id="btn-tutup-validasi-gangguan" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+  <div class="panel" style="max-width:500px; width:100%; max-height:92vh; overflow-y:auto;">
+    <div class="panel-head panel-head-wo"><h3>🔧 Validasi Gangguan & Dispatch</h3><button id="btn-tutup-validasi-gangguan" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="isi-detail-gangguan" style="font-size:12.5px; line-height:1.8; border:1px solid var(--line-bright); padding:10px; margin-bottom:12px;"></div>
 
     <div id="blok-tombol-validasi">
@@ -1273,8 +1310,8 @@ MAIN CONTENT
 
 <!-- ===== MODAL PANEL WORK ORDER (Riwayat & Status -- Supervisor) ===== -->
 <div id="modal-panel-wo-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:560px; width:100%; max-height:90vh; overflow-y:auto; border-top:3px solid #1e40af;">
-    <div class="panel-head"><h3 style="color:#1e40af;">🗂️ Panel Work Order</h3><button id="btn-tutup-panel-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+  <div class="panel" style="max-width:560px; width:100%; max-height:90vh; overflow-y:auto;">
+    <div class="panel-head panel-head-wo"><h3>🗂️ Panel Work Order</h3><button id="btn-tutup-panel-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div style="display:flex; gap:10px; margin-bottom:14px; font-size:11px;">
       <div style="flex:1; text-align:center; border:1px solid var(--line-bright); padding:8px;">
         <div style="color:var(--text-dim);">Total</div>
@@ -1289,14 +1326,33 @@ MAIN CONTENT
         <div id="stat-wo-selesai" style="font-size:18px; font-weight:800; color:var(--green);">0</div>
       </div>
     </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px; flex-wrap:wrap;">
+      <div class="gmail-tabs">
+        <button class="gmail-tab-pill active" data-tab-wo="prioritas">Prioritas</button>
+        <button class="gmail-tab-pill" data-tab-wo="semua">Semua</button>
+      </div>
+      <div style="position:relative;">
+        <button id="btn-filter-wo" class="gmail-filter-btn">⚙ Filter <span id="label-filter-wo-aktif"></span></button>
+        <div id="dropdown-filter-wo" class="gmail-dropdown hidden">
+          <div class="gmail-dropdown-item active" data-status-wo="">Semua Status</div>
+          <div class="gmail-dropdown-item" data-status-wo="menunggu_validasi">🆕 Menunggu Validasi</div>
+          <div class="gmail-dropdown-item" data-status-wo="menunggu_dispatch">🔍 Menunggu Dispatch</div>
+          <div class="gmail-dropdown-item" data-status-wo="ditugaskan">📨 Ditugaskan</div>
+          <div class="gmail-dropdown-item" data-status-wo="dikerjakan">🔧 Dikerjakan</div>
+          <div class="gmail-dropdown-item" data-status-wo="selesai">✅ Selesai</div>
+          <div class="gmail-dropdown-item" data-status-wo="ditolak">❌ Ditolak</div>
+        </div>
+      </div>
+    </div>
     <div id="daftar-panel-wo"></div>
   </div>
+</div>
 </div>
 
 <!-- ===== MODAL DETAIL WO (progress, checklist SHE, dokumentasi -- Personil yang ditugaskan) ===== -->
 <div id="modal-progress-wo-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4900; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:480px; width:100%; max-height:92vh; overflow-y:auto; border-top:3px solid #1e40af;">
-    <div class="panel-head"><h3 style="color:#1e40af;">Pelaksanaan Work Order</h3><button id="btn-tutup-progress-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+  <div class="panel" style="max-width:480px; width:100%; max-height:92vh; overflow-y:auto;">
+    <div class="panel-head panel-head-wo"><h3>Pelaksanaan Work Order</h3><button id="btn-tutup-progress-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="isi-progress-wo" style="font-size:12.5px; line-height:1.8; margin-bottom:10px;"></div>
 
     <div id="blok-terima-tolak-wo" class="hidden" style="display:flex; gap:8px; margin-bottom:12px;">
@@ -1319,6 +1375,40 @@ MAIN CONTENT
     <div style="font-size:9px; color:var(--text-dim); margin-top:4px; text-align:center;">⚠️ Ini pencatatan manual -- BUKAN integrasi API otomatis ke SAP sungguhan.</div>
     </div>
     <div id="status-progress-wo" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL EXECUTIVE DASHBOARD (Ringkasan Manajemen -- admin/editor/vip) ===== -->
+<div id="modal-executive-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:640px; width:100%; max-height:92vh; overflow-y:auto;">
+    <div class="panel-head panel-head-wo"><h3>📈 Executive Dashboard</h3><button id="btn-tutup-executive" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Overview per Plant</div>
+    <div id="daftar-overview-plant" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;"></div>
+
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+      <div style="flex:1; min-width:200px;">
+        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Status Work Order</div>
+        <canvas id="chart-donut-wo" style="max-height:200px;"></canvas>
+      </div>
+      <div style="flex:1; min-width:140px; display:flex; flex-direction:column; gap:8px; justify-content:center;">
+        <div style="border:1px solid var(--red); padding:8px 10px;">
+          <div style="font-size:10px; color:var(--red);">🆘 SOS Aktif</div>
+          <div id="exec-sos-aktif" style="font-size:20px; font-weight:800; color:var(--red);">0</div>
+        </div>
+        <div style="border:1px solid var(--amber); padding:8px 10px;">
+          <div style="font-size:10px; color:var(--amber);">😓 Fatigue Tinggi</div>
+          <div id="exec-fatigue-tinggi" style="font-size:20px; font-weight:800; color:var(--amber);">0</div>
+        </div>
+        <div style="border:1px solid var(--orange); padding:8px 10px;">
+          <div style="font-size:10px; color:var(--orange);">⚠️ Laporan Bahaya Aktif</div>
+          <div id="exec-bahaya-aktif" style="font-size:20px; font-weight:800; color:var(--orange);">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Tren Harian Work Order (14 hari terakhir)</div>
+    <canvas id="chart-tren-wo" style="max-height:220px;"></canvas>
   </div>
 </div>
 
@@ -1622,6 +1712,7 @@ MAIN CONTENT
     }
     tampilkanIdentitasPengguna(auth.currentUser.email, window.__userRole, dataUserUntukIdentitas.kategoriKerja);
 
+    initStatTotalPersonel();
     initDashboard();
     terapkanBatasanRole();
   }
@@ -1671,6 +1762,7 @@ MAIN CONTENT
     document.getElementById('btn-lapor-gangguan').classList.toggle('hidden', isGuest);
     // Panel Work Order -- khusus moderator (admin/editor/vip, berperan sebagai "Supervisor")
     document.getElementById('btn-panel-wo').classList.toggle('hidden', !isModeratorBahaya);
+    document.getElementById('btn-executive-dashboard').classList.toggle('hidden', !isModeratorBahaya);
 
     // Tab room "VIP -- Command Channel" HANYA untuk admin/editor/vip -- BUKAN untuk 'user'/'guest'
     const bolehLihatRoomVip = (window.__userRole === 'admin' || window.__userRole === 'vip');
@@ -1868,16 +1960,25 @@ MAIN CONTENT
   // Security Rules yang membatasi listing collection 'users'). Kalau gagal
   // (permission-denied untuk role lain), diam-diam pakai jumlah personel
   // yang SEDANG AKTIF tracking sebagai perkiraan (lihat listener personnel).
-  try{
-    onSnapshot(
-      query(collection(db, 'users'), where('role', '==', 'user')),
-      (snap)=>{
-        window.__statTotalDariUsersBerhasil = true;
-        updateStatCard('stat-total', snap.size);
-      },
-      ()=>{ window.__statTotalDariUsersBerhasil = false; }
-    );
-  }catch(e){ window.__statTotalDariUsersBerhasil = false; }
+  // PENTING: dipanggil dari tampilkanDashboard() (SETELAH login+role terkonfirmasi),
+  // BUKAN langsung dieksekusi di top-level script -- sebelumnya bug ini menyebabkan
+  // query selalu gagal (request.auth belum siap) sehingga Admin/VIP pun salah
+  // menampilkan hasil fallback (jumlah sedang tracking) alih-alih total terdaftar.
+  function initStatTotalPersonel(){
+    try{
+      onSnapshot(
+        query(collection(db, 'users'), where('role', '==', 'user')),
+        (snap)=>{
+          window.__statTotalDariUsersBerhasil = true;
+          updateStatCard('stat-total', snap.size);
+        },
+        (err)=>{
+          window.__statTotalDariUsersBerhasil = false;
+          console.error('Gagal ambil total personel terdaftar (fallback ke jumlah sedang tracking):', err.message);
+        }
+      );
+    }catch(e){ window.__statTotalDariUsersBerhasil = false; }
+  }
 
   // ---------- Dashboard (data simulasi/dummy untuk POC) ----------
   let dashboardInited = false;
@@ -1902,6 +2003,7 @@ MAIN CONTENT
     initLaporanBahaya();
     initSistemSOS();
     initSistemWO();
+    initExecutiveDashboard();
     mulaiPemantauanGeofencePasif(); // khusus role='user' -- auto check-in/out tanpa perlu tombol tracking
   }
 
@@ -4317,6 +4419,8 @@ MAIN CONTENT
   let idWOSedangDikerjakan = null;
   let lampiranFotoWO = null;
   let woDitutupManualSesiIni = new Set(); // id WO yg personil sudah tutup manual -- jangan auto-buka lagi sesi ini
+  let tabAktifWO = 'prioritas'; // 'prioritas' | 'semua' -- tab gaya Gmail di Panel WO
+  let filterStatusWO = ''; // '' = semua status, atau salah satu nilai status WO
 
   function initSistemWO(){
     // ---------- Lapor Gangguan (semua role kecuali guest) ----------
@@ -4435,6 +4539,33 @@ MAIN CONTENT
     });
     document.getElementById('btn-tutup-panel-wo').addEventListener('click', ()=>{
       document.getElementById('modal-panel-wo-overlay').classList.add('hidden');
+    });
+
+    // ---------- Tab pil "Prioritas/Semua" + dropdown Filter status (gaya Gmail/Outlook) ----------
+    document.querySelectorAll('[data-tab-wo]').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('[data-tab-wo]').forEach(t=> t.classList.remove('active'));
+        tab.classList.add('active');
+        tabAktifWO = tab.dataset.tabWo;
+        renderPanelWO();
+      });
+    });
+    document.getElementById('btn-filter-wo').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      document.getElementById('dropdown-filter-wo').classList.toggle('hidden');
+    });
+    document.querySelectorAll('[data-status-wo]').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        document.querySelectorAll('[data-status-wo]').forEach(i=> i.classList.remove('active'));
+        item.classList.add('active');
+        filterStatusWO = item.dataset.statusWo;
+        document.getElementById('label-filter-wo-aktif').textContent = filterStatusWO ? ('· ' + item.textContent.trim()) : '';
+        document.getElementById('dropdown-filter-wo').classList.add('hidden');
+        renderPanelWO();
+      });
+    });
+    document.addEventListener('click', ()=>{
+      document.getElementById('dropdown-filter-wo').classList.add('hidden');
     });
 
     // Banner klik -> buka gangguan tertua yang masih menunggu validasi (khusus moderator)
@@ -4676,7 +4807,21 @@ MAIN CONTENT
       cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Belum ada laporan gangguan.</div>';
       return;
     }
-    cont.innerHTML = daftarSemuaGangguanWO.map(g=>{
+
+    // Terapkan tab "Prioritas" (perlu tindakan segera) vs "Semua", lalu filter status dropdown
+    let daftarTampil = daftarSemuaGangguanWO;
+    if (tabAktifWO === 'prioritas'){
+      daftarTampil = daftarTampil.filter(g=> ['menunggu_validasi', 'menunggu_dispatch', 'ditugaskan'].includes(g.status));
+    }
+    if (filterStatusWO){
+      daftarTampil = daftarTampil.filter(g=> g.status === filterStatusWO);
+    }
+    if (daftarTampil.length === 0){
+      cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Tidak ada WO yang cocok dengan tab/filter ini.</div>';
+      return;
+    }
+
+    cont.innerHTML = daftarTampil.map(g=>{
       const waktu = g.waktuLapor && g.waktuLapor.toDate ? g.waktuLapor.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
       const fungsiKlik = (g.status === 'menunggu_validasi' || g.status === 'menunggu_dispatch' || g.status === 'ditolak') ? 'bukaValidasiGangguan' : 'bukaProgressWO';
       return '<div onclick="window.' + fungsiKlik + '(\'' + g.id + '\')" style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaStatus[g.status] + '; padding:8px 10px; margin-bottom:6px; cursor:pointer;">'
@@ -4712,6 +4857,121 @@ MAIN CONTENT
     document.getElementById('modal-progress-wo-overlay').classList.remove('hidden');
   }
   window.bukaProgressWO = bukaProgressWO;
+
+  // ==========================================================
+  // EXECUTIVE DASHBOARD -- ringkasan manajemen (admin/editor/vip), data REAL dari
+  // modul yang sudah ada (gangguanWO, insidenSOS, laporanBahaya, FIT% personel).
+  // TIDAK ada "Panic Button"/"Near Miss" seperti di poster referensi -- diganti dengan
+  // kategori yang benar-benar kita lacak: SOS Aktif & Laporan Bahaya Aktif.
+  // ==========================================================
+  let chartDonutWO = null;
+  let chartTrenWO = null;
+
+  function initExecutiveDashboard(){
+    document.getElementById('btn-executive-dashboard').addEventListener('click', ()=>{
+      document.getElementById('modal-executive-overlay').classList.remove('hidden');
+      renderExecutiveDashboard();
+    });
+    document.getElementById('btn-tutup-executive').addEventListener('click', ()=>{
+      document.getElementById('modal-executive-overlay').classList.add('hidden');
+    });
+  }
+
+  function renderExecutiveDashboard(){
+    // ---------- Overview per Plant ----------
+    const statusAktifWO = ['menunggu_validasi', 'menunggu_dispatch', 'ditugaskan', 'dikerjakan'];
+    const perPlant = {}; // nama plant -> { total, aktif, adaTinggi }
+    daftarSemuaGangguanWO.forEach(g=>{
+      const nama = g.plant || 'Tanpa Nama';
+      if (!perPlant[nama]) perPlant[nama] = { total: 0, aktif: 0, adaTinggi: false };
+      perPlant[nama].total++;
+      if (statusAktifWO.includes(g.status)){
+        perPlant[nama].aktif++;
+        if (g.prioritas === 'tinggi') perPlant[nama].adaTinggi = true;
+      }
+    });
+    const contPlant = document.getElementById('daftar-overview-plant');
+    const namaPlant = Object.keys(perPlant);
+    if (namaPlant.length === 0){
+      contPlant.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Belum ada data gangguan/WO untuk ditampilkan per plant.</div>';
+    } else {
+      contPlant.innerHTML = namaPlant.map(nama=>{
+        const p = perPlant[nama];
+        const waspada = p.adaTinggi;
+        return '<div style="flex:1; min-width:110px; text-align:center; border:1px solid ' + (waspada ? 'var(--red)' : 'var(--green)') + '; padding:10px;">'
+          + '<div style="font-size:10px; color:var(--text-dim);">' + nama + '</div>'
+          + '<div style="font-size:20px; font-weight:800;">' + p.aktif + '/' + p.total + '</div>'
+          + '<div style="font-size:9.5px; color:' + (waspada ? 'var(--red)' : 'var(--green)') + '; font-weight:700;">' + (waspada ? '● Waspada' : '● Aman') + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    // ---------- Donut Status WO ----------
+    const jmlAktif = daftarSemuaGangguanWO.filter(g=> statusAktifWO.includes(g.status)).length;
+    const jmlSelesai = daftarSemuaGangguanWO.filter(g=> g.status === 'selesai').length;
+    const jmlDitolak = daftarSemuaGangguanWO.filter(g=> g.status === 'ditolak').length;
+    if (chartDonutWO) chartDonutWO.destroy();
+    chartDonutWO = new Chart(document.getElementById('chart-donut-wo'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Aktif', 'Selesai', 'Ditolak'],
+        datasets: [{ data: [jmlAktif, jmlSelesai, jmlDitolak], backgroundColor: ['#1e40af', '#3ecf8e', '#8c9096'] }]
+      },
+      options: {
+        plugins: { legend: { position: 'bottom', labels: { color: '#1A1D1F', font: { size: 9 }, boxWidth: 10 } } }
+      }
+    });
+
+    // ---------- Kartu Alarm & Insiden (data real, bukan dummy) ----------
+    const sosAktif = (typeof daftarSemuaInsidenSOS !== 'undefined')
+      ? daftarSemuaInsidenSOS.filter(s=> s.status === 'menunggu_verifikasi').length : 0;
+    const fatigueTinggi = Object.values(daftarPersonelAktifCache).filter(p=> p.fitPersen != null && p.fitPersen < 40).length;
+    const bahayaAktif = (typeof daftarBahayaCache !== 'undefined')
+      ? daftarBahayaCache.filter(b=> b.status !== 'selesai').length : 0;
+    document.getElementById('exec-sos-aktif').textContent = sosAktif;
+    document.getElementById('exec-fatigue-tinggi').textContent = fatigueTinggi;
+    document.getElementById('exec-bahaya-aktif').textContent = bahayaAktif;
+
+    // ---------- Tren Harian (14 hari terakhir): WO baru dilaporkan vs WO diselesaikan per hari ----------
+    const hariTerakhir = [];
+    for (let i = 13; i >= 0; i--){
+      const tgl = new Date();
+      tgl.setDate(tgl.getDate() - i);
+      hariTerakhir.push(tgl.toLocaleDateString('id-ID', { day:'2-digit', month:'2-digit' }));
+    }
+    const dataLapor = hariTerakhir.map(()=> 0);
+    const dataSelesai = hariTerakhir.map(()=> 0);
+    daftarSemuaGangguanWO.forEach(g=>{
+      if (g.waktuLapor && g.waktuLapor.toDate){
+        const label = g.waktuLapor.toDate().toLocaleDateString('id-ID', { day:'2-digit', month:'2-digit' });
+        const idx = hariTerakhir.indexOf(label);
+        if (idx >= 0) dataLapor[idx]++;
+      }
+      if (g.waktuSelesai && g.waktuSelesai.toDate){
+        const label = g.waktuSelesai.toDate().toLocaleDateString('id-ID', { day:'2-digit', month:'2-digit' });
+        const idx = hariTerakhir.indexOf(label);
+        if (idx >= 0) dataSelesai[idx]++;
+      }
+    });
+    if (chartTrenWO) chartTrenWO.destroy();
+    chartTrenWO = new Chart(document.getElementById('chart-tren-wo'), {
+      type: 'line',
+      data: {
+        labels: hariTerakhir,
+        datasets: [
+          { label: 'WO Dilaporkan', data: dataLapor, borderColor: '#1e40af', backgroundColor: 'rgba(30,64,175,0.1)', tension: 0.3 },
+          { label: 'WO Selesai', data: dataSelesai, borderColor: '#3ecf8e', backgroundColor: 'rgba(62,207,142,0.1)', tension: 0.3 }
+        ]
+      },
+      options: {
+        plugins: { legend: { position: 'bottom', labels: { color: '#1A1D1F', font: { size: 9 }, boxWidth: 10 } } },
+        scales: {
+          x: { ticks: { color: '#1A1D1F', font: { size: 8 } }, grid: { color: '#E4E7EB' } },
+          y: { ticks: { color: '#1A1D1F', font: { size: 9 }, stepSize: 1 }, grid: { color: '#E4E7EB' }, beginAtZero: true }
+        }
+      }
+    });
+  }
 
   // ==========================================================
   // RUANG KOMUNIKASI — Chat (teks + foto) & Laporan Cepat
