@@ -136,6 +136,15 @@
     font-family:var(--mono); border-radius:2px;
   }
 
+  /* Animasi kedip -- dipakai untuk ikon alarm WO (ada laporan gangguan baru / WO ditugaskan) */
+  @keyframes kedipAlarmWO {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(30,64,175,0.7); transform: scale(1); }
+    50% { box-shadow: 0 0 0 8px rgba(30,64,175,0); transform: scale(1.08); }
+  }
+  .blink-alarm-wo {
+    animation: kedipAlarmWO 1s infinite;
+  }
+
   .sos-banner{
     background:#2a0808; border:1px solid var(--red); color:#ffb3b3; padding:12px 16px;
     font-size:12.5px; margin-bottom:16px; display:none;
@@ -846,6 +855,7 @@ MAIN CONTENT
           <button id="btn-riwayat-sos" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Riwayat & Verifikasi SOS (Moderator)">📟</button>
           <button id="btn-lapor-gangguan" class="track-btn icon-square-btn hidden" style="background:#1e40af; color:#fff; border:1px solid #1e40af;" title="Lapor Gangguan (Work Order)">🔧</button>
           <button id="btn-panel-wo" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="Panel Work Order (Supervisor)">🗂️</button>
+          <button id="btn-wo-saya-personil" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:#1e40af; border:1px solid #1e40af;" title="WO Saya (Belum Ada)">🔧</button>
         </div>
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -4378,6 +4388,7 @@ MAIN CONTENT
           catatanPekerjaan: null, fotoSelesaiUrl: null, waktuSelesai: null,
           sapSync: false, waktuSapSync: null
         });
+        kirimNotifikasiKeModerator('🔧 Gangguan Baru', plant + ' - ' + area + ' (' + prioritas + ')');
 
         statusEl.style.color = 'var(--green)';
         statusEl.textContent = '✅ Laporan gangguan terkirim ke Supervisor.';
@@ -4521,16 +4532,29 @@ MAIN CONTENT
         if (jumlahMenunggu > 0){
           document.getElementById('teks-banner-gangguan').textContent = '🔧 ADA ' + jumlahMenunggu + ' LAPORAN GANGGUAN BARU -- MENUNGGU VALIDASI';
         }
+        // Ikon Panel WO berkedip selama masih ada gangguan menunggu validasi
+        document.getElementById('btn-panel-wo').classList.toggle('blink-alarm-wo', jumlahMenunggu > 0);
       }
 
-      // Untuk personil: auto-buka modal kalau ada WO ditugaskan/dikerjakan miliknya yang belum dibuka
+      // Untuk personil: auto-buka modal kalau ada WO ditugaskan/dikerjakan miliknya yang belum dibuka,
+      // DAN nyalakan ikon "WO Saya" (berkedip kalau masih perlu Terima/Tolak, nyala tetap kalau sudah dikerjakan)
       if (auth.currentUser && window.__userRole === 'user'){
         const woSaya = daftarSemuaGangguanWO.find(g=>
           g.personilUid === auth.currentUser.uid
           && (g.status === 'ditugaskan' || g.status === 'dikerjakan')
-          && !woDitutupManualSesiIni.has(g.id)
         );
-        if (woSaya && idWOSedangDikerjakan !== woSaya.id){
+        const btnWoSaya = document.getElementById('btn-wo-saya-personil');
+        if (woSaya){
+          btnWoSaya.classList.remove('hidden');
+          btnWoSaya.classList.toggle('blink-alarm-wo', woSaya.status === 'ditugaskan'); // kedip = perlu Terima/Tolak
+          btnWoSaya.title = 'WO Saya: ' + woSaya.plant + ' - ' + woSaya.area;
+          btnWoSaya.onclick = ()=> bukaProgressWO(woSaya.id);
+        } else {
+          btnWoSaya.classList.add('hidden');
+          btnWoSaya.classList.remove('blink-alarm-wo');
+        }
+
+        if (woSaya && woSaya.status === 'ditugaskan' && idWOSedangDikerjakan !== woSaya.id && !woDitutupManualSesiIni.has(woSaya.id)){
           bukaProgressWO(woSaya.id);
         }
       }
@@ -4614,9 +4638,12 @@ MAIN CONTENT
     statusEl.style.color = 'var(--text-dim)';
     statusEl.textContent = 'Mendispatch...';
     try{
+      const gangguanTerkait = daftarSemuaGangguanWO.find(g=> g.id === idGangguanSedangDivalidasi);
       await updateDoc(doc(db, 'gangguanWO', idGangguanSedangDivalidasi), {
         status: 'ditugaskan', personilUid, personilEmail, waktuDispatch: serverTimestamp()
       });
+      kirimNotifikasiKeUid(personilUid, '📨 WO Baru Ditugaskan',
+        (gangguanTerkait ? (gangguanTerkait.plant + ' - ' + gangguanTerkait.area) : 'Ada tugas baru untuk Anda') + ' -- buka aplikasi untuk Terima/Tolak.');
       statusEl.style.color = 'var(--green)';
       statusEl.textContent = '✅ WO berhasil didispatch ke ' + personilEmail;
       setTimeout(()=> document.getElementById('modal-validasi-gangguan-overlay').classList.add('hidden'), 1200);
@@ -5370,6 +5397,7 @@ MAIN CONTENT
         await setDoc(doc(db, 'pushSubscriptions', auth.currentUser.uid), {
           token,
           email: auth.currentUser.email,
+          role: window.__userRole || 'user', // dipakai utk notifikasi bertarget, mis. "khusus moderator"
           updatedAt: serverTimestamp()
         });
         tombol.classList.add('hidden'); // sembunyikan tombol -- sudah aktif
@@ -5406,6 +5434,41 @@ MAIN CONTENT
       });
     }catch(err){
       console.error('Gagal kirim notifikasi:', err); // gagal kirim notif TIDAK boleh menggagalkan pengiriman chat itu sendiri
+    }
+  }
+
+  /** Kirim notifikasi push KHUSUS ke moderator (admin/editor/vip) -- dipakai saat ada gangguan baru menunggu validasi */
+  async function kirimNotifikasiKeModerator(judul, isi){
+    try{
+      const snapSubs = await getDocs(collection(db, 'pushSubscriptions'));
+      const tokens = [];
+      snapSubs.forEach(d=>{
+        const data = d.data();
+        if (['admin','editor','vip'].includes(data.role) && data.token) tokens.push(data.token);
+      });
+      if (tokens.length === 0) return;
+      await fetch(NOTIF_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Kunci-Rahasia': NOTIF_KUNCI_RAHASIA },
+        body: JSON.stringify({ tokens, judul, isi })
+      });
+    }catch(err){
+      console.error('Gagal kirim notifikasi ke moderator:', err);
+    }
+  }
+
+  /** Kirim notifikasi push ke 1 orang spesifik (uid) -- dipakai saat WO didispatch ke personil tertentu */
+  async function kirimNotifikasiKeUid(uid, judul, isi){
+    try{
+      const subDoc = await getDoc(doc(db, 'pushSubscriptions', uid));
+      if (!subDoc.exists() || !subDoc.data().token) return;
+      await fetch(NOTIF_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Kunci-Rahasia': NOTIF_KUNCI_RAHASIA },
+        body: JSON.stringify({ tokens: [subDoc.data().token], judul, isi })
+      });
+    }catch(err){
+      console.error('Gagal kirim notifikasi ke uid:', err);
     }
   }
 
