@@ -1341,6 +1341,12 @@ MAIN CONTENT
     <div id="blok-rekomendasi-dispatch" class="hidden">
       <div style="font-size:11px; color:var(--text-dim); margin:12px 0 6px;">📡 Rekomendasi Personil (berdasarkan jarak terdekat & FIT% -- bukan AI, murni perhitungan aturan dari data real-time)</div>
       <div id="daftar-rekomendasi-personil"></div>
+
+      <button id="btn-toggle-dispatch-manual" class="hidden" style="width:100%; margin-top:10px; padding:9px; background:var(--panel); border:1px solid #1e40af; color:#1e40af; font-family:var(--mono); font-size:11px; cursor:pointer;">🗓️ Dispatch Manual (dari Jadwal Kerja Hari Ini) ▾</button>
+      <div id="blok-dispatch-manual" class="hidden" style="margin-top:8px;">
+        <div style="font-size:10px; color:var(--text-dim); margin-bottom:6px;">Personil yang terjadwal bertugas HARI INI (termasuk yang tidak sedang aktif tracking -- mis. belum lihat notifikasi).</div>
+        <div id="daftar-dispatch-manual"></div>
+      </div>
     </div>
     <div id="status-aksi-gangguan" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
   </div>
@@ -1768,6 +1774,7 @@ MAIN CONTENT
       window.__userRole = 'user'; // gagal baca -> anggap user biasa (aman, tidak elevate ke admin)
     }
     window.__userKategoriKerja = dataUserUntukIdentitas.kategoriKerja || null; // 'supervisor'/'manager'/dll -- dipakai utk hak akses Panel WO/Executive Dashboard
+    window.__userJenisManager = dataUserUntukIdentitas.jenisManager || null; // 'produksi'/'non-produksi' -- dipakai utk hak akses Manual Dispatch dari Jadwal
     tampilkanIdentitasPengguna(auth.currentUser.email, window.__userRole, dataUserUntukIdentitas.kategoriKerja);
 
     initStatTotalPersonel();
@@ -1989,6 +1996,21 @@ MAIN CONTENT
           spesialisasiSelect.style.display = (jenisPersonilSelect.value === 'ts') ? '' : 'none';
         });
 
+        // Jenis Manager (Produksi / Non-Produksi) -- HANYA relevan kalau kategoriKerja='manager'.
+        // Manager Produksi TIDAK boleh manual dispatch WO (itu wewenang manager non-produksi/maintenance).
+        const jenisManagerSelect = document.createElement('select');
+        jenisManagerSelect.style.cssText = roleSelect.style.cssText;
+        jenisManagerSelect.style.display = (u.role === 'user' && u.kategoriKerja === 'manager') ? '' : 'none';
+        [['', '-- jenis manager --'], ['produksi', 'Manager Produksi'], ['non-produksi', 'Manager Non-Produksi (Maintenance/TS)']].forEach(([val, label])=>{
+          const opt = document.createElement('option');
+          opt.value = val; opt.textContent = label;
+          if ((u.jenisManager || '') === val) opt.selected = true;
+          jenisManagerSelect.appendChild(opt);
+        });
+        kategoriSelect.addEventListener('change', ()=>{
+          jenisManagerSelect.style.display = (kategoriSelect.value === 'manager') ? '' : 'none';
+        });
+
         // Toggle tampil/sembunyi kategori & pola shift kalau role diganti manual di dropdown
         roleSelect.addEventListener('change', ()=>{
           const tampil = roleSelect.value === 'user';
@@ -1996,6 +2018,7 @@ MAIN CONTENT
           polaShiftSelect.style.display = tampil ? '' : 'none';
           jenisPersonilSelect.style.display = tampil ? '' : 'none';
           spesialisasiSelect.style.display = (tampil && jenisPersonilSelect.value === 'ts') ? '' : 'none';
+          jenisManagerSelect.style.display = (tampil && kategoriSelect.value === 'manager') ? '' : 'none';
         });
 
         const btnSimpan = document.createElement('button');
@@ -2011,6 +2034,7 @@ MAIN CONTENT
             dataUpdate.polaShiftDasar = (roleSelect.value === 'user') ? (polaShiftSelect.value || null) : null;
             dataUpdate.jenisPersonil = (roleSelect.value === 'user') ? (jenisPersonilSelect.value || null) : null;
             dataUpdate.spesialisasiTS = (roleSelect.value === 'user' && jenisPersonilSelect.value === 'ts') ? (spesialisasiSelect.value || null) : null;
+            dataUpdate.jenisManager = (roleSelect.value === 'user' && kategoriSelect.value === 'manager') ? (jenisManagerSelect.value || null) : null;
             await updateDoc(doc(db, 'users', uid), dataUpdate);
             btnSimpan.textContent = '✓ TERSIMPAN';
             setTimeout(()=>{ btnSimpan.textContent = 'SIMPAN'; }, 1500);
@@ -2028,6 +2052,7 @@ MAIN CONTENT
         row.appendChild(polaShiftSelect);
         row.appendChild(jenisPersonilSelect);
         row.appendChild(spesialisasiSelect);
+        row.appendChild(jenisManagerSelect);
         row.appendChild(btnSimpan);
         listEl.appendChild(row);
       });
@@ -2045,6 +2070,14 @@ MAIN CONTENT
   function isSupervisorAtauManager(){
     return window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip'
       || (window.__userRole === 'user' && (window.__userKategoriKerja === 'supervisor' || window.__userKategoriKerja === 'manager'));
+  }
+
+  // Manual Dispatch dari Jadwal Kerja -- admin/editor/vip ATAU Manager NON-PRODUKSI (bukan Supervisor
+  // biasa, bukan Manager Produksi). Alasan: perlu bisa dispatch ke personil yang TIDAK AKTIF tracking
+  // (mis. sedang tidur/tidak lihat notif), berdasarkan siapa yang terjadwal bertugas hari ini.
+  function bolehManualDispatchJadwal(){
+    return window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip'
+      || (window.__userRole === 'user' && window.__userKategoriKerja === 'manager' && window.__userJenisManager !== 'produksi');
   }
 
   function updateStatCard(id, value){
@@ -4657,8 +4690,16 @@ MAIN CONTENT
         });
         document.getElementById('blok-tombol-validasi').classList.add('hidden');
         document.getElementById('blok-rekomendasi-dispatch').classList.remove('hidden');
+        document.getElementById('btn-toggle-dispatch-manual').classList.toggle('hidden', !bolehManualDispatchJadwal());
         tampilkanRekomendasiPersonil(gangguan);
       }catch(err){ alert('Gagal validasi: ' + err.message); }
+    });
+
+    document.getElementById('btn-toggle-dispatch-manual').addEventListener('click', ()=>{
+      const blok = document.getElementById('blok-dispatch-manual');
+      const sedangTerbuka = !blok.classList.contains('hidden');
+      blok.classList.toggle('hidden', sedangTerbuka);
+      if (!sedangTerbuka) renderDispatchManual();
     });
 
     // ---------- Panel WO (moderator) ----------
@@ -4879,6 +4920,8 @@ MAIN CONTENT
     const sudahDivalidasi = g.status !== 'menunggu_validasi';
     document.getElementById('blok-tombol-validasi').classList.toggle('hidden', sudahDivalidasi);
     document.getElementById('blok-rekomendasi-dispatch').classList.toggle('hidden', !sudahDivalidasi || g.status === 'ditolak');
+    document.getElementById('btn-toggle-dispatch-manual').classList.toggle('hidden', !(sudahDivalidasi && g.status !== 'ditolak' && bolehManualDispatchJadwal()));
+    document.getElementById('blok-dispatch-manual').classList.add('hidden'); // selalu mulai tertutup tiap buka modal
     if (sudahDivalidasi && g.status !== 'ditolak') tampilkanRekomendasiPersonil(g);
     document.getElementById('status-aksi-gangguan').textContent = '';
     document.getElementById('modal-validasi-gangguan-overlay').classList.remove('hidden');
@@ -4955,7 +4998,7 @@ MAIN CONTENT
       await updateDoc(doc(db, 'gangguanWO', idGangguanSedangDivalidasi), {
         status: 'ditugaskan', personilUid, personilEmail, waktuDispatch: serverTimestamp()
       });
-      kirimNotifikasiKeUid(personilUid, '📨 WO Baru Ditugaskan',
+      kirimNotifikasiKeUid(personilUid, '🚨 WO BARU DITUGASKAN -- SEGERA DITANGGAPI',
         (gangguanTerkait ? (gangguanTerkait.plant + ' - ' + gangguanTerkait.area) : 'Ada tugas baru untuk Anda') + ' -- buka aplikasi untuk Terima/Tolak.');
       statusEl.style.color = 'var(--green)';
       statusEl.textContent = '✅ WO berhasil didispatch ke ' + personilEmail;
@@ -4965,6 +5008,51 @@ MAIN CONTENT
       statusEl.textContent = '⚠️ Gagal dispatch: ' + err.message;
     }
   };
+
+  // Dispatch Manual dari Jadwal Kerja -- ambil personil yang TERJADWAL bertugas HARI INI,
+  // TIDAK PEDULI apakah tracking-nya sedang aktif atau tidak (mis. personil belum lihat
+  // notifikasi/sedang istirahat). Khusus admin/editor/vip & Manager Non-Produksi.
+  async function renderDispatchManual(){
+    const cont = document.getElementById('daftar-dispatch-manual');
+    cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Memuat jadwal hari ini...</div>';
+    try{
+      const now = new Date();
+      const hariIni = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'); // format HARUS sama persis dgn idDokumenJadwalHariIni()
+      const snap = await getDocs(query(collection(db, 'jadwalKerja'), where('tanggal', '==', hariIni), where('statusHariIni', '==', 'aktif')));
+      if (snap.empty){
+        cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Tidak ada personil yang terjadwal bertugas hari ini.</div>';
+        return;
+      }
+      const daftar = [];
+      snap.forEach(d=> daftar.push(d.data()));
+      // Ambil email/nama masing-masing -- pakai cache tracking kalau ada, kalau tidak fetch dari users
+      await Promise.all(daftar.map(async (j)=>{
+        const dariCache = daftarPersonelAktifCache[j.uid];
+        if (dariCache){
+          j.email = dariCache.email; j.nama = dariCache.nama; j.sedangTracking = true;
+        } else {
+          try{
+            const userDoc = await getDoc(doc(db, 'users', j.uid));
+            const data = userDoc.exists() ? userDoc.data() : {};
+            j.email = data.email || j.uid; j.nama = data.nama || data.email || j.uid; j.sedangTracking = false;
+          }catch(e){ j.email = j.uid; j.nama = j.uid; j.sedangTracking = false; }
+        }
+      }));
+
+      cont.innerHTML = daftar.map(j=>{
+        const statusTracking = j.sedangTracking
+          ? '<span style="color:var(--green);">● Sedang tracking</span>'
+          : '<span style="color:var(--amber);">● Tidak sedang tracking (mungkin belum lihat notif)</span>';
+        return '<div style="border:1px solid var(--line-bright); padding:8px 10px; margin-bottom:6px;">'
+          + '<div style="font-weight:700; font-size:12px;">' + j.nama + '</div>'
+          + '<div style="font-size:10px; margin:2px 0;">' + statusTracking + ' · Shift: ' + (j.shiftTerdeteksi || '-') + '</div>'
+          + '<button onclick="window.dispatchKePersonil(\'' + j.uid + '\', \'' + (j.email||'').replace(/'/g,"") + '\')" style="width:100%; margin-top:6px; padding:7px; background:var(--panel); color:#1e40af; border:1px solid #1e40af; font-family:var(--mono); font-size:11px; cursor:pointer;">Pilih & Dispatch</button>'
+          + '</div>';
+      }).join('');
+    }catch(err){
+      cont.innerHTML = '<div style="color:var(--red); font-size:11px;">⚠️ Gagal memuat jadwal: ' + err.message + '</div>';
+    }
+  }
 
   function renderPanelWO(){
     const total = daftarSemuaGangguanWO.length;
