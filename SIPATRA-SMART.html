@@ -786,6 +786,7 @@ MAIN CONTENT
       <button id="admin-modal-close" class="icon-btn">✕</button>
     </div>
     <div id="admin-user-status" style="font-size:11.5px; margin-bottom:10px;"></div>
+    <input type="text" id="admin-user-search" placeholder="🔍 Cari email/nama user..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
     <div id="admin-user-list"></div>
 
     <hr style="border-color:var(--line-bright); margin:18px 0;">
@@ -860,13 +861,13 @@ MAIN CONTENT
 
   <!-- ===== QUICK STATS (data real dari Firestore, bukan dummy) ===== -->
   <div class="stats-grid">
-    <div class="stat-card">
+    <div class="stat-card" onclick="window.bukaDaftarPersonilAktif()" style="cursor:pointer;" title="Klik untuk lihat siapa saja yang sedang aktif">
       <span class="stat-icon">📡</span>
       <div class="stat-label">Total Personel</div>
       <div class="stat-value" id="stat-total">0</div>
       <span class="stat-change up">● Terdaftar</span>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" onclick="window.bukaDaftarPersonilAktif()" style="cursor:pointer;" title="Klik untuk lihat siapa saja yang sedang aktif">
       <span class="stat-icon">📍</span>
       <div class="stat-label">Sedang Bertugas</div>
       <div class="stat-value" id="stat-active">0</div>
@@ -1475,6 +1476,15 @@ MAIN CONTENT
   </div>
 </div>
 
+<!-- ===== MODAL DAFTAR PERSONIL AKTIF (terlihat SEMUA pengguna -- bantu koordinasi/dispatch manual) ===== -->
+<div id="modal-personil-aktif-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:460px; width:100%; max-height:85vh; overflow-y:auto;">
+    <div class="panel-head"><h3>📡 Personil Sedang Aktif</h3><button id="btn-tutup-personil-aktif" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Daftar akun yang sedang aktif tracking saat ini (membantu koordinasi & dispatch manual).</div>
+    <div id="daftar-personil-aktif-modal"></div>
+  </div>
+</div>
+
 <!-- ===== MODAL VIDEO CALL (WebRTC) ===== -->
 <div id="call-overlay">
   <div id="call-box">
@@ -1909,6 +1919,8 @@ MAIN CONTENT
     document.getElementById('admin-modal-overlay').classList.add('hidden');
   });
 
+  let daftarUserAdminCache = []; // {uid, data} -- di-cache supaya search tidak perlu fetch ulang Firestore
+
   async function muatDaftarUserAdmin(){
     const statusEl = document.getElementById('admin-user-status');
     const listEl = document.getElementById('admin-user-list');
@@ -1918,20 +1930,70 @@ MAIN CONTENT
     try{
       const snap = await getDocs(collection(db, 'users'));
       statusEl.textContent = '';
-      if (snap.empty){
-        listEl.innerHTML = '<div style="color:var(--text-dim); font-size:12px;">Belum ada user terdaftar.</div>';
-        return;
-      }
-      snap.forEach(docSnap=>{
-        const u = docSnap.data();
-        const uid = docSnap.id;
+      daftarUserAdminCache = [];
+      snap.forEach(docSnap=> daftarUserAdminCache.push({ uid: docSnap.id, data: docSnap.data() }));
+      renderDaftarUserAdmin(document.getElementById('admin-user-search').value || '');
+    }catch(err){
+      statusEl.textContent = 'Gagal memuat daftar user: ' + err.message;
+      statusEl.className = 'err';
+    }
+  }
+
+  // Render ulang daftar dari CACHE (bukan fetch ulang) -- dipakai baik saat pertama buka
+  // maupun setiap kali user mengetik di kotak pencarian.
+  function renderDaftarUserAdmin(teksCari){
+    const listEl = document.getElementById('admin-user-list');
+    const kataKunci = (teksCari || '').trim().toLowerCase();
+    const hasilFilter = kataKunci
+      ? daftarUserAdminCache.filter(({ data: u })=> (u.email || '').toLowerCase().includes(kataKunci) || (u.phone || '').toLowerCase().includes(kataKunci))
+      : daftarUserAdminCache;
+
+    listEl.innerHTML = '';
+    if (daftarUserAdminCache.length === 0){
+      listEl.innerHTML = '<div style="color:var(--text-dim); font-size:12px;">Belum ada user terdaftar.</div>';
+      return;
+    }
+    if (hasilFilter.length === 0){
+      listEl.innerHTML = '<div style="color:var(--text-dim); font-size:12px;">Tidak ada user yang cocok dengan pencarian "' + teksCari + '".</div>';
+      return;
+    }
+    hasilFilter.forEach(({ uid, data: u })=> listEl.appendChild(buatBarisUserAdmin(uid, u)));
+  }
+
+  // Bangun 1 baris user -- RINGKAS secara default (email + badge role), detail (semua dropdown
+  // pengaturan) disembunyikan di balik tombol "Detail ▾" supaya layar HP tidak penuh kalau
+  // user terdaftar banyak.
+  function buatBarisUserAdmin(uid, u){
+        const statusEl = document.getElementById('admin-user-status');
         const row = document.createElement('div');
-        row.style.cssText = 'border:1px solid var(--line-bright); padding:10px 12px; margin-bottom:8px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between;';
+        row.style.cssText = 'border:1px solid var(--line-bright); padding:10px 12px; margin-bottom:8px;';
+
+        const baleadRow = document.createElement('div');
+        baleadRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between;';
 
         const info = document.createElement('div');
         info.style.cssText = 'font-size:12px; flex:1; min-width:180px;';
-        info.innerHTML = '<b>' + (u.email || '(tanpa email)') + '</b><br>'
+        const badgeWarna = u.role === 'admin' ? 'var(--red)' : u.role === 'guest' ? 'var(--text-dim)' : '#1e40af';
+        info.innerHTML = '<b>' + (u.email || '(tanpa email)') + '</b> <span style="font-size:9px; background:' + badgeWarna + '; color:#fff; padding:2px 6px; border-radius:4px;">' + (u.role || 'user') + '</span><br>'
           + '<span style="color:var(--text-dim); font-size:10.5px;">' + (u.phone || '-') + ' · uid: ' + uid.slice(0,8) + '...</span>';
+
+        const btnToggleDetail = document.createElement('button');
+        btnToggleDetail.textContent = 'Detail ▾';
+        btnToggleDetail.className = 'icon-btn';
+        btnToggleDetail.style.cssText = 'width:auto; padding:6px 12px; font-size:11px; flex-shrink:0;';
+
+        baleadRow.appendChild(info);
+        baleadRow.appendChild(btnToggleDetail);
+        row.appendChild(baleadRow);
+
+        const detailWrap = document.createElement('div');
+        detailWrap.style.cssText = 'display:none; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--line-bright);';
+        btnToggleDetail.addEventListener('click', ()=>{
+          const tampil = detailWrap.style.display === 'none';
+          detailWrap.style.display = tampil ? 'flex' : 'none';
+          btnToggleDetail.textContent = tampil ? 'Detail ▴' : 'Detail ▾';
+        });
+        row.appendChild(detailWrap);
 
         const roleSelect = document.createElement('select');
         roleSelect.style.cssText = 'background:#000; color:var(--text); border:1px solid var(--line-bright); font-family:var(--mono); padding:6px 8px; font-size:11.5px;';
@@ -2045,22 +2107,20 @@ MAIN CONTENT
           }
         });
 
-        row.appendChild(info);
-        row.appendChild(roleSelect);
-        row.appendChild(statusSelect);
-        row.appendChild(kategoriSelect);
-        row.appendChild(polaShiftSelect);
-        row.appendChild(jenisPersonilSelect);
-        row.appendChild(spesialisasiSelect);
-        row.appendChild(jenisManagerSelect);
-        row.appendChild(btnSimpan);
-        listEl.appendChild(row);
-      });
-    }catch(err){
-      statusEl.textContent = 'Gagal memuat daftar user: ' + err.message;
-      statusEl.className = 'err';
-    }
+        detailWrap.appendChild(roleSelect);
+        detailWrap.appendChild(statusSelect);
+        detailWrap.appendChild(kategoriSelect);
+        detailWrap.appendChild(polaShiftSelect);
+        detailWrap.appendChild(jenisPersonilSelect);
+        detailWrap.appendChild(spesialisasiSelect);
+        detailWrap.appendChild(jenisManagerSelect);
+        detailWrap.appendChild(btnSimpan);
+        return row;
   }
+
+  document.getElementById('admin-user-search').addEventListener('input', (e)=>{
+    renderDaftarUserAdmin(e.target.value);
+  });
 
   // ---------- Kartu Statistik (data REAL, bukan dummy) ----------
   window.__statTotalDariUsersBerhasil = false;
@@ -2072,11 +2132,12 @@ MAIN CONTENT
       || (window.__userRole === 'user' && (window.__userKategoriKerja === 'supervisor' || window.__userKategoriKerja === 'manager'));
   }
 
-  // Manual Dispatch dari Jadwal Kerja -- admin/editor/vip ATAU Manager NON-PRODUKSI (bukan Supervisor
-  // biasa, bukan Manager Produksi). Alasan: perlu bisa dispatch ke personil yang TIDAK AKTIF tracking
-  // (mis. sedang tidur/tidak lihat notif), berdasarkan siapa yang terjadwal bertugas hari ini.
+  // Manual Dispatch dari Jadwal Kerja -- admin/editor/vip, Supervisor, ATAU Manager NON-PRODUKSI.
+  // Alasan: perlu bisa dispatch ke personil yang TIDAK AKTIF tracking (mis. sedang tidur/tidak
+  // lihat notifikasi), berdasarkan siapa yang terjadwal bertugas hari ini.
   function bolehManualDispatchJadwal(){
     return window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip'
+      || (window.__userRole === 'user' && window.__userKategoriKerja === 'supervisor')
       || (window.__userRole === 'user' && window.__userKategoriKerja === 'manager' && window.__userJenisManager !== 'produksi');
   }
 
@@ -2109,6 +2170,30 @@ MAIN CONTENT
       );
     }catch(e){ window.__statTotalDariUsersBerhasil = false; }
   }
+
+  // Daftar Personil Aktif -- SEMUA pengguna (bukan cuma moderator) boleh lihat siapa yang
+  // sedang aktif tracking saat ini. Membantu koordinasi & dispatch manual antar tim.
+  window.bukaDaftarPersonilAktif = function(){
+    const cont = document.getElementById('daftar-personil-aktif-modal');
+    const daftar = Object.values(daftarPersonelAktifCache);
+    if (daftar.length === 0){
+      cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Belum ada personil yang sedang aktif tracking saat ini.</div>';
+    } else {
+      cont.innerHTML = daftar.map(p=>{
+        const warnaStatus = p.status === 'sos' ? 'var(--red)' : 'var(--green)';
+        const labelStatus = p.status === 'sos' ? '🆘 SOS' : '● Online';
+        const fitTeks = p.fitPersen != null ? (' · 💪 FIT ' + p.fitPersen + '%') : '';
+        return '<div style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaStatus + '; padding:8px 10px; margin-bottom:6px;">'
+          + '<div style="font-weight:700; font-size:12px;">' + (p.nama || p.email) + '</div>'
+          + '<div style="font-size:10px; color:' + warnaStatus + '; margin-top:2px;">' + labelStatus + fitTeks + '</div>'
+          + '</div>';
+      }).join('');
+    }
+    document.getElementById('modal-personil-aktif-overlay').classList.remove('hidden');
+  };
+  document.getElementById('btn-tutup-personil-aktif').addEventListener('click', ()=>{
+    document.getElementById('modal-personil-aktif-overlay').classList.add('hidden');
+  });
 
   // ---------- Dashboard (data simulasi/dummy untuk POC) ----------
   let dashboardInited = false;
