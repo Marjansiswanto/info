@@ -1298,6 +1298,7 @@ MAIN CONTENT
       <option value="Listrik">Listrik</option>
       <option value="Mekanik">Mekanik</option>
       <option value="Instrumentasi">Instrumentasi</option>
+      <option value="Produksi">Produksi</option>
       <option value="Lainnya">Lainnya</option>
     </select>
 
@@ -1347,43 +1348,44 @@ MAIN CONTENT
 
 <!-- ===== MODAL PANEL WORK ORDER (Riwayat & Status -- Supervisor) ===== -->
 <div id="modal-panel-wo-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:560px; width:100%; max-height:90vh; overflow-y:auto;">
+  <div class="panel" style="max-width:560px; width:100%; max-height:90vh; display:flex; flex-direction:column;">
     <div class="panel-head panel-head-wo"><h3>🗂️ Panel Work Order</h3><button id="btn-tutup-panel-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
-    <div style="display:flex; gap:10px; margin-bottom:14px; font-size:11px;">
-      <div style="flex:1; text-align:center; border:1px solid var(--line-bright); padding:8px;">
-        <div style="color:var(--text-dim);">Total</div>
-        <div id="stat-wo-total" style="font-size:18px; font-weight:800;">0</div>
+    <div style="padding:14px 16px 0; flex-shrink:0;">
+      <div style="display:flex; gap:10px; margin-bottom:14px; font-size:11px;">
+        <div style="flex:1; text-align:center; border:1px solid var(--line-bright); padding:8px;">
+          <div style="color:var(--text-dim);">Total</div>
+          <div id="stat-wo-total" style="font-size:18px; font-weight:800;">0</div>
+        </div>
+        <div style="flex:1; text-align:center; border:1px solid #1e40af; padding:8px;">
+          <div style="color:#1e40af;">Aktif</div>
+          <div id="stat-wo-aktif" style="font-size:18px; font-weight:800; color:#1e40af;">0</div>
+        </div>
+        <div style="flex:1; text-align:center; border:1px solid var(--green); padding:8px;">
+          <div style="color:var(--green);">Selesai</div>
+          <div id="stat-wo-selesai" style="font-size:18px; font-weight:800; color:var(--green);">0</div>
+        </div>
       </div>
-      <div style="flex:1; text-align:center; border:1px solid #1e40af; padding:8px;">
-        <div style="color:#1e40af;">Aktif</div>
-        <div id="stat-wo-aktif" style="font-size:18px; font-weight:800; color:#1e40af;">0</div>
-      </div>
-      <div style="flex:1; text-align:center; border:1px solid var(--green); padding:8px;">
-        <div style="color:var(--green);">Selesai</div>
-        <div id="stat-wo-selesai" style="font-size:18px; font-weight:800; color:var(--green);">0</div>
-      </div>
-    </div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px; flex-wrap:wrap;">
-      <div class="gmail-tabs">
-        <button class="gmail-tab-pill active" data-tab-wo="prioritas">Prioritas</button>
-        <button class="gmail-tab-pill" data-tab-wo="semua">Semua</button>
-      </div>
-      <div style="position:relative;">
-        <button id="btn-filter-wo" class="gmail-filter-btn">⚙ Filter <span id="label-filter-wo-aktif"></span></button>
-        <div id="dropdown-filter-wo" class="gmail-dropdown hidden">
-          <div class="gmail-dropdown-item active" data-status-wo="">Semua Status</div>
-          <div class="gmail-dropdown-item" data-status-wo="menunggu_validasi">🆕 Menunggu Validasi</div>
-          <div class="gmail-dropdown-item" data-status-wo="menunggu_dispatch">🔍 Menunggu Dispatch</div>
-          <div class="gmail-dropdown-item" data-status-wo="ditugaskan">📨 Ditugaskan</div>
-          <div class="gmail-dropdown-item" data-status-wo="dikerjakan">🔧 Dikerjakan</div>
-          <div class="gmail-dropdown-item" data-status-wo="selesai">✅ Selesai</div>
-          <div class="gmail-dropdown-item" data-status-wo="ditolak">❌ Ditolak</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px; flex-wrap:wrap;">
+        <div class="gmail-tabs">
+          <button class="gmail-tab-pill active" data-tab-wo="prioritas">Prioritas</button>
+          <button class="gmail-tab-pill" data-tab-wo="semua">Semua</button>
+        </div>
+        <div style="position:relative;">
+          <button id="btn-filter-wo" class="gmail-filter-btn">⚙ Filter <span id="label-filter-wo-aktif"></span></button>
+          <div id="dropdown-filter-wo" class="gmail-dropdown hidden">
+            <div class="gmail-dropdown-item active" data-status-wo="">Semua Status</div>
+            <div class="gmail-dropdown-item" data-status-wo="menunggu_validasi">🆕 Menunggu Validasi</div>
+            <div class="gmail-dropdown-item" data-status-wo="menunggu_dispatch">🔍 Menunggu Dispatch</div>
+            <div class="gmail-dropdown-item" data-status-wo="ditugaskan">📨 Ditugaskan</div>
+            <div class="gmail-dropdown-item" data-status-wo="dikerjakan">🔧 Dikerjakan</div>
+            <div class="gmail-dropdown-item" data-status-wo="selesai">✅ Selesai</div>
+            <div class="gmail-dropdown-item" data-status-wo="ditolak">❌ Ditolak</div>
+          </div>
         </div>
       </div>
     </div>
-    <div id="daftar-panel-wo"></div>
+    <div id="daftar-panel-wo" style="overflow-y:auto; padding:0 16px 16px; flex:1; min-height:80px;"></div>
   </div>
-</div>
 </div>
 
 <!-- ===== MODAL DETAIL WO (progress, checklist SHE, dokumentasi -- Personil yang ditugaskan) ===== -->
@@ -1424,8 +1426,8 @@ MAIN CONTENT
     <div id="daftar-overview-plant" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;"></div>
 
     <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
-      <div style="flex:1; min-width:200px;">
-        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Status Work Order</div>
+      <div style="flex:1; min-width:200px; cursor:pointer;" onclick="window.bukaPanelWODariExecutive(null)" title="Klik untuk lihat detail semua Work Order">
+        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Status Work Order <span style="font-size:9px;">(klik utk detail →)</span></div>
         <canvas id="chart-donut-wo" style="max-height:200px;"></canvas>
       </div>
       <div style="flex:1; min-width:140px; display:flex; flex-direction:column; gap:8px; justify-content:center;">
@@ -1765,6 +1767,7 @@ MAIN CONTENT
     }catch(err){
       window.__userRole = 'user'; // gagal baca -> anggap user biasa (aman, tidak elevate ke admin)
     }
+    window.__userKategoriKerja = dataUserUntukIdentitas.kategoriKerja || null; // 'supervisor'/'manager'/dll -- dipakai utk hak akses Panel WO/Executive Dashboard
     tampilkanIdentitasPengguna(auth.currentUser.email, window.__userRole, dataUserUntukIdentitas.kategoriKerja);
 
     initStatTotalPersonel();
@@ -1809,7 +1812,7 @@ MAIN CONTENT
     // Lapor Bahaya -- semua role KECUALI guest boleh lapor
     document.getElementById('btn-lapor-bahaya').classList.toggle('hidden', isGuest);
     // Panel Analitik Bahaya -- khusus moderator (admin/editor/vip)
-    const isModeratorBahaya = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+    const isModeratorBahaya = isSupervisorAtauManager();
     document.getElementById('btn-panel-bahaya').classList.toggle('hidden', !isModeratorBahaya);
     // Riwayat & Verifikasi SOS -- juga khusus moderator (admin/editor/vip)
     document.getElementById('btn-riwayat-sos').classList.toggle('hidden', !isModeratorBahaya);
@@ -1962,11 +1965,37 @@ MAIN CONTENT
           polaShiftSelect.appendChild(opt);
         });
 
+        // Jenis Personil (Operator Produksi / Personil TS) & Spesialisasi -- HANYA relevan role='user'
+        const jenisPersonilSelect = document.createElement('select');
+        jenisPersonilSelect.style.cssText = roleSelect.style.cssText;
+        jenisPersonilSelect.style.display = (u.role === 'user') ? '' : 'none';
+        [['', '-- jenis personil --'], ['operator', 'Operator Produksi'], ['ts', 'Personil TS (Troubleshooting)']].forEach(([val, label])=>{
+          const opt = document.createElement('option');
+          opt.value = val; opt.textContent = label;
+          if ((u.jenisPersonil || '') === val) opt.selected = true;
+          jenisPersonilSelect.appendChild(opt);
+        });
+
+        const spesialisasiSelect = document.createElement('select');
+        spesialisasiSelect.style.cssText = roleSelect.style.cssText;
+        spesialisasiSelect.style.display = (u.role === 'user' && u.jenisPersonil === 'ts') ? '' : 'none';
+        [['', '-- spesialisasi --'], ['Listrik', 'Listrik'], ['Mekanik', 'Mekanik'], ['Instrumentasi', 'Instrumentasi'], ['Produksi', 'Produksi'], ['Lainnya', 'Lainnya']].forEach(([val, label])=>{
+          const opt = document.createElement('option');
+          opt.value = val; opt.textContent = label;
+          if ((u.spesialisasiTS || '') === val) opt.selected = true;
+          spesialisasiSelect.appendChild(opt);
+        });
+        jenisPersonilSelect.addEventListener('change', ()=>{
+          spesialisasiSelect.style.display = (jenisPersonilSelect.value === 'ts') ? '' : 'none';
+        });
+
         // Toggle tampil/sembunyi kategori & pola shift kalau role diganti manual di dropdown
         roleSelect.addEventListener('change', ()=>{
           const tampil = roleSelect.value === 'user';
           kategoriSelect.style.display = tampil ? '' : 'none';
           polaShiftSelect.style.display = tampil ? '' : 'none';
+          jenisPersonilSelect.style.display = tampil ? '' : 'none';
+          spesialisasiSelect.style.display = (tampil && jenisPersonilSelect.value === 'ts') ? '' : 'none';
         });
 
         const btnSimpan = document.createElement('button');
@@ -1977,9 +2006,11 @@ MAIN CONTENT
           btnSimpan.textContent = '...';
           try{
             const dataUpdate = { role: roleSelect.value, status: statusSelect.value };
-            // kategoriKerja/polaShiftDasar HARUS null kalau role bukan 'user' (sesuai spesifikasi)
+            // kategoriKerja/polaShiftDasar/jenisPersonil/spesialisasiTS HARUS null kalau role bukan 'user'
             dataUpdate.kategoriKerja = (roleSelect.value === 'user') ? (kategoriSelect.value || null) : null;
             dataUpdate.polaShiftDasar = (roleSelect.value === 'user') ? (polaShiftSelect.value || null) : null;
+            dataUpdate.jenisPersonil = (roleSelect.value === 'user') ? (jenisPersonilSelect.value || null) : null;
+            dataUpdate.spesialisasiTS = (roleSelect.value === 'user' && jenisPersonilSelect.value === 'ts') ? (spesialisasiSelect.value || null) : null;
             await updateDoc(doc(db, 'users', uid), dataUpdate);
             btnSimpan.textContent = '✓ TERSIMPAN';
             setTimeout(()=>{ btnSimpan.textContent = 'SIMPAN'; }, 1500);
@@ -1995,6 +2026,8 @@ MAIN CONTENT
         row.appendChild(statusSelect);
         row.appendChild(kategoriSelect);
         row.appendChild(polaShiftSelect);
+        row.appendChild(jenisPersonilSelect);
+        row.appendChild(spesialisasiSelect);
         row.appendChild(btnSimpan);
         listEl.appendChild(row);
       });
@@ -2006,6 +2039,14 @@ MAIN CONTENT
 
   // ---------- Kartu Statistik (data REAL, bukan dummy) ----------
   window.__statTotalDariUsersBerhasil = false;
+  // Cek "moderator" utk Bahaya/SOS/WO -- admin/editor/vip ATAU akun role 'user' yang kategoriKerja-nya
+  // diatur admin sebagai Supervisor/Manager (supaya Supervisor lapangan juga bisa validasi/dispatch WO,
+  // verifikasi SOS, dan lihat Executive Dashboard, tanpa perlu akun 'admin' penuh).
+  function isSupervisorAtauManager(){
+    return window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip'
+      || (window.__userRole === 'user' && (window.__userKategoriKerja === 'supervisor' || window.__userKategoriKerja === 'manager'));
+  }
+
   function updateStatCard(id, value){
     const el = document.getElementById(id);
     if (el) el.textContent = value;
@@ -3977,7 +4018,7 @@ MAIN CONTENT
 
     // Banner alert -- klik untuk langsung buka panel (khusus moderator; personil biasa cuma lihat bannernya)
     document.getElementById('banner-bahaya-tinggi').addEventListener('click', ()=>{
-      const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+      const isModerator = isSupervisorAtauManager();
       if (isModerator){
         document.getElementById('modal-panel-bahaya-overlay').classList.remove('hidden');
         renderPanelBahaya();
@@ -4160,7 +4201,7 @@ MAIN CONTENT
     }
 
     // Blok ubah status -- HANYA untuk moderator (admin/editor/vip)
-    const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+    const isModerator = isSupervisorAtauManager();
     document.getElementById('blok-status-bahaya').classList.toggle('hidden', !isModerator);
     document.getElementById('status-ubah-status-bahaya').textContent = '';
     idLaporanBahayaDibuka = id; // dipakai tombol ubah status di bawah
@@ -4441,7 +4482,7 @@ MAIN CONTENT
       daftarSemuaInsidenSOS = [];
       snap.forEach(d=> daftarSemuaInsidenSOS.push({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
 
-      const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+      const isModerator = isSupervisorAtauManager();
       if (isModerator){
         antrianSosBelumDiverifikasi = daftarSemuaInsidenSOS
           .filter(x=> x.status === 'menunggu_verifikasi' && !sosDitundaSesiIni.has(x.id))
@@ -4478,6 +4519,7 @@ MAIN CONTENT
   let woDitutupManualSesiIni = new Set(); // id WO yg personil sudah tutup manual -- jangan auto-buka lagi sesi ini
   let tabAktifWO = 'prioritas'; // 'prioritas' | 'semua' -- tab gaya Gmail di Panel WO
   let filterStatusWO = ''; // '' = semua status, atau salah satu nilai status WO
+  let filterPlantWO = null; // dipakai saat drill-down dari Executive Dashboard -- null = semua plant
   let idWOSedangDilacak = null; // id WO yg sedang ditampilkan di modal stepper "Lacak WO"
 
   function initSistemWO(){
@@ -4595,9 +4637,12 @@ MAIN CONTENT
     });
     document.getElementById('btn-tolak-gangguan').addEventListener('click', async ()=>{
       if (!idGangguanSedangDivalidasi || !auth.currentUser) return;
+      const alasan = prompt('Alasan menolak laporan ini (opsional, boleh dikosongkan):', '');
+      if (alasan === null) return; // batal (klik Cancel di prompt)
       try{
         await updateDoc(doc(db, 'gangguanWO', idGangguanSedangDivalidasi), {
-          status: 'ditolak', divalidasiOleh: auth.currentUser.email, waktuValidasi: serverTimestamp()
+          status: 'ditolak', divalidasiOleh: auth.currentUser.email, waktuValidasi: serverTimestamp(),
+          alasanTolak: alasan.trim() || null
         });
         document.getElementById('modal-validasi-gangguan-overlay').classList.add('hidden');
       }catch(err){ alert('Gagal tolak: ' + err.message); }
@@ -4618,6 +4663,7 @@ MAIN CONTENT
 
     // ---------- Panel WO (moderator) ----------
     document.getElementById('btn-panel-wo').addEventListener('click', ()=>{
+      filterPlantWO = null;
       document.getElementById('modal-panel-wo-overlay').classList.remove('hidden');
       renderPanelWO();
     });
@@ -4664,7 +4710,7 @@ MAIN CONTENT
 
     // Banner klik -> buka gangguan tertua yang masih menunggu validasi (khusus moderator)
     document.getElementById('banner-gangguan-baru').addEventListener('click', ()=>{
-      const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+      const isModerator = isSupervisorAtauManager();
       if (!isModerator) return;
       const antrian = daftarSemuaGangguanWO.filter(g=> g.status === 'menunggu_validasi').sort((a,b)=>{
         const ta = a.waktuLapor && a.waktuLapor.toDate ? a.waktuLapor.toDate().getTime() : 0;
@@ -4694,10 +4740,13 @@ MAIN CONTENT
     document.getElementById('btn-tolak-wo').addEventListener('click', async ()=>{
       if (!idWOSedangDikerjakan) return;
       if (!confirm('Tolak Work Order ini? Supervisor perlu menugaskan ulang ke personil lain.')) return;
+      const alasan = prompt('Alasan menolak WO ini (opsional, boleh dikosongkan):', '');
+      if (alasan === null) return; // batal (klik Cancel di prompt)
       try{
         woDitutupManualSesiIni.add(idWOSedangDikerjakan);
         await updateDoc(doc(db, 'gangguanWO', idWOSedangDikerjakan), {
-          status: 'menunggu_dispatch', personilUid: null, personilEmail: null
+          status: 'menunggu_dispatch', personilUid: null, personilEmail: null,
+          alasanTolakPersonil: alasan.trim() || null
         });
         document.getElementById('modal-progress-wo-overlay').classList.add('hidden');
         idWOSedangDikerjakan = null;
@@ -4755,7 +4804,7 @@ MAIN CONTENT
       daftarSemuaGangguanWO = [];
       snap.forEach(d=> daftarSemuaGangguanWO.push({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
 
-      const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+      const isModerator = isSupervisorAtauManager();
       const jumlahMenunggu = daftarSemuaGangguanWO.filter(g=> g.status === 'menunggu_validasi').length;
       if (isModerator){
         document.getElementById('banner-gangguan-baru').classList.toggle('hidden', jumlahMenunggu === 0);
@@ -4838,37 +4887,58 @@ MAIN CONTENT
 
   // Rekomendasi personil -- RULE-BASED (jarak terdekat + FIT% tertinggi dari data real-time
   // yang sudah kita lacak), BUKAN AI/Machine Learning sungguhan.
-  function tampilkanRekomendasiPersonil(gangguan){
+  // Rekomendasi personil -- RULE-BASED (jarak terdekat + FIT% tertinggi + kecocokan spesialisasi TS
+  // dengan jenis gangguan, dari data real-time yang sudah kita lacak), BUKAN AI/Machine Learning.
+  async function tampilkanRekomendasiPersonil(gangguan){
     const cont = document.getElementById('daftar-rekomendasi-personil');
     if (!gangguan.lat || !gangguan.lon){
       cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Lokasi gangguan tidak tersedia -- tidak bisa hitung jarak. Pilih personil manual dari Panel Admin.</div>';
       return;
     }
-    const kandidat = Object.entries(daftarPersonelAktifCache)
+    cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Menghitung rekomendasi...</div>';
+
+    // Pool awal (lebih besar dari 3) berdasarkan jarak terdekat -- disaring lagi setelah tahu spesialisasi
+    let kandidat = Object.entries(daftarPersonelAktifCache)
       .filter(([uid, p])=> p.lat && p.lon && p.status !== 'sos')
       .map(([uid, p])=>{
         const jarakM = hitungJarakMeter(gangguan.lat, gangguan.lon, p.lat, p.lon);
         return { uid, ...p, jarakM };
       })
-      .sort((a, b)=>{
-        const skorA = a.jarakM - (a.fitPersen != null ? a.fitPersen : 50) * 5;
-        const skorB = b.jarakM - (b.fitPersen != null ? b.fitPersen : 50) * 5;
-        return skorA - skorB;
-      })
-      .slice(0, 3);
+      .sort((a, b)=> a.jarakM - b.jarakM)
+      .slice(0, 8);
 
     if (kandidat.length === 0){
       cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Tidak ada personil yang sedang aktif tracking saat ini.</div>';
       return;
     }
 
+    // Ambil spesialisasi TS masing-masing kandidat dari koleksi users (sekali per buka panel)
+    await Promise.all(kandidat.map(async (k)=>{
+      try{
+        const userDoc = await getDoc(doc(db, 'users', k.uid));
+        const data = userDoc.exists() ? userDoc.data() : {};
+        k.jenisPersonil = data.jenisPersonil || null;
+        k.spesialisasiTS = data.spesialisasiTS || null;
+      }catch(e){ k.spesialisasiTS = null; }
+    }));
+
+    // Skor akhir: jarak + FIT%, BONUS besar kalau spesialisasi TS cocok dengan jenis gangguan
+    kandidat = kandidat.map(k=>{
+      const cocokSpesialisasi = !!(k.spesialisasiTS && gangguan.jenis && k.spesialisasiTS.toLowerCase() === gangguan.jenis.toLowerCase());
+      const skor = k.jarakM - (k.fitPersen != null ? k.fitPersen : 50) * 5 - (cocokSpesialisasi ? 2000 : 0);
+      return { ...k, cocokSpesialisasi, skor };
+    }).sort((a, b)=> a.skor - b.skor).slice(0, 3);
+
     cont.innerHTML = kandidat.map((k, i)=>{
       const fitTeks = k.fitPersen != null ? ('💪 FIT ' + k.fitPersen + '%') : 'FIT belum tersedia';
       const fitWarna = k.fitPersen == null ? 'var(--text-dim)' : (k.fitPersen >= 70 ? 'var(--green)' : (k.fitPersen >= 40 ? 'var(--amber)' : 'var(--red)'));
       const label = i === 0 ? '⭐ REKOMENDASI UTAMA' : 'Alternatif';
+      const badgeSpesialisasi = k.spesialisasiTS
+        ? ('<span style="background:' + (k.cocokSpesialisasi ? '#1e40af' : 'var(--line-bright)') + '; color:' + (k.cocokSpesialisasi ? '#fff' : 'var(--text-dim)') + '; font-size:9px; padding:2px 6px; border-radius:4px; margin-left:4px;">' + (k.cocokSpesialisasi ? '✓ Spesialis ' : '') + k.spesialisasiTS + '</span>')
+        : '';
       return '<div style="border:1px solid ' + (i === 0 ? '#1e40af' : 'var(--line-bright)') + '; padding:10px; margin-bottom:8px;">'
         + '<div style="font-size:9.5px; color:' + (i === 0 ? '#1e40af' : 'var(--text-dim)') + '; font-weight:700; margin-bottom:4px;">' + label + '</div>'
-        + '<div style="font-weight:700; font-size:12px;">' + k.nama + '</div>'
+        + '<div style="font-weight:700; font-size:12px;">' + k.nama + badgeSpesialisasi + '</div>'
         + '<div style="font-size:10.5px; color:var(--text-dim); margin:2px 0;">📍 ' + (k.jarakM / 1000).toFixed(2) + ' km · <span style="color:' + fitWarna + ';">' + fitTeks + '</span></div>'
         + '<button onclick="window.dispatchKePersonil(\'' + k.uid + '\', \'' + k.email.replace(/'/g,"") + '\')" style="width:100%; margin-top:6px; padding:7px; background:' + (i === 0 ? '#1e40af' : 'var(--panel)') + '; color:' + (i === 0 ? '#fff' : '#1e40af') + '; border:1px solid #1e40af; font-family:var(--mono); font-size:11px; cursor:pointer;">' + (i === 0 ? 'DISPATCH' : 'Pilih') + '</button>'
         + '</div>';
@@ -4920,13 +4990,16 @@ MAIN CONTENT
       return;
     }
 
-    // Terapkan tab "Prioritas" (perlu tindakan segera) vs "Semua", lalu filter status dropdown
+    // Terapkan tab "Prioritas" (perlu tindakan segera) vs "Semua", lalu filter status dropdown & plant (drill-down)
     let daftarTampil = daftarSemuaGangguanWO;
     if (tabAktifWO === 'prioritas'){
       daftarTampil = daftarTampil.filter(g=> ['menunggu_validasi', 'menunggu_dispatch', 'ditugaskan'].includes(g.status));
     }
     if (filterStatusWO){
       daftarTampil = daftarTampil.filter(g=> g.status === filterStatusWO);
+    }
+    if (filterPlantWO){
+      daftarTampil = daftarTampil.filter(g=> g.plant === filterPlantWO);
     }
     if (daftarTampil.length === 0){
       cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Tidak ada WO yang cocok dengan tab/filter ini.</div>';
@@ -4995,7 +5068,7 @@ MAIN CONTENT
     lampiranFotoWO = null;
     document.getElementById('status-progress-wo').textContent = '';
 
-    const isModerator = (window.__userRole === 'admin' || window.__userRole === 'editor' || window.__userRole === 'vip');
+    const isModerator = isSupervisorAtauManager();
     document.getElementById('blok-terima-tolak-wo').classList.toggle('hidden', g.status !== 'ditugaskan');
     document.getElementById('blok-pengerjaan-wo').classList.toggle('hidden', g.status === 'ditugaskan');
     document.getElementById('btn-selesai-wo').classList.toggle('hidden', g.status === 'selesai');
@@ -5045,14 +5118,36 @@ MAIN CONTENT
     tampilkanTrackingWO(daftarSemuaGangguanWO.find(x=> x.id === id));
   };
 
+  // Drill-down dari Executive Dashboard (klik kartu Plant / donut chart) -> buka Panel WO,
+  // dengan filter plant (opsional) supaya langsung lihat WO yang relevan.
+  window.bukaPanelWODariExecutive = function(nomorPlant){
+    filterPlantWO = nomorPlant || null;
+    filterStatusWO = '';
+    tabAktifWO = 'semua';
+    document.querySelectorAll('[data-tab-wo]').forEach(t=> t.classList.toggle('active', t.dataset.tabWo === 'semua'));
+    document.querySelectorAll('[data-status-wo]').forEach(i=> i.classList.toggle('active', i.dataset.statusWo === ''));
+    document.getElementById('label-filter-wo-aktif').textContent = '';
+    document.getElementById('modal-executive-overlay').classList.add('hidden');
+    document.getElementById('modal-panel-wo-overlay').classList.remove('hidden');
+    renderPanelWO();
+  };
+
   // Tampilkan pelacakan visual gaya Shopee/GoSend -- garis waktu vertikal per tahap status
   function tampilkanTrackingWO(g){
     if (!g) return;
     idWOSedangDilacak = g.id;
 
+    const persenProgress = { menunggu_validasi: 10, menunggu_dispatch: 25, ditugaskan: 50, dikerjakan: 75, selesai: 100, ditolak: 0 }[g.status] ?? 0;
+    const warnaProgress = g.status === 'ditolak' ? 'var(--red)' : (g.status === 'selesai' ? 'var(--green)' : '#1e40af');
     document.getElementById('ringkasan-tracking-wo').innerHTML =
       '<div style="font-weight:700; font-size:13px;">' + g.plant + ' - ' + g.area + '</div>'
-      + '<div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">' + g.jenis + (g.nomorWO ? (' · 📄 ' + g.nomorWO) : '') + '</div>';
+      + '<div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">' + g.jenis + (g.nomorWO ? (' · 📄 ' + g.nomorWO) : '') + '</div>'
+      + (g.status !== 'ditolak' ? (
+          '<div style="margin-top:8px; background:var(--line-bright); border-radius:20px; height:8px; overflow:hidden;">'
+          + '<div style="width:' + persenProgress + '%; height:100%; background:' + warnaProgress + ';"></div>'
+          + '</div>'
+          + '<div style="font-size:10px; color:' + warnaProgress + '; font-weight:700; margin-top:3px;">' + persenProgress + '% selesai</div>'
+        ) : '');
 
     const fmt = (ts)=> ts && ts.toDate ? ts.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : null;
 
@@ -5061,13 +5156,15 @@ MAIN CONTENT
     if (g.status === 'ditolak'){
       tahap = [
         { label: 'Dilaporkan', waktu: fmt(g.waktuLapor), done: true },
-        { label: 'Ditolak Supervisor', waktu: fmt(g.waktuValidasi), done: true, rejected: true }
+        { label: 'Ditolak Supervisor', waktu: fmt(g.waktuValidasi), done: true, rejected: true,
+          catatan: g.alasanTolak ? ('Alasan: ' + g.alasanTolak) : null }
       ];
     } else {
       tahap = [
         { label: 'Dilaporkan', waktu: fmt(g.waktuLapor), done: true },
         { label: 'Divalidasi Supervisor', waktu: fmt(g.waktuValidasi), done: !!g.waktuValidasi },
-        { label: 'Ditugaskan ke Personil' + (g.personilEmail ? (' (' + g.personilEmail + ')') : ''), waktu: fmt(g.waktuDispatch), done: !!g.waktuDispatch },
+        { label: 'Ditugaskan ke Personil' + (g.personilEmail ? (' (' + g.personilEmail + ')') : ''), waktu: fmt(g.waktuDispatch), done: !!g.waktuDispatch,
+          catatan: g.alasanTolakPersonil ? ('⚠️ Sempat ditolak personil sebelumnya -- Alasan: ' + g.alasanTolakPersonil) : null },
         { label: 'Diterima & Dikerjakan Personil', waktu: fmt(g.waktuDiterima), done: !!g.waktuDiterima },
         { label: 'Selesai', waktu: fmt(g.waktuSelesai), done: !!g.waktuSelesai }
       ];
@@ -5080,6 +5177,7 @@ MAIN CONTENT
         + '<div class="stepper-wo-dot">' + ikon + '</div>'
         + '<div class="stepper-wo-label">' + t.label + '</div>'
         + (t.waktu ? '<div class="stepper-wo-sub">' + t.waktu + '</div>' : '<div class="stepper-wo-sub">Menunggu...</div>')
+        + (t.catatan ? '<div class="stepper-wo-sub" style="color:var(--amber);">' + t.catatan + '</div>' : '')
         + '</div>';
     }).join('');
 
@@ -5127,10 +5225,11 @@ MAIN CONTENT
       contPlant.innerHTML = namaPlant.map(nama=>{
         const p = perPlant[nama];
         const waspada = p.adaTinggi;
-        return '<div style="flex:1; min-width:110px; text-align:center; border:1px solid ' + (waspada ? 'var(--red)' : 'var(--green)') + '; padding:10px;">'
+        return '<div onclick="window.bukaPanelWODariExecutive(\'' + nama.replace(/'/g,"") + '\')" style="flex:1; min-width:110px; text-align:center; border:1px solid ' + (waspada ? 'var(--red)' : 'var(--green)') + '; padding:10px; cursor:pointer;">'
           + '<div style="font-size:10px; color:var(--text-dim);">' + nama + '</div>'
           + '<div style="font-size:20px; font-weight:800;">' + p.aktif + '/' + p.total + '</div>'
           + '<div style="font-size:9.5px; color:' + (waspada ? 'var(--red)' : 'var(--green)') + '; font-weight:700;">' + (waspada ? '● Waspada' : '● Aman') + '</div>'
+          + '<div style="font-size:8.5px; color:var(--text-dim); margin-top:4px;">Klik utk detail →</div>'
           + '</div>';
       }).join('');
     }
