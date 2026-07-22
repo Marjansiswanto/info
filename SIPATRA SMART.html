@@ -3006,6 +3006,7 @@ MAIN CONTENT
     dashboardInited = true;
 
     const map = L.map('sar-map').setView([-4.793, 119.616], 14);
+    window.__sarMapInstance = map; // expose global -- dipakai renderer marker Laporan Bahaya di luar fungsi ini
 
     // Pastikan Leaflet menyesuaikan ulang tampilan tile-nya dengan ukuran
     // kontainer sesungguhnya -- perlu karena Leaflet "mengunci" ukuran dari
@@ -4979,8 +4980,77 @@ MAIN CONTENT
       if (!document.getElementById('modal-panel-bahaya-overlay').classList.contains('hidden')){
         renderPanelBahaya();
       }
+
+      // Terinspirasi fitur "Laporkan Masalah" Google Street View -- begitu laporan bahaya
+      // dikirim, otomatis muncul PIN + GEOFENCE (lingkaran radius) di peta live, klik pin
+      // atau lingkarannya langsung buka detail laporan yang sama seperti dari Panel Analitik.
+      renderMarkerBahayaDiPeta();
     }, (err)=>{
       console.error('Gagal baca laporanBahaya:', err.message);
+    });
+  }
+
+  // Pin + Geofence Laporan Bahaya di peta live -- 1 marker (divIcon custom, warna sesuai
+  // tingkat) + 1 lingkaran radius per laporan yang MASIH AKTIF (status bukan 'selesai').
+  // Klik pin ATAU lingkarannya -> buka panel detail yang sama seperti dari Panel Analitik
+  // (reuse window.bukaDetailBahaya, tidak ada duplikasi logika).
+  let markerBahayaDiPeta = {}; // { [idLaporan]: { marker, circle } }
+  function renderMarkerBahayaDiPeta(){
+    const map = window.__sarMapInstance;
+    if (!map) return; // peta belum siap -- akan dipanggil lagi otomatis di update berikutnya
+
+    // Hapus pin/lingkaran milik laporan yang SUDAH TIDAK ADA lagi di cache terbaru
+    const idMasihAda = new Set(daftarBahayaCache.map(l=> l.id));
+    Object.keys(markerBahayaDiPeta).forEach(id=>{
+      if (!idMasihAda.has(id)){
+        map.removeLayer(markerBahayaDiPeta[id].marker);
+        map.removeLayer(markerBahayaDiPeta[id].circle);
+        delete markerBahayaDiPeta[id];
+      }
+    });
+
+    daftarBahayaCache.forEach(l=>{
+      if (!l.lat || !l.lon) return;
+
+      // Laporan yang statusnya SUDAH 'selesai' tidak perlu tetap tampil sebagai pin aktif --
+      // supaya peta tidak penuh riwayat lama yang sudah ditangani.
+      if (l.status === 'selesai'){
+        if (markerBahayaDiPeta[l.id]){
+          map.removeLayer(markerBahayaDiPeta[l.id].marker);
+          map.removeLayer(markerBahayaDiPeta[l.id].circle);
+          delete markerBahayaDiPeta[l.id];
+        }
+        return;
+      }
+
+      const warnaTingkat = { tinggi: '#dc2626', sedang: '#f59e0b', rendah: '#16a34a' }[l.tingkat] || '#dc2626';
+      // Radius geofence (meter) -- makin tinggi tingkat bahaya, makin lebar area peringatannya
+      const radiusGeofence = { tinggi: 30, sedang: 20, rendah: 15 }[l.tingkat] || 20;
+
+      if (markerBahayaDiPeta[l.id]){
+        // Sudah pernah dirender -- cukup perbarui posisi/gaya (mis. tingkat/status berubah),
+        // tidak perlu buat ulang objeknya dari nol.
+        markerBahayaDiPeta[l.id].marker.setLatLng([l.lat, l.lon]);
+        markerBahayaDiPeta[l.id].circle.setLatLng([l.lat, l.lon]).setRadius(radiusGeofence).setStyle({ color: warnaTingkat, fillColor: warnaTingkat });
+        return;
+      }
+
+      // Pin custom bentuk "tetesan" (divIcon) -- beda dari marker personel biasa, supaya
+      // langsung kelihatan ini laporan bahaya, bukan posisi orang.
+      const iconBahaya = L.divIcon({
+        html: '<div style="background:' + warnaTingkat + '; width:28px; height:28px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;"><span style="transform:rotate(45deg); font-size:13px;">⚠️</span></div>',
+        className: '', iconSize: [28, 28], iconAnchor: [14, 28]
+      });
+
+      const marker = L.marker([l.lat, l.lon], { icon: iconBahaya }).addTo(map);
+      marker.on('click', ()=> window.bukaDetailBahaya(l.id));
+
+      const circle = L.circle([l.lat, l.lon], {
+        radius: radiusGeofence, color: warnaTingkat, weight: 2, fillColor: warnaTingkat, fillOpacity: 0.15
+      }).addTo(map);
+      circle.on('click', ()=> window.bukaDetailBahaya(l.id));
+
+      markerBahayaDiPeta[l.id] = { marker, circle };
     });
   }
 
