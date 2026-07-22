@@ -2591,6 +2591,28 @@ MAIN CONTENT
           window.hapusNIK(u.nik);
         });
 
+        // Hapus posisi/marker akun ini dari peta live secara paksa -- perlu kalau akun sudah
+        // TIDAK BISA login lagi (mis. diblokir 1HP=1akun/dicabut NIK) sehingga tidak akan
+        // pernah bisa buka app sendiri untuk klik "Hentikan Tracking"/logout resmi -- data
+        // posisi lamanya jadi "nyangkut" selamanya di peta kalau tidak dihapus manual dari sini.
+        const btnHapusDariPeta = document.createElement('button');
+        btnHapusDariPeta.textContent = '🗑️ Hapus dari Peta';
+        btnHapusDariPeta.className = 'icon-btn';
+        btnHapusDariPeta.style.cssText = 'width:auto; padding:6px 12px; font-size:11px; border-color:var(--red); color:var(--red);';
+        btnHapusDariPeta.title = 'Hapus paksa data posisi akun ini dari peta live (untuk akun yang sudah tidak bisa login lagi)';
+        btnHapusDariPeta.addEventListener('click', async ()=>{
+          if (!confirm('Hapus data posisi "' + (u.email||uid) + '" dari peta live? Tindakan ini tidak bisa dibatalkan.')) return;
+          btnHapusDariPeta.textContent = '...';
+          try{
+            await deleteDoc(doc(db, 'personnel', uid));
+            btnHapusDariPeta.textContent = '✓ Dihapus';
+            setTimeout(()=>{ btnHapusDariPeta.textContent = '🗑️ Hapus dari Peta'; }, 1500);
+          }catch(err){
+            alert('Gagal hapus: ' + err.message);
+            btnHapusDariPeta.textContent = '🗑️ Hapus dari Peta';
+          }
+        });
+
         detailWrap.appendChild(roleSelect);
         detailWrap.appendChild(statusSelect);
         detailWrap.appendChild(kategoriSelect);
@@ -2602,6 +2624,7 @@ MAIN CONTENT
         detailWrap.appendChild(btnResetPerangkat);
         detailWrap.appendChild(btnGantiHPVerifikasi);
         detailWrap.appendChild(btnCabutNIK);
+        detailWrap.appendChild(btnHapusDariPeta);
         return row;
   }
 
