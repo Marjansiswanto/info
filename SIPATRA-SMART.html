@@ -786,6 +786,7 @@ MAIN CONTENT
       <h3 style="margin:0; font-size:15px; color:var(--orange);">Panel Admin — Kelola User</h3>
       <div style="display:flex; gap:6px;">
         <button id="btn-gear-visibilitas-peta" class="icon-btn icon-square-btn" title="Pengaturan Jadwal Tampil di Peta">⚙️</button>
+        <button id="btn-kelola-nik" class="icon-btn icon-square-btn" title="Kelola Daftar NIK (Whitelist Pendaftaran)">🆔</button>
         <button id="admin-modal-close" class="icon-btn">✕</button>
       </div>
     </div>
@@ -850,6 +851,8 @@ MAIN CONTENT
       <input type="email" id="signup-email" placeholder="Email">
       <input type="password" id="signup-password" placeholder="Password (min. 6 karakter)">
       <input type="tel" id="signup-phone" placeholder="No. HP WhatsApp (format: +62812xxxxxxx)">
+      <input type="text" id="signup-nik" placeholder="NIK (Nomor Induk Karyawan) -- minta ke Admin kalau belum tahu">
+      <p class="sub" style="margin-top:-6px; margin-bottom:8px;">🔒 NIK harus sudah didaftarkan Admin lebih dulu. Kalau belum punya NIK, hubungi Admin sebelum mendaftar.</p>
       <label style="font-size:11px; color:var(--text-dim); display:block; margin:8px 0 4px;">📸 Foto Selfie (wajib -- untuk verifikasi identitas kalau nanti ganti HP)</label>
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
         <button type="button" id="btn-ambil-selfie-signup" class="secondary" style="width:auto; padding:8px 14px;">📷 Ambil Foto</button>
@@ -1598,6 +1601,21 @@ MAIN CONTENT
   </div>
 </div>
 
+<!-- ===== MODAL KELOLA NIK (Whitelist Pendaftaran -- Admin) ===== -->
+<div id="modal-kelola-nik-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:5100; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel" style="max-width:460px; width:100%; max-height:88vh; overflow-y:auto;">
+    <div class="panel-head"><h3>🆔 Kelola Daftar NIK</h3><button id="btn-tutup-kelola-nik" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="font-size:11px; color:var(--text-dim); margin-bottom:12px;">Daftarkan NIK di sini SEBELUM personil mendaftar akun -- NIK yang belum ada di daftar ini tidak akan bisa dipakai untuk mendaftar.</div>
+
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <input type="text" id="input-nik-baru" placeholder="NIK baru..." style="flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
+      <button id="btn-tambah-nik" class="icon-btn" style="width:auto; padding:8px 14px; background:var(--orange); color:#000; font-weight:700;">+ Tambah</button>
+    </div>
+    <div id="status-kelola-nik" style="font-size:10.5px; margin-bottom:10px;"></div>
+    <div id="daftar-nik-list"></div>
+  </div>
+</div>
+
 <!-- ===== MODAL VIDEO CALL (WebRTC) ===== -->
 <div id="call-overlay">
   <div id="call-box">
@@ -1814,26 +1832,56 @@ MAIN CONTENT
     const email = document.getElementById('signup-email').value.trim();
     const pass = document.getElementById('signup-password').value;
     const phone = document.getElementById('signup-phone').value.trim();
+    const nik = document.getElementById('signup-nik').value.trim();
+    if (!nik){
+      setStatus('signup-status', '⚠️ NIK wajib diisi -- minta ke Admin kalau belum tahu NIK Anda.', 'err');
+      return;
+    }
     if (!fileSelfieSignup){
       setStatus('signup-status', '⚠️ Foto selfie wajib diambil -- dipakai untuk verifikasi identitas kalau nanti ganti HP.', 'err');
       return;
     }
     setStatus('signup-status', 'Memproses pendaftaran...', 'info');
+    let credUntukRollback = null;
     try{
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      credUntukRollback = cred.user;
+
+      // Validasi NIK -- HARUS sudah didaftarkan Admin sebelumnya (whitelist) & belum dipakai
+      // akun lain. Dicek SETELAH akun Auth dibuat (bukan sebelum) supaya pengecekan bisa
+      // pakai Firestore Rules yang mensyaratkan "sudah login" secara konsisten dengan
+      // koleksi lain -- kalau NIK tidak valid, akun Auth yang baru dibuat langsung DIHAPUS
+      // lagi (rollback), jadi tidak ada akun "nyangkut" tanpa profil.
+      setStatus('signup-status', 'Memvalidasi NIK...', 'info');
+      const nikSnap = await getDoc(doc(db, 'daftarNIKDiizinkan', nik));
+      if (!nikSnap.exists() || (nikSnap.data().uidTerpakai && nikSnap.data().uidTerpakai !== cred.user.uid)){
+        await cred.user.delete();
+        setStatus('signup-status', '⚠️ NIK tidak ditemukan atau sudah dipakai akun lain. Hubungi Admin untuk daftarkan NIK Anda dulu.', 'err');
+        return;
+      }
+      await updateDoc(doc(db, 'daftarNIKDiizinkan', nik), { uidTerpakai: cred.user.uid, waktuKlaim: serverTimestamp() });
+
+      // Daftarkan device hash (lapisan TAMBAHAN, bukan pengganti perangkatTerdaftar yang sudah
+      // ada) -- kalau Worker belum di-deploy/URL belum diisi, ini diam-diam dilewati (tidak
+      // menggagalkan pendaftaran) supaya tidak ada ketergantungan keras ke infrastruktur baru.
+      await daftarkanPerangkatHash(cred.user.uid, false);
+
       setStatus('signup-status', 'Mengunggah foto selfie...', 'info');
       const fileKompresi = await kompresGambar(fileSelfieSignup);
       const namaUpload = 'selfie-daftar.' + (fileKompresi.type === 'image/webp' ? 'webp' : 'jpg');
       const fotoSelfieUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', namaUpload);
-      // Simpan nomor HP + foto selfie (jadi acuan identitas -- "1 akun, 1 foto, 1 nomor HP")
-      // + role default 'guest'. Semua pendaftaran baru berstatus 'guest' (read-only) sampai
-      // Pak Marjan menaikkan role-nya manual lewat Panel Admin.
+      // Simpan nomor HP + foto selfie + NIK (jadi acuan identitas -- "1 akun, 1 foto, 1 nomor HP,
+      // 1 NIK") + role default 'guest'. Semua pendaftaran baru berstatus 'guest' (read-only)
+      // sampai Pak Marjan menaikkan role-nya manual lewat Panel Admin.
       await setDoc(doc(db, 'users', cred.user.uid), {
-        email, phone, fotoSelfieUrl, role: 'guest', status: 'active', dibuatPada: Date.now()
+        email, phone, nik, fotoSelfieUrl, role: 'guest', status: 'active', dibuatPada: Date.now()
       });
       // Langsung masuk dashboard -- tanpa verifikasi 2 langkah untuk tahap POC ini
       tampilkanDashboard();
     }catch(err){
+      // Kalau gagal SETELAH akun Auth sempat dibuat (mis. gagal upload foto), coba rollback
+      // juga -- supaya tidak ada akun Auth "hantu" tanpa profil Firestore.
+      if (credUntukRollback){ try{ await credUntukRollback.delete(); }catch(e){} }
       setStatus('signup-status', 'Gagal daftar: ' + err.message, 'err');
     }
   });
@@ -1907,6 +1955,27 @@ MAIN CONTENT
       window.__userRole = 'user'; // gagal baca -> anggap user biasa (aman, tidak elevate ke admin)
     }
 
+    // ---------- Cek NIK: apakah akun ini MASIH terdaftar? ----------
+    // Kalau Admin sudah CABUT/hapus NIK akun ini dari whitelist (mis. karyawan resign/keluar),
+    // login DITOLAK di sini -- meski login Authentication (email/password) itu sendiri masih
+    // valid secara teknis (kita tidak bisa hapus itu dari web app biasa, lihat catatan di
+    // cekDanKunciPerangkat di bawah). Ini jadi jalur "cabut akses" praktis buat Admin.
+    // Akun LAMA yang dibuat SEBELUM fitur NIK ini ada (tidak punya field nik sama sekali) dan
+    // akun 'guest' DIKECUALIKAN dari pengecekan ini (grandfathered -- supaya tidak mendadak
+    // terkunci akun yang sudah ada).
+    if (window.__userRole !== 'guest' && dataUserUntukIdentitas.nik){
+      try{
+        const nikSnap = await getDoc(doc(db, 'daftarNIKDiizinkan', dataUserUntukIdentitas.nik));
+        if (!nikSnap.exists() || nikSnap.data().uidTerpakai !== auth.currentUser.uid){
+          alert('⚠️ Akun Anda tidak terdaftar. Hubungi Admin.');
+          await signOut(auth);
+          return;
+        }
+      }catch(err){
+        console.error('Gagal cek status NIK (dibiarkan lanjut supaya tidak memblokir kerja karena error jaringan):', err.message);
+      }
+    }
+
     // ---------- Penguncian Perangkat: 1 HP/browser cuma boleh terikat ke 1 akun ----------
     // CATATAN JUJUR: ini terikat ke BROWSER/localStorage, BUKAN nomor SIM/IMEI (web app
     // TIDAK BISA baca SIM sama sekali -- itu dikunci OS). Bisa dilewati dgn ganti browser/
@@ -1969,13 +2038,31 @@ MAIN CONTENT
       const snapUser = await getDoc(doc(db, 'users', uid));
       const perangkatTerpercaya = snapUser.exists() ? snapUser.data().perangkatIdTerakhir : null;
       if (perangkatTerpercaya && perangkatTerpercaya !== deviceId){
-        return await mintaPersetujuanPerangkatBaru(uid, email, deviceId);
+        const disetujui = await mintaPersetujuanPerangkatBaru(uid, email, deviceId);
+        if (disetujui){
+          // Setelah disetujui (approve HP lain / OTP Email), daftarkan ulang device hash juga
+          // (force overwrite -- perangkat baru ini sudah lolos 2FA, sah menggantikan yang lama)
+          await daftarkanPerangkatHash(uid, true);
+        }
+        return disetujui;
       }
 
       // Belum ada perangkat terpercaya sebelumnya (login pertama kali), atau memang perangkat
       // yang sama -- langsung klaim/perbarui ikatannya, tidak perlu persetujuan.
       await setDoc(doc(db, 'perangkatTerdaftar', deviceId), { uid, email, waktuDaftar: serverTimestamp() });
       await setDoc(doc(db, 'users', uid), { perangkatIdTerakhir: deviceId }, { merge: true });
+
+      // Lapis 3 (TAMBAHAN): pastikan device hash (Worker) juga tersinkron. Kalau belum pernah
+      // terdaftar (mis. akun lama dari sebelum fitur ini ada), daftarkan sekarang. Kalau K ada
+      // tapi verifikasi gagal (mis. localStorage dipindah manual antar HP), CUMA dicatat sebagai
+      // peringatan -- tidak memblokir, karena Lapis 1 & 2 di atas sudah jadi penentu utama.
+      const hasilVerifikasi = await verifikasiPerangkatHash(uid);
+      if (!hasilVerifikasi.adaK){
+        await daftarkanPerangkatHash(uid, true);
+      } else if (!hasilVerifikasi.valid){
+        console.warn('Device hash tidak cocok -- kemungkinan localStorage dipindah manual antar perangkat.');
+      }
+
       return true;
     }catch(err){
       console.error('Gagal cek penguncian perangkat (dibiarkan lanjut supaya tidak memblokir kerja karena error jaringan):', err.message);
@@ -2467,6 +2554,15 @@ MAIN CONTENT
           try{
             await deleteDoc(doc(db, 'perangkatTerdaftar', u.perangkatIdTerakhir));
             await updateDoc(doc(db, 'users', uid), { perangkatIdTerakhir: null });
+            // Reset juga binding hash di Worker (lapisan tambahan) -- gagal di sini TIDAK
+            // membatalkan reset utama di atas (Firestore tetap jadi penentu utama)
+            try{
+              await fetch(DEVICE_WORKER_URL + '/admin-reset-device', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Admin-Key': KUNCI_ADMIN_RESET_DEVICE },
+                body: JSON.stringify({ uid })
+              });
+            }catch(e){ console.error('Gagal reset device hash di Worker:', e.message); }
             btnResetPerangkat.textContent = '✓ Direset';
             setTimeout(()=>{ btnResetPerangkat.textContent = '📱 Reset Perangkat'; }, 1500);
           }catch(err){
@@ -2482,6 +2578,19 @@ MAIN CONTENT
         btnGantiHPVerifikasi.title = 'Prosedur ganti HP/nomor rusak -- wajib verifikasi foto selfie dulu (gaya prosedur bank)';
         btnGantiHPVerifikasi.addEventListener('click', ()=> window.bukaGantiPerangkatVerifikasi(uid, u));
 
+        const btnCabutNIK = document.createElement('button');
+        btnCabutNIK.textContent = '🚫 Cabut Akses (NIK)';
+        btnCabutNIK.className = 'icon-btn';
+        btnCabutNIK.style.cssText = 'width:auto; padding:6px 12px; font-size:11px; border-color:var(--red); color:var(--red);';
+        btnCabutNIK.title = 'Keluarkan user dari sistem -- login berikutnya akan ditolak';
+        btnCabutNIK.addEventListener('click', ()=>{
+          if (!u.nik){
+            alert('Akun ini tidak punya NIK tercatat (mungkin akun lama sebelum fitur NIK ada). Gunakan "Ubah role jadi suspended" untuk menonaktifkan.');
+            return;
+          }
+          window.hapusNIK(u.nik);
+        });
+
         detailWrap.appendChild(roleSelect);
         detailWrap.appendChild(statusSelect);
         detailWrap.appendChild(kategoriSelect);
@@ -2492,12 +2601,92 @@ MAIN CONTENT
         detailWrap.appendChild(btnSimpan);
         detailWrap.appendChild(btnResetPerangkat);
         detailWrap.appendChild(btnGantiHPVerifikasi);
+        detailWrap.appendChild(btnCabutNIK);
         return row;
   }
 
   document.getElementById('admin-user-search').addEventListener('input', (e)=>{
     renderDaftarUserAdmin(e.target.value);
   });
+
+  // ==========================================================
+  // KELOLA NIK -- whitelist yang harus diisi Admin SEBELUM personil mendaftar. NIK yang
+  // "dicabut" (dihapus dari sini) membuat login akun terkait ditolak (lihat cek di
+  // tampilkanDashboard). Ini jadi jalur praktis "keluarkan user dari sistem" tanpa perlu
+  // akses hapus Firebase Authentication (yang tidak bisa dilakukan dari web app biasa).
+  // ==========================================================
+  document.getElementById('btn-kelola-nik').addEventListener('click', ()=>{
+    document.getElementById('modal-kelola-nik-overlay').classList.remove('hidden');
+    renderDaftarNIK();
+  });
+  document.getElementById('btn-tutup-kelola-nik').addEventListener('click', ()=>{
+    document.getElementById('modal-kelola-nik-overlay').classList.add('hidden');
+  });
+  document.getElementById('btn-tambah-nik').addEventListener('click', async ()=>{
+    const statusEl = document.getElementById('status-kelola-nik');
+    const nik = document.getElementById('input-nik-baru').value.trim();
+    if (!nik){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ NIK tidak boleh kosong.';
+      return;
+    }
+    try{
+      const existing = await getDoc(doc(db, 'daftarNIKDiizinkan', nik));
+      if (existing.exists()){
+        statusEl.style.color = 'var(--red)';
+        statusEl.textContent = '⚠️ NIK ini sudah ada di daftar.';
+        return;
+      }
+      await setDoc(doc(db, 'daftarNIKDiizinkan', nik), {
+        nik, uidTerpakai: null, ditambahkanOleh: auth.currentUser.email, waktuDitambahkan: serverTimestamp()
+      });
+      document.getElementById('input-nik-baru').value = '';
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = '✅ NIK ditambahkan.';
+      renderDaftarNIK();
+    }catch(err){
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = '⚠️ Gagal: ' + err.message;
+    }
+  });
+
+  async function renderDaftarNIK(){
+    const cont = document.getElementById('daftar-nik-list');
+    cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Memuat...</div>';
+    try{
+      const snap = await getDocs(collection(db, 'daftarNIKDiizinkan'));
+      if (snap.empty){
+        cont.innerHTML = '<div style="color:var(--text-dim); font-size:11px;">Belum ada NIK terdaftar.</div>';
+        return;
+      }
+      const daftar = [];
+      snap.forEach(d=> daftar.push(d.data()));
+      cont.innerHTML = daftar.map(n=>{
+        const terpakai = !!n.uidTerpakai;
+        return '<div style="border:1px solid var(--line-bright); border-left:3px solid ' + (terpakai ? 'var(--green)' : 'var(--amber)') + '; padding:8px 10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; gap:8px;">'
+          + '<div><div style="font-weight:700; font-size:12px;">' + n.nik + '</div>'
+          + '<div style="font-size:10px; color:' + (terpakai ? 'var(--green)' : 'var(--amber)') + ';">' + (terpakai ? '✅ Sudah dipakai' : '⏳ Belum dipakai') + '</div></div>'
+          + '<button onclick="window.hapusNIK(\'' + n.nik.replace(/'/g,"") + '\')" style="padding:6px 10px; background:var(--panel); color:var(--red); border:1px solid var(--red); font-family:var(--mono); font-size:10px; cursor:pointer;">🚫 Cabut</button>'
+          + '</div>';
+      }).join('');
+    }catch(err){
+      cont.innerHTML = '<div style="color:var(--red); font-size:11px;">Gagal memuat: ' + err.message + '</div>';
+    }
+  }
+
+  // Cabut 1 NIK -- kalau NIK ini sedang dipakai akun tertentu, akun itu akan DITOLAK login
+  // berikutnya (dicek di tampilkanDashboard). Dipanggil baik dari panel Kelola NIK maupun
+  // langsung dari baris user (lihat buatBarisUserAdmin).
+  window.hapusNIK = async function(nik){
+    if (!confirm('Cabut NIK "' + nik + '"? Kalau NIK ini sedang dipakai suatu akun, akun itu TIDAK BISA login lagi setelah ini.')) return;
+    try{
+      await deleteDoc(doc(db, 'daftarNIKDiizinkan', nik));
+      renderDaftarNIK();
+      alert('✅ NIK "' + nik + '" sudah dicabut.');
+    }catch(err){
+      alert('Gagal mencabut NIK: ' + err.message);
+    }
+  };
 
   // ==========================================================
   // GANTI HP/NOMOR DENGAN VERIFIKASI FOTO -- prosedur gaya bank: admin bandingkan foto
@@ -6719,6 +6908,49 @@ MAIN CONTENT
   const NOTIF_WORKER_URL = 'https://withered-king-1a2e.manggala2008.workers.dev';
   const NOTIF_KUNCI_RAHASIA = 'jBuLEtiiovKMe9rwBQtZeicXgFJ6gEieaY-_Dwd_BGE';
   const FCM_VAPID_KEY = 'Zr_zb4MNZe02vhtXDrgb55r6L1mCkXajdyqga-Tz7xQ';
+
+  // ==========================================================
+  // DEVICE BINDING (Hash+Pepper) -- lapisan TAMBAHAN di atas penguncian perangkat
+  // localStorage yang sudah ada (perangkatTerdaftar). GANTI 2 nilai ini setelah Worker
+  // "worker-device-binding.js" selesai di-deploy (lihat file terpisah untuk kodenya).
+  // KUNCI_ADMIN_RESET_DEVICE ini SENGAJA cuma dipakai di Panel Admin (bukan alur user biasa)
+  // -- tetap perlu diingat: nilai ini terlihat di "View Source" siapa pun, jadi risikonya
+  // TERBATAS ke kemampuan reset binding (bukan bypass login) -- lihat penjelasan sebelumnya.
+  // ==========================================================
+  const DEVICE_WORKER_URL = 'https://GANTI-DENGAN-URL-WORKER-BAPAK.workers.dev';
+  const KUNCI_ADMIN_RESET_DEVICE = 'GANTI-DENGAN-ADMIN_RESET_KEY-YANG-SAMA-DI-WORKER';
+
+  async function daftarkanPerangkatHash(uid, permitOverwrite){
+    try{
+      const res = await fetch(DEVICE_WORKER_URL + '/register-device', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, permitOverwrite: !!permitOverwrite })
+      });
+      const data = await res.json();
+      if (!res.ok) return { sukses: false, error: data.error || 'Gagal daftar perangkat' };
+      localStorage.setItem('sipatra_device_secret_K', data.deviceSecret);
+      return { sukses: true };
+    }catch(err){
+      console.error('Gagal daftarkan device hash (Worker mungkin belum di-deploy/URL belum diisi):', err.message);
+      return { sukses: false, error: err.message };
+    }
+  }
+
+  async function verifikasiPerangkatHash(uid){
+    const K = localStorage.getItem('sipatra_device_secret_K');
+    if (!K) return { adaK: false, valid: false };
+    try{
+      const res = await fetch(DEVICE_WORKER_URL + '/verify-device', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, deviceSecret: K })
+      });
+      const data = await res.json();
+      return { adaK: true, valid: !!data.valid };
+    }catch(err){
+      console.error('Gagal verifikasi device hash (dianggap lolos supaya tidak blokir kerja krn error jaringan):', err.message);
+      return { adaK: true, valid: true }; // jangan blokir kerja gara-gara Worker/jaringan error
+    }
+  }
 
   let fcmMessaging = null;
 
