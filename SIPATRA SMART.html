@@ -947,22 +947,6 @@ MAIN CONTENT
           </div>
           <button id="btn-pindai-ble" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim); margin-bottom:8px;" title="Pindai BLE Beacon Lantai Ini (opsional)">📶</button>
           <div id="hasil-ble-zona" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;"></div>
-
-          <textarea id="input-keterangan-zona" rows="2" placeholder="Keterangan tambahan (opsional) -- mis. jenis bahaya, prosedur khusus, dll." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px; resize:vertical;"></textarea>
-
-          <div style="font-size:10px; color:var(--text-dim); margin-bottom:4px;">Lampiran (opsional) -- foto/video/dokumen pendukung</div>
-          <div style="display:flex; gap:8px; margin-bottom:6px;">
-            <button type="button" id="btn-zona-foto-kamera" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Ambil Foto (Kamera)">📷</button>
-            <button type="button" id="btn-zona-foto-galeri" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Pilih Foto dari Galeri">🖼️</button>
-            <button type="button" id="btn-zona-video" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Pilih Video">🎥</button>
-            <button type="button" id="btn-zona-dokumen" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Pilih Dokumen (PDF/Word/dll.)">📄</button>
-          </div>
-          <div id="nama-lampiran-zona" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;"></div>
-          <input type="file" id="input-zona-foto-kamera" accept="image/*" capture="environment" class="hidden">
-          <input type="file" id="input-zona-foto-galeri" accept="image/*" class="hidden">
-          <input type="file" id="input-zona-video" accept="video/*" class="hidden">
-          <input type="file" id="input-zona-dokumen" accept=".pdf,.doc,.docx,.xls,.xlsx" class="hidden">
-
           <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
             Klik di peta untuk menandai titik batas zona (minimal 3 titik). Titik akan otomatis tersambung membentuk area.
           </div>
@@ -1629,14 +1613,6 @@ MAIN CONTENT
     </div>
     <div id="status-kelola-nik" style="font-size:10.5px; margin-bottom:10px;"></div>
     <div id="daftar-nik-list"></div>
-  </div>
-</div>
-
-<!-- ===== MODAL DETAIL ZONA BAHAYA (klik zona di peta -- keterangan + foto/video/dokumen) ===== -->
-<div id="modal-detail-zona-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:440px; width:100%; max-height:88vh; overflow-y:auto;">
-    <div class="panel-head"><h3 id="judul-detail-zona">⚠️ Zona Bahaya</h3><button id="btn-tutup-detail-zona" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
-    <div id="isi-detail-zona"></div>
   </div>
 </div>
 
@@ -3617,7 +3593,6 @@ MAIN CONTENT
     let zonaBahayaLayers = {}; // id -> L.polygon yang sudah tersimpan
     let zonaBahayaCache = []; // array {id, nama, titik, lantai, ketinggian} untuk cek personel masuk zona
     let bleTerdeteksiSementara = null; // nama device BLE yang terakhir dipindai (opsional, best-effort)
-    let lampiranZonaTerpilih = null; // { file, tipe: 'foto'|'video'|'dokumen' } -- dipilih sebelum kirim
 
     function resetGambarZona(){
       titikZonaSementara = [];
@@ -3627,28 +3602,9 @@ MAIN CONTENT
       document.getElementById('jumlah-titik-zona').textContent = '0';
       document.getElementById('input-lantai-zona').value = '';
       document.getElementById('input-ketinggian-zona').value = '';
-      document.getElementById('input-keterangan-zona').value = '';
-      document.getElementById('nama-lampiran-zona').textContent = '';
       document.getElementById('hasil-ble-zona').textContent = '';
       bleTerdeteksiSementara = null;
-      lampiranZonaTerpilih = null;
     }
-
-    // ---------- Lampiran Zona Bahaya: foto (kamera/galeri), video, dokumen ----------
-    document.getElementById('btn-zona-foto-kamera').addEventListener('click', ()=> document.getElementById('input-zona-foto-kamera').click());
-    document.getElementById('btn-zona-foto-galeri').addEventListener('click', ()=> document.getElementById('input-zona-foto-galeri').click());
-    document.getElementById('btn-zona-video').addEventListener('click', ()=> document.getElementById('input-zona-video').click());
-    document.getElementById('btn-zona-dokumen').addEventListener('click', ()=> document.getElementById('input-zona-dokumen').click());
-    [['input-zona-foto-kamera', 'foto'], ['input-zona-foto-galeri', 'foto'], ['input-zona-video', 'video'], ['input-zona-dokumen', 'dokumen']].forEach(([idInput, tipe])=>{
-      document.getElementById(idInput).addEventListener('change', (e)=>{
-        const file = e.target.files[0];
-        if (file){
-          lampiranZonaTerpilih = { file, tipe };
-          document.getElementById('nama-lampiran-zona').textContent = '✅ ' + file.name + ' (' + tipe + ')';
-        }
-        e.target.value = '';
-      });
-    });
 
     // Pindai BLE Beacon terdekat (best-effort) -- keterbatasan Web Bluetooth browser:
     // hanya jalan di Chrome/Edge (Android & desktop), TIDAK jalan di Safari iOS,
@@ -3696,30 +3652,13 @@ MAIN CONTENT
       const nama = document.getElementById('input-nama-zona').value.trim() || 'Zona Bahaya';
       const lantaiRaw = document.getElementById('input-lantai-zona').value.trim();
       const ketinggianRaw = document.getElementById('input-ketinggian-zona').value.trim();
-      const keterangan = document.getElementById('input-keterangan-zona').value.trim();
-      const btnSelesai = document.getElementById('btn-selesai-zona');
-      btnSelesai.disabled = true;
       try{
-        let fotoUrl = null, videoUrl = null, dokumenUrl = null, dokumenNama = null;
-        if (lampiranZonaTerpilih){
-          if (lampiranZonaTerpilih.tipe === 'foto'){
-            const fileKompresi = await kompresGambar(lampiranZonaTerpilih.file);
-            fotoUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', 'zona.' + (fileKompresi.type === 'image/webp' ? 'webp' : 'jpg'));
-          } else if (lampiranZonaTerpilih.tipe === 'video'){
-            videoUrl = await uploadKeR2DenganProgres(lampiranZonaTerpilih.file, 'video', lampiranZonaTerpilih.file.name);
-          } else if (lampiranZonaTerpilih.tipe === 'dokumen'){
-            dokumenUrl = await uploadKeR2DenganProgres(lampiranZonaTerpilih.file, 'dokumen', lampiranZonaTerpilih.file.name);
-            dokumenNama = lampiranZonaTerpilih.file.name;
-          }
-        }
         await addDoc(collection(db, 'zonaBahaya'), {
           nama,
           titik: titikZonaSementara,
           lantai: lantaiRaw !== '' ? Number(lantaiRaw) : null,           // input manual, BUKAN dari GPS altitude
           ketinggianMeter: ketinggianRaw !== '' ? Number(ketinggianRaw) : null, // input manual, BUKAN dari GPS altitude
           bleBeacon: bleTerdeteksiSementara,                              // referensi tambahan, best-effort
-          keterangan: keterangan || null,
-          fotoUrl, videoUrl, dokumenUrl, dokumenNama,
           dibuatOleh: auth.currentUser ? auth.currentUser.email : 'tidak diketahui',
           waktu: serverTimestamp()
         });
@@ -3731,7 +3670,6 @@ MAIN CONTENT
       }catch(err){
         alert('Gagal menyimpan zona bahaya: ' + err.message);
       }
-      btnSelesai.disabled = false;
     });
 
 
@@ -3757,11 +3695,7 @@ MAIN CONTENT
         const z = docSnap.data();
         const id = docSnap.id;
         idAktif.add(id);
-        zonaBahayaCache.push({
-          id, nama: z.nama, titik: z.titik, lantai: z.lantai, ketinggianMeter: z.ketinggianMeter,
-          keterangan: z.keterangan, fotoUrl: z.fotoUrl, videoUrl: z.videoUrl, dokumenUrl: z.dokumenUrl, dokumenNama: z.dokumenNama,
-          bleBeacon: z.bleBeacon, dibuatOleh: z.dibuatOleh
-        });
+        zonaBahayaCache.push({ id, nama: z.nama, titik: z.titik, lantai: z.lantai, ketinggianMeter: z.ketinggianMeter });
 
         const labelLantai = z.lantai !== null && z.lantai !== undefined ? (' · Lt.' + z.lantai) : '';
         if (zonaBahayaLayers[id]){
@@ -3770,8 +3704,6 @@ MAIN CONTENT
           zonaBahayaLayers[id] = L.polygon(z.titik.map(t => [t.lat, t.lon]), {
             color: '#e05f5f', weight: 2, dashArray: '6,4', fillColor: '#e05f5f', fillOpacity: 0.15
           }).addTo(map).bindTooltip('⚠️ ' + z.nama + labelLantai, { permanent: true, direction: 'center', className: 'zona-bahaya-label' });
-          // Klik area zona -> buka panel detail (keterangan + foto/video/dokumen kalau ada)
-          zonaBahayaLayers[id].on('click', ()=> window.bukaDetailZona(id));
         }
 
         let infoTambahan = '';
@@ -3805,43 +3737,6 @@ MAIN CONTENT
       updateStatCard('stat-zona', zonaBahayaCache.length);
       const labelZona = document.getElementById('stat-zona-label');
       if (labelZona) labelZona.textContent = zonaBahayaCache.length > 0 ? '● Waspada' : '● Terpantau';
-    });
-
-    // Buka detail 1 Zona Bahaya (klik area zona di peta) -- keterangan + foto/video/dokumen.
-    // Ditaruh di scope initDashboard() (bukan scope lain) supaya bisa akses zonaBahayaCache.
-    window.bukaDetailZona = function(id){
-      const z = zonaBahayaCache.find(x=> x.id === id);
-      if (!z) return;
-      document.getElementById('judul-detail-zona').textContent = '⚠️ ' + z.nama;
-
-      let html = '<div style="font-size:12px; line-height:1.8;">';
-      if (z.lantai !== null && z.lantai !== undefined) html += '<div><b>Lantai:</b> ' + z.lantai + '</div>';
-      if (z.ketinggianMeter !== null && z.ketinggianMeter !== undefined) html += '<div><b>Ketinggian:</b> ' + z.ketinggianMeter + 'm dari ground</div>';
-      if (z.bleBeacon) html += '<div><b>BLE Beacon:</b> ' + z.bleBeacon + '</div>';
-      if (z.dibuatOleh) html += '<div><b>Ditandai oleh:</b> ' + z.dibuatOleh + '</div>';
-      html += '</div>';
-      if (z.keterangan){
-        html += '<div style="margin-top:8px; font-size:12px;"><b>Keterangan:</b><br>' + z.keterangan.replace(/</g,'&lt;') + '</div>';
-      }
-      if (z.fotoUrl){
-        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px;">📷 Foto:</div>'
-          + '<img src="' + z.fotoUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + z.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
-      }
-      if (z.videoUrl){
-        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px;">🎥 Video:</div>'
-          + '<video src="' + z.videoUrl + '" controls style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + z.videoUrl.replace(/'/g,"\\'") + '\', \'video\')"></video>';
-      }
-      if (z.dokumenUrl){
-        html += '<div style="margin-top:10px;"><a href="' + z.dokumenUrl + '" target="_blank" style="display:block; padding:10px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text); text-decoration:none; font-size:11px;">📄 ' + (z.dokumenNama || 'Buka Dokumen') + '</a></div>';
-      }
-      if (!z.keterangan && !z.fotoUrl && !z.videoUrl && !z.dokumenUrl){
-        html += '<div style="font-size:11px; color:var(--text-dim); margin-top:8px;">Tidak ada keterangan/lampiran tambahan untuk zona ini.</div>';
-      }
-      document.getElementById('isi-detail-zona').innerHTML = html;
-      document.getElementById('modal-detail-zona-overlay').classList.remove('hidden');
-    };
-    document.getElementById('btn-tutup-detail-zona').addEventListener('click', ()=>{
-      document.getElementById('modal-detail-zona-overlay').classList.add('hidden');
     });
 
     // ==========================================================
