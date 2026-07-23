@@ -722,7 +722,8 @@ MAIN CONTENT
         <span>STATUS PERSONEL</span>
         <span class="tag" id="personnel-tag">LIVE</span>
       </div>
-      <div class="tracking-control">
+      <div class="tracking-control" style="position:relative;">
+        <div id="tracking-status-popup" class="hidden" style="position:absolute; bottom:calc(100% + 8px); left:14px; right:14px; background:#1F2937; color:#fff; font-size:11.5px; font-weight:600; padding:8px 14px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.25); z-index:200; text-align:center;"></div>
         <input type="text" id="input-area-wo" placeholder="Keterangan Area Kerja / WO (mis. MCC KILN) — opsional" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
         <div class="baris-ikon-aksi">
           <button id="btn-toggle-tracking" class="track-btn icon-square-btn" title="Aktifkan Tracking Saya">📍</button>
@@ -4479,7 +4480,8 @@ MAIN CONTENT
       const namaAreaWO = document.getElementById('input-area-wo').value.trim() || 'Tanpa keterangan area';
       const btn = document.getElementById('btn-sudah-tiba');
       btn.disabled = true;
-      btn.textContent = 'Menyimpan catatan rute...';
+      btn.textContent = '⏳';
+      setTrackingStatus('Menyimpan catatan rute...');
       try{
         const jarakPergiKm = (hitungJarakMeter(
           titikAwalLokal.lat, titikAwalLokal.lon,
@@ -4501,11 +4503,13 @@ MAIN CONTENT
         });
         idRuteAktif = refDoc.id;
         titikTibaLokal = { lat: window.__posisiTerkiniSaya.lat, lon: window.__posisiTerkiniSaya.lon, waktuMs: waktuTibaSekarang };
-        btn.textContent = '✅ Kedatangan tercatat — rute pulang mulai dihitung';
+        btn.textContent = '✅';
+        setTrackingStatus('Kedatangan tercatat — rute pulang mulai dihitung.');
       }catch(err){
         alert('Gagal menyimpan catatan kedatangan: ' + err.message);
         btn.disabled = false;
-        btn.textContent = '🏁 SAYA SUDAH TIBA DI LOKASI WO';
+        btn.textContent = '🏁';
+        setTrackingStatus('Gagal menyimpan catatan kedatangan: ' + err.message);
       }
     });
 
@@ -4560,8 +4564,22 @@ MAIN CONTENT
     });
   }
 
+  let timeoutPopupStatus = null;
   function setTrackingStatus(msg){
+    // Tetap isi baris teks biasa di bawah (riwayat/aksesibilitas) ...
     document.getElementById('tracking-status').textContent = msg || '';
+
+    // ... DAN tampilkan sebagai popup kecil mengambang DI ATAS baris ikon, supaya tidak
+    // pernah menghalangi/menabrak tombol mana pun -- otomatis hilang sendiri setelah beberapa detik.
+    const popup = document.getElementById('tracking-status-popup');
+    if (timeoutPopupStatus){ clearTimeout(timeoutPopupStatus); timeoutPopupStatus = null; }
+    if (!msg){
+      popup.classList.add('hidden');
+      return;
+    }
+    popup.textContent = msg;
+    popup.classList.remove('hidden');
+    timeoutPopupStatus = setTimeout(()=>{ popup.classList.add('hidden'); }, 4000);
   }
 
   let wakeLockRef = null;
