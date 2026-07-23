@@ -591,7 +591,7 @@ MAIN CONTENT
 
     <!-- Tampilan 1: daftar percakapan + pencarian user (default) -->
     <div id="dm-tampilan-daftar">
-      <input type="text" id="dm-input-cari-user" placeholder="🔍 Cari nama/email user untuk mulai DM baru..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+      <input type="text" id="dm-input-cari-user" placeholder="🔍 Cari nama/email user untuk mulai DM baru..." style="width:100%; background:#F9FAFB; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
       <div id="dm-hasil-pencarian" style="margin-bottom:14px;"></div>
       <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px; letter-spacing:.05em;">PERCAKAPAN AKTIF</div>
       <div id="dm-daftar-percakapan"></div>
@@ -600,21 +600,9 @@ MAIN CONTENT
     <!-- Tampilan 2: jendela chat 1-on-1 (muncul setelah pilih user/percakapan) -->
     <div id="dm-tampilan-chat" class="hidden">
       <button id="dm-btn-kembali" class="icon-btn icon-square-btn" title="Kembali ke daftar" style="margin-bottom:10px;">←</button>
-      <div id="dm-chat-messages" style="height:320px; overflow-y:auto; border:1px solid var(--line-bright); padding:10px; margin-bottom:10px; background:#000;"></div>
-      <div id="dm-upload-status" style="font-size:10.5px; color:var(--amber); min-height:14px; margin-bottom:4px;"></div>
+      <div id="dm-chat-messages" style="height:320px; overflow-y:auto; border:1px solid var(--line-bright); padding:10px; margin-bottom:10px; background:#F9FAFB;"></div>
       <div style="display:flex; gap:8px; align-items:center;">
-        <div style="position:relative; flex-shrink:0;">
-          <button id="dm-btn-attach" class="icon-btn icon-square-btn" title="Lampirkan">📎</button>
-          <div id="dm-attach-menu-popup" class="hidden" style="position:absolute; bottom:calc(100% + 6px); left:0; z-index:50; background:var(--panel); border:1px solid var(--line-bright); display:flex; flex-direction:column; min-width:190px; box-shadow:0 4px 14px rgba(0,0,0,0.5);">
-            <button class="attach-menu-item" id="dm-menu-foto-kamera" style="background:transparent; border:none; border-bottom:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); font-size:12px; text-align:left; padding:10px 12px; cursor:pointer;">📷 Foto (Kamera)</button>
-            <button class="attach-menu-item" id="dm-menu-galeri" style="background:transparent; border:none; border-bottom:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); font-size:12px; text-align:left; padding:10px 12px; cursor:pointer;">🖼️ Pilih dari Galeri</button>
-            <button class="attach-menu-item" id="dm-menu-file" style="background:transparent; border:none; color:var(--text); font-family:var(--mono); font-size:12px; text-align:left; padding:10px 12px; cursor:pointer;">📄 Pilih File (Dokumen)</button>
-          </div>
-        </div>
-        <input type="file" id="dm-photo-input" accept="image/*" capture="environment" class="hidden">
-        <input type="file" id="dm-galeri-input" accept="image/*" class="hidden">
-        <input type="file" id="dm-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" class="hidden">
-        <input type="text" id="dm-chat-text-input" placeholder="Tulis pesan pribadi..." style="flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
+        <input type="text" id="dm-chat-text-input" placeholder="Tulis pesan pribadi..." style="flex:1; background:#F9FAFB; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
         <button id="dm-btn-kirim" class="icon-btn icon-square-btn" style="background:var(--orange); color:#0a0c0d;" title="Kirim">➤</button>
       </div>
     </div>
@@ -6677,7 +6665,7 @@ MAIN CONTENT
         }
         if (m.fileUrl){
           const namaFile = (m.fileName || 'File').replace(/</g,'&lt;');
-          html += '<a href="' + m.fileUrl + '" target="_blank" style="display:flex; align-items:center; gap:8px; margin-top:6px; padding:8px 10px; border:1px solid var(--line-bright); color:var(--text); text-decoration:none; background:#000;">'
+          html += '<a href="' + m.fileUrl + '" target="_blank" style="display:flex; align-items:center; gap:8px; margin-top:6px; padding:8px 10px; border:1px solid var(--line-bright); color:var(--text); text-decoration:none; background:#F9FAFB;">'
             + '<span style="font-size:18px;">📄</span><span style="font-size:11px; word-break:break-all;">' + namaFile + '</span></a>';
         }
         // Edit/Hapus -- HANYA untuk pesan milik sendiri
@@ -6722,81 +6710,17 @@ MAIN CONTENT
     }
   };
 
-  // ---------- Lampiran foto/file di DM (pakai mekanisme upload R2 yang sama dgn ruang chat utama) ----------
-  document.getElementById('dm-btn-attach').addEventListener('click', (e)=>{
-    e.stopPropagation();
-    document.getElementById('dm-attach-menu-popup').classList.toggle('hidden');
-  });
-  document.addEventListener('click', (e)=>{
-    const popup = document.getElementById('dm-attach-menu-popup');
-    const btn = document.getElementById('dm-btn-attach');
-    if (popup && !popup.classList.contains('hidden') && !popup.contains(e.target) && e.target !== btn){
-      popup.classList.add('hidden');
-    }
-  });
-  document.getElementById('dm-menu-foto-kamera').addEventListener('click', ()=>{
-    document.getElementById('dm-attach-menu-popup').classList.add('hidden');
-    document.getElementById('dm-photo-input').click();
-  });
-  document.getElementById('dm-menu-galeri').addEventListener('click', ()=>{
-    document.getElementById('dm-attach-menu-popup').classList.add('hidden');
-    document.getElementById('dm-galeri-input').click();
-  });
-  document.getElementById('dm-menu-file').addEventListener('click', ()=>{
-    document.getElementById('dm-attach-menu-popup').classList.add('hidden');
-    document.getElementById('dm-file-input').click();
-  });
-  document.getElementById('dm-photo-input').addEventListener('change', async (e)=>{
-    const file = e.target.files[0];
-    if (file) await kirimPesanDM({ file, tipeFile: 'foto' });
-    e.target.value = '';
-  });
-  document.getElementById('dm-galeri-input').addEventListener('change', async (e)=>{
-    const file = e.target.files[0];
-    if (file) await kirimPesanDM({ file, tipeFile: 'foto' });
-    e.target.value = '';
-  });
-  document.getElementById('dm-file-input').addEventListener('change', async (e)=>{
-    const file = e.target.files[0];
-    if (file) await kirimPesanDM({ file, tipeFile: 'dokumen' });
-    e.target.value = '';
-  });
+  // ---------- Lampiran foto/file di DM: DIHAPUS atas permintaan (chat DM teks saja) ----------
 
-  async function kirimPesanDM(lampiran){
+  async function kirimPesanDM(){
     const input = document.getElementById('dm-chat-text-input');
-    const text = (!lampiran) ? input.value.trim() : '';
+    const text = input.value.trim();
     if (!dmRoomAktif || !auth.currentUser) return;
-    if (!lampiran && !text) return;
-
-    let photoUrl = null, fileUrl = null, fileName = null;
-    if (lampiran && lampiran.file){
-      const statusEl = document.getElementById('dm-upload-status');
-      try{
-        let fileUntukUpload = lampiran.file;
-        let namaUntukUpload = lampiran.file.name;
-        if (lampiran.tipeFile === 'foto'){
-          statusEl.textContent = 'Mengompres & mengunggah foto...';
-          fileUntukUpload = await kompresGambar(lampiran.file);
-          namaUntukUpload = 'foto.' + (fileUntukUpload.type === 'image/webp' ? 'webp' : 'jpg');
-        } else {
-          statusEl.textContent = 'Mengunggah file...';
-        }
-        const url = await uploadKeR2DenganProgres(fileUntukUpload, lampiran.tipeFile, namaUntukUpload);
-        if (lampiran.tipeFile === 'foto') photoUrl = url;
-        else { fileUrl = url; fileName = lampiran.file.name; }
-        statusEl.textContent = '';
-      }catch(err){
-        statusEl.textContent = 'Gagal unggah: ' + err.message;
-        return;
-      }
-    }
+    if (!text) return;
 
     try{
       await addDoc(collection(db, 'dmRooms', dmRoomAktif, 'messages'), {
         text: text || null,
-        photoUrl: photoUrl || null,
-        fileUrl: fileUrl || null,
-        fileName: fileName || null,
         pengirimUid: auth.currentUser.uid,
         pengirimEmail: auth.currentUser.email,
         waktu: serverTimestamp()
