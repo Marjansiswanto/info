@@ -162,6 +162,14 @@
   .moda-opsi.dipilih{ border-color:var(--orange); box-shadow:0 0 0 2px rgba(0,170,19,0.2) inset; }
 
   .ikon-tombol-img{ width:100%; height:100%; object-fit:cover; border-radius:9px; display:block; }
+
+  /* ===== Mode Fullscreen untuk panel modal tertentu (Lapor Gangguan, Lapor Bahaya,
+     Riwayat & Verifikasi SOS, Tracking WO, Panel Analitik Bahaya, Executive Dashboard) ===== */
+  .modal-fullscreen-overlay{ padding:0 !important; }
+  .modal-fullscreen-panel{
+    max-width:none !important; width:100% !important; height:100% !important; max-height:none !important;
+    border-radius:0 !important; margin:0 !important; overflow-y:auto !important;
+  }
   #btn-toggle-tracking{ padding:0 !important; overflow:hidden; position:relative; }
   #btn-toggle-tracking.active{
     box-shadow:0 0 0 3px rgba(0,170,19,0.35);
@@ -595,7 +603,7 @@ MAIN CONTENT
   </div>
 </div>
 
-<div id="dm-modal-overlay" class="hidden" style="position:fixed; inset:0; background:var(--panel); z-index:4600; display:flex; flex-direction:column;">
+<div id="dm-modal-overlay" class="hidden" style="position:fixed; inset:0; background:var(--panel); z-index:4950; display:flex; flex-direction:column;">
   <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); flex-shrink:0;">
     <h3 id="dm-modal-judul" style="margin:0; font-size:15px; color:var(--orange);">💬 Pesan Pribadi</h3>
     <button id="dm-modal-close" class="icon-btn icon-square-btn" title="Tutup">✕</button>
@@ -613,7 +621,19 @@ MAIN CONTENT
   <div id="dm-tampilan-chat" class="hidden" style="flex:1; display:flex; flex-direction:column; min-height:0;">
     <button id="dm-btn-kembali" class="icon-btn icon-square-btn" title="Kembali ke daftar" style="margin:10px 0 0 18px; align-self:flex-start; flex-shrink:0;">←</button>
     <div id="dm-chat-messages" style="flex:1; overflow-y:auto; padding:16px 18px; background:#F9FAFB;"></div>
+    <div id="dm-upload-status" style="font-size:10.5px; color:var(--amber); min-height:14px; padding:0 18px;"></div>
     <div style="display:flex; gap:8px; align-items:center; padding:12px 18px; border-top:1px solid var(--line); flex-shrink:0;">
+      <div style="position:relative; flex-shrink:0;">
+        <button id="dm-btn-attach" class="icon-btn icon-square-btn" title="Lampirkan">📎</button>
+        <div id="dm-attach-menu-popup" class="hidden" style="position:absolute; bottom:calc(100% + 6px); left:0; z-index:50; background:var(--panel); border:1px solid var(--line-bright); display:flex; flex-direction:column; min-width:190px; box-shadow:0 4px 14px rgba(0,0,0,0.15); border-radius:10px; overflow:hidden;">
+          <button class="attach-menu-item" id="dm-menu-foto-kamera" style="background:transparent; border:none; border-bottom:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); font-size:12px; text-align:left; padding:10px 12px; cursor:pointer;">📷 Foto (Kamera)</button>
+          <button class="attach-menu-item" id="dm-menu-galeri" style="background:transparent; border:none; border-bottom:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); font-size:12px; text-align:left; padding:10px 12px; cursor:pointer;">🖼️ Pilih dari Galeri</button>
+          <button class="attach-menu-item" id="dm-menu-file" style="background:transparent; border:none; color:var(--text); font-family:var(--mono); font-size:12px; text-align:left; padding:10px 12px; cursor:pointer;">📄 Pilih File (Dokumen)</button>
+        </div>
+      </div>
+      <input type="file" id="dm-photo-input" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="dm-galeri-input" accept="image/*" class="hidden">
+      <input type="file" id="dm-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" class="hidden">
       <input type="text" id="dm-chat-text-input" placeholder="Tulis pesan pribadi..." style="flex:1; background:#F9FAFB; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:10px; box-sizing:border-box; border-radius:10px;">
       <button id="dm-btn-kirim" class="icon-btn icon-square-btn" style="background:var(--orange); color:#0a0c0d;" title="Kirim">➤</button>
     </div>
@@ -930,13 +950,16 @@ MAIN CONTENT
       <button id="btn-coba-lagi-upload" class="icon-btn hidden" style="padding:2px 8px; font-size:10.5px;">🔄 Coba Lagi</button>
     </div>
     <div class="chat-composer">
-      <div class="quick-report-wrap">
-        <button type="button" id="btn-quick-report-toggle" class="quick-report-toggle-btn" title="Info Cepat: Ketinggian Air / Slope / Longsor">🏷️ Info Cepat ▾</button>
-        <div class="quick-report-row hidden" id="quick-report-menu">
-          <button data-report="Ketinggian Air Bendungan">💧 Ketinggian Air</button>
-          <button data-report="Kondisi Lereng/Slope">⛰️ Slope</button>
-          <button data-report="Laporan Longsor">🚨 Longsor</button>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+        <div class="quick-report-wrap" style="margin-bottom:0;">
+          <button type="button" id="btn-quick-report-toggle" class="quick-report-toggle-btn" title="Info Cepat: Ketinggian Air / Slope / Longsor">🏷️ Info Cepat ▾</button>
+          <div class="quick-report-row hidden" id="quick-report-menu">
+            <button data-report="Ketinggian Air Bendungan">💧 Ketinggian Air</button>
+            <button data-report="Kondisi Lereng/Slope">⛰️ Slope</button>
+            <button data-report="Laporan Longsor">🚨 Longsor</button>
+          </div>
         </div>
+        <button class="icon-btn" id="btn-start-call" title="Video call">🎥</button>
       </div>
       <div class="composer-row">
         <div class="attach-menu-wrap">
@@ -954,7 +977,6 @@ MAIN CONTENT
         <input type="file" id="chat-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv">
         <input type="text" id="chat-text-input" placeholder="Tulis pesan...">
         <button class="icon-btn" id="btn-send-chat" title="Kirim">➤</button>
-        <button class="icon-btn" id="btn-start-call" title="Video call">🎥</button>
       </div>
     </div>
   </div>
@@ -986,8 +1008,8 @@ MAIN CONTENT
 </div><!-- /main-content -->
 
 <!-- ===== MODAL LAPOR BAHAYA (semua role kecuali guest) ===== -->
-<div id="modal-lapor-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
+<div id="modal-lapor-bahaya-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
     <div class="panel-head"><h3>⚠️ Lapor Bahaya / Potensi Bahaya</h3><button id="btn-tutup-lapor-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">
       Laporkan kondisi/potensi bahaya yang Anda temui (mis. genangan air di ruang listrik, tumpahan/kebocoran oli, kabel terkelupas, dll). Lokasi otomatis diambil dari posisi Anda saat ini.
@@ -1039,8 +1061,8 @@ MAIN CONTENT
 </div>
 
 <!-- ===== MODAL PANEL ANALITIK LAPORAN BAHAYA (Admin/Editor/VIP) ===== -->
-<div id="modal-panel-bahaya-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:640px; width:100%; max-height:92vh; overflow-y:auto;">
+<div id="modal-panel-bahaya-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:640px; width:100%; max-height:92vh; overflow-y:auto;">
     <div class="panel-head"><h3>📊 Panel Analitik Laporan Bahaya</h3><button id="btn-tutup-panel-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
 
     <div style="display:flex; gap:12px; margin-bottom:14px; font-size:11px;">
@@ -1145,16 +1167,16 @@ MAIN CONTENT
 </div>
 
 <!-- ===== MODAL RIWAYAT SOS (Moderator) ===== -->
-<div id="modal-riwayat-sos-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:520px; width:100%; max-height:90vh; overflow-y:auto;">
+<div id="modal-riwayat-sos-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:520px; width:100%; max-height:90vh; overflow-y:auto;">
     <div class="panel-head"><h3>📟 Riwayat & Verifikasi SOS</h3><button id="btn-tutup-riwayat-sos" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="daftar-riwayat-sos"></div>
   </div>
 </div>
 
 <!-- ===== MODAL LAPOR GANGGUAN (semua role kecuali guest -- "Operator Produksi") ===== -->
-<div id="modal-lapor-gangguan-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
+<div id="modal-lapor-gangguan-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
     <div class="panel-head panel-head-wo"><h3>🔧 Lapor Gangguan</h3><button id="btn-tutup-lapor-gangguan" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">
       Laporkan gangguan/kerusakan peralatan. Supervisor akan menerima notifikasi untuk validasi & dispatch personil terdekat.
@@ -1313,8 +1335,8 @@ MAIN CONTENT
 </div>
 
 <!-- ===== MODAL EXECUTIVE DASHBOARD (Ringkasan Manajemen -- admin/editor/vip) ===== -->
-<div id="modal-executive-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:640px; width:100%; max-height:92vh; overflow-y:auto;">
+<div id="modal-executive-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:640px; width:100%; max-height:92vh; overflow-y:auto;">
     <div class="panel-head panel-head-wo"><h3>📈 Executive Dashboard</h3><button id="btn-tutup-executive" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
 
     <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Overview per Plant</div>
@@ -1356,8 +1378,8 @@ MAIN CONTENT
 </div>
 
 <!-- ===== MODAL LACAK WO (stepper visual gaya Shopee/GoSend) ===== -->
-<div id="modal-tracking-wo-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:440px; width:100%; max-height:92vh; overflow-y:auto;">
+<div id="modal-tracking-wo-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:440px; width:100%; max-height:92vh; overflow-y:auto;">
     <div class="panel-head panel-head-wo"><h3>📦 Lacak WO</h3><button id="btn-tutup-tracking-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="ringkasan-tracking-wo" style="padding:14px 16px 0;"></div>
     <div id="isi-tracking-wo" class="stepper-wo" style="padding:16px;"></div>
@@ -6555,6 +6577,46 @@ MAIN CONTENT
     document.getElementById('dm-chat-text-input').addEventListener('keydown', (e)=>{
       if (e.key === 'Enter'){ e.preventDefault(); kirimPesanDM(); }
     });
+
+    // ---------- Lampiran foto/file di DM (pakai mekanisme upload R2 yang sama dgn ruang chat utama) ----------
+    document.getElementById('dm-btn-attach').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      document.getElementById('dm-attach-menu-popup').classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e)=>{
+      const popup = document.getElementById('dm-attach-menu-popup');
+      const btn = document.getElementById('dm-btn-attach');
+      if (popup && !popup.classList.contains('hidden') && !popup.contains(e.target) && e.target !== btn){
+        popup.classList.add('hidden');
+      }
+    });
+    document.getElementById('dm-menu-foto-kamera').addEventListener('click', ()=>{
+      document.getElementById('dm-attach-menu-popup').classList.add('hidden');
+      document.getElementById('dm-photo-input').click();
+    });
+    document.getElementById('dm-menu-galeri').addEventListener('click', ()=>{
+      document.getElementById('dm-attach-menu-popup').classList.add('hidden');
+      document.getElementById('dm-galeri-input').click();
+    });
+    document.getElementById('dm-menu-file').addEventListener('click', ()=>{
+      document.getElementById('dm-attach-menu-popup').classList.add('hidden');
+      document.getElementById('dm-file-input').click();
+    });
+    document.getElementById('dm-photo-input').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if (file) await kirimPesanDM({ file, tipeFile: 'foto' });
+      e.target.value = '';
+    });
+    document.getElementById('dm-galeri-input').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if (file) await kirimPesanDM({ file, tipeFile: 'foto' });
+      e.target.value = '';
+    });
+    document.getElementById('dm-file-input').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if (file) await kirimPesanDM({ file, tipeFile: 'dokumen' });
+      e.target.value = '';
+    });
   }
 
   function tampilkanDaftarDM(){
@@ -6672,10 +6734,21 @@ MAIN CONTENT
     const q = query(collection(db, 'dmRooms', dmRoomAktif, 'messages'), orderBy('waktu', 'asc'));
     unsubscribeDM = onSnapshot(q, (snap)=>{
       listEl.innerHTML = '';
+      let tanggalTerakhirDitampilkanDM = null; // reset tiap kali render ulang penuh
       snap.forEach(docSnap=>{
         const m = docSnap.data();
         const msgId = docSnap.id;
         const mine = auth.currentUser && m.pengirimUid === auth.currentUser.uid;
+
+        // Pesan yang baru dikirim (belum sempat sync serverTimestamp) sementara waktu=null -- anggap "hari ini"
+        const tanggalPesanDM = m.waktu && m.waktu.toDate ? m.waktu.toDate() : new Date();
+        const kunciTanggalDM = tanggalPesanDM.toDateString();
+        if (kunciTanggalDM !== tanggalTerakhirDitampilkanDM){
+          tambahkanDividerTanggalDM(tanggalPesanDM);
+          tanggalTerakhirDitampilkanDM = kunciTanggalDM;
+        }
+
+        const jamPesanDM = tanggalPesanDM.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
         const bubble = document.createElement('div');
         bubble.style.cssText = 'margin-bottom:8px; padding:8px; border:1px solid ' + (mine ? 'var(--orange)' : 'var(--line-bright)') + '; max-width:80%;'
           + (mine ? ' margin-left:auto;' : '');
@@ -6704,6 +6777,7 @@ MAIN CONTENT
           html += '<span onclick="window.hapusPesanDM(\'' + msgId + '\')" title="Hapus" style="cursor:pointer; color:var(--red);">🗑️</span>';
           html += '</div>';
         }
+        html += '<div style="font-size:9.5px; color:var(--text-dim); margin-top:4px; text-align:right;">' + jamPesanDM + '</div>';
         bubble.innerHTML = html;
         listEl.appendChild(bubble);
       });
@@ -6739,15 +6813,41 @@ MAIN CONTENT
 
   // ---------- Lampiran foto/file di DM: DIHAPUS atas permintaan (chat DM teks saja) ----------
 
-  async function kirimPesanDM(){
+  async function kirimPesanDM(lampiran){
     const input = document.getElementById('dm-chat-text-input');
-    const text = input.value.trim();
+    const text = (!lampiran) ? input.value.trim() : '';
     if (!dmRoomAktif || !auth.currentUser) return;
-    if (!text) return;
+    if (!lampiran && !text) return;
+
+    let photoUrl = null, fileUrl = null, fileName = null;
+    if (lampiran && lampiran.file){
+      const statusEl = document.getElementById('dm-upload-status');
+      try{
+        let fileUntukUpload = lampiran.file;
+        let namaUntukUpload = lampiran.file.name;
+        if (lampiran.tipeFile === 'foto'){
+          statusEl.textContent = 'Mengompres & mengunggah foto...';
+          fileUntukUpload = await kompresGambar(lampiran.file);
+          namaUntukUpload = 'foto.' + (fileUntukUpload.type === 'image/webp' ? 'webp' : 'jpg');
+        } else {
+          statusEl.textContent = 'Mengunggah file...';
+        }
+        const url = await uploadKeR2DenganProgres(fileUntukUpload, lampiran.tipeFile, namaUntukUpload);
+        if (lampiran.tipeFile === 'foto') photoUrl = url;
+        else { fileUrl = url; fileName = lampiran.file.name; }
+        statusEl.textContent = '';
+      }catch(err){
+        statusEl.textContent = 'Gagal unggah: ' + err.message;
+        return;
+      }
+    }
 
     try{
       await addDoc(collection(db, 'dmRooms', dmRoomAktif, 'messages'), {
         text: text || null,
+        photoUrl: photoUrl || null,
+        fileUrl: fileUrl || null,
+        fileName: fileName || null,
         pengirimUid: auth.currentUser.uid,
         pengirimEmail: auth.currentUser.email,
         waktu: serverTimestamp()
@@ -6792,6 +6892,33 @@ MAIN CONTENT
   /** Bikin & tampilkan pembatas tanggal di ruang chat -- "Hari Ini" / "Kemarin" / tanggal lengkap */
   function tambahkanDividerTanggal(tanggalPesan){
     const listEl = document.getElementById('chat-messages');
+    const hariIni = new Date();
+    const kemarin = new Date();
+    kemarin.setDate(hariIni.getDate() - 1);
+
+    let teksLabel;
+    if (tanggalPesan.toDateString() === hariIni.toDateString()){
+      teksLabel = 'Hari Ini';
+    } else if (tanggalPesan.toDateString() === kemarin.toDateString()){
+      teksLabel = 'Kemarin';
+    } else {
+      teksLabel = tanggalPesan.toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
+    }
+
+    const divider = document.createElement('div');
+    divider.style.cssText = 'display:flex; align-items:center; gap:10px; margin:14px 0; opacity:0.7;';
+    divider.innerHTML =
+      '<div style="flex:1; height:1px; background:var(--line-bright);"></div>'
+      + '<div style="font-size:10.5px; color:var(--text-dim); font-family:var(--mono); white-space:nowrap;">' + teksLabel + '</div>'
+      + '<div style="flex:1; height:1px; background:var(--line-bright);"></div>';
+    listEl.appendChild(divider);
+  }
+
+  /** Sama seperti tambahkanDividerTanggal(), tapi ditempel ke #dm-chat-messages (ruang DM) */
+  function tambahkanDividerTanggalDM(tanggalPesan){
+    const listEl = document.getElementById('dm-chat-messages');
     const hariIni = new Date();
     const kemarin = new Date();
     kemarin.setDate(hariIni.getDate() - 1);
