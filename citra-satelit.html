@@ -341,7 +341,7 @@
     font-size: 13px;
     font-weight: 500;
     color: var(--secondary);
-    min-height: 20px;
+    min-height: 24px;
     margin-bottom: 12px;
   }
   #loc-card button.primary {
@@ -618,78 +618,247 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ====== KOORDINAT DEFAULT: KA'BAH ======
-  var DEFAULT_LAT = 21.4225, DEFAULT_LON = 39.8262, DEFAULT_LABEL = 'Ka\'bah — Masjidil Haram, Mekkah';
-  var GEE_APP_BASE = 'https://sipatra-smart.projects.earthengine.app/view/sipatra-satelit';
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM siap — memulai inisialisasi...');
 
-  // ====== SENTINEL-2 MAP ======
-  var map = L.map('s2-map', { zoomControl: true, maxZoom: 18 }).setView([DEFAULT_LAT, DEFAULT_LON], 15);
+    // ====== KOORDINAT DEFAULT: KA'BAH ======
+    var DEFAULT_LAT = 21.4225, DEFAULT_LON = 39.8262, DEFAULT_LABEL = 'Ka\'bah — Masjidil Haram, Mekkah';
+    var GEE_APP_BASE = 'https://sipatra-smart.projects.earthengine.app/view/sipatra-satelit';
 
-  var s2Layer = L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg', {
-    attribution: 'Sentinel-2 cloudless by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2020)',
-    maxZoom: 18,
-    maxNativeZoom: 14
-  }).addTo(map);
+    // ====== SENTINEL-2 MAP ======
+    var map = L.map('s2-map', { zoomControl: true, maxZoom: 18 }).setView([DEFAULT_LAT, DEFAULT_LON], 15);
 
-  var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
+    var s2Layer = L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg', {
+      attribution: 'Sentinel-2 cloudless by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2020)',
+      maxZoom: 18,
+      maxNativeZoom: 14
+    }).addTo(map);
+
+    var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    });
+
+    var lokasiMarker = L.circleMarker([DEFAULT_LAT, DEFAULT_LON], {
+      radius: 8,
+      color: '#0B7A5B',
+      weight: 3,
+      fillColor: '#0B7A5B',
+      fillOpacity: 0.25
+    }).addTo(map).bindPopup('<b>' + DEFAULT_LABEL + '</b>');
+
+    // ====== NAVIGASI MAP ======
+    var navMap = L.map('nav-map', { zoomControl: true, maxZoom: 18 }).setView([DEFAULT_LAT, DEFAULT_LON], 13);
+
+    var navBase = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(navMap);
+
+    var seamarkLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+      attribution: 'Sea marks © OpenSeaMap contributors',
+      maxZoom: 18,
+      opacity: 0.9
+    }).addTo(navMap);
+
+    var navMarker = L.circleMarker([DEFAULT_LAT, DEFAULT_LON], {
+      radius: 8,
+      color: '#0B7A5B',
+      weight: 3,
+      fillColor: '#0B7A5B',
+      fillOpacity: 0.25
+    }).addTo(navMap).bindPopup('<b>' + DEFAULT_LABEL + '</b>');
+
+    // ====== FUNGSI UPDATE GNSS ======
+    function updateGnssReadout(lat, lon, acc) {
+      document.getElementById('gnss-lat').textContent = lat.toFixed(6) + '° ' + (lat >= 0 ? 'LU' : 'LS');
+      document.getElementById('gnss-lon').textContent = Math.abs(lon).toFixed(6) + '° ' + (lon >= 0 ? 'BT' : 'BB');
+      document.getElementById('gnss-acc').textContent = acc ? ('±' + Math.round(acc) + ' m') : '—';
+      console.log('📍 GNSS update:', lat, lon, acc);
+    }
+    updateGnssReadout(DEFAULT_LAT, DEFAULT_LON, null);
+
+    // ====== KLIK PETA NAVIGASI ======
+    navMap.on('click', function(e) {
+      var lat = e.latlng.lat, lon = e.latlng.lng;
+      updateGnssReadout(lat, lon, null);
+      navMarker.setLatLng([lat, lon])
+        .bindPopup('<b>Titik dipilih</b><br>' + lat.toFixed(6) + ', ' + lon.toFixed(6))
+        .openPopup();
+    });
+
+    // ====== TOGGLE LAYER SENTINEL ======
+    document.querySelectorAll('.toolbar button[data-layer]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.toolbar button[data-layer]').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        if (btn.dataset.layer === 's2') {
+          map.removeLayer(osmLayer);
+          map.addLayer(s2Layer);
+        } else {
+          map.removeLayer(s2Layer);
+          map.addLayer(osmLayer);
+        }
+      });
+    });
+
+    // ====== TOGGLE SEAMARK ======
+    document.querySelectorAll('.toolbar button[data-nav]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.toolbar button[data-nav]').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        if (btn.dataset.nav === 'seamark') {
+          navMap.addLayer(seamarkLayer);
+        } else {
+          navMap.removeLayer(seamarkLayer);
+        }
+      });
+    });
+
+    // ====== FUNGSI LOAD GEE DENGAN TIMESTAMP ======
+    function loadGeeApp(lat, lon) {
+      var frame = document.getElementById('gee-frame');
+      var url = GEE_APP_BASE + '?lat=' + lat.toFixed(6) + '&lon=' + lon.toFixed(6) + '&t=' + Date.now();
+      frame.src = url;
+      console.log('🛰️ GEE loaded:', url);
+    }
+
+    function loadWindy(lat, lon) {
+      var frame = document.getElementById('windy-frame');
+      frame.src = 'https://embed.windy.com/embed2.html'
+        + '?lat=' + lat.toFixed(3)
+        + '&lon=' + lon.toFixed(3)
+        + '&detailLat=' + lat.toFixed(3)
+        + '&detailLon=' + lon.toFixed(3)
+        + '&width=650&height=450&zoom=9'
+        + '&level=surface&overlay=satellite&product=ecmwf'
+        + '&menu=&message=true&marker=&calendar=now&pressure=&type=map'
+        + '&location=coordinates&metricWind=default&metricTemp=default&radarRange=-1';
+      console.log('🌤️ Windy loaded');
+    }
+
+    // ====== TERAPKAN LOKASI ======
+    function applyLocation(lat, lon, label, acc) {
+      console.log('📍 Menerapkan lokasi:', lat, lon, label);
+      map.setView([lat, lon], 15);
+      lokasiMarker.setLatLng([lat, lon]).bindPopup('<b>' + (label || 'Lokasi') + '</b>').openPopup();
+      loadGeeApp(lat, lon);
+      loadWindy(lat, lon);
+      navMap.setView([lat, lon], 13);
+      navMarker.setLatLng([lat, lon]).bindPopup('<b>' + (label || 'Lokasi') + '</b>');
+      updateGnssReadout(lat, lon, acc);
+    }
+
+    // ====== REFERENSI ELEMEN MODAL ======
+    var overlay = document.getElementById('loc-overlay');
+    var locStatus = document.getElementById('loc-status');
+    var btnUseMine = document.getElementById('loc-use-mine');
+    var btnSkip = document.getElementById('loc-skip');
+    var btnSearch = document.getElementById('loc-search-btn');
+    var searchInput = document.getElementById('loc-search-input');
+    var resultsDiv = document.getElementById('loc-search-results');
+
+    // ====== TOMBOL "GUNAKAN LOKASI SAYA" ======
+    btnUseMine.addEventListener('click', function() {
+      console.log('🔘 Tombol "Gunakan Lokasi Saya" diklik');
+      locStatus.textContent = 'Mengambil lokasi...';
+      if (!navigator.geolocation) {
+        locStatus.textContent = '❌ Geolocation tidak didukung. Gunakan default.';
+        console.warn('Geolocation tidak didukung');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          var lat = pos.coords.latitude, lon = pos.coords.longitude;
+          var acc = pos.coords.accuracy;
+          locStatus.textContent = '✅ Lokasi: ' + lat.toFixed(5) + ', ' + lon.toFixed(5);
+          overlay.classList.add('hidden');
+          applyLocation(lat, lon, 'Lokasi Anda', acc);
+        },
+        function(err) {
+          locStatus.textContent = '❌ Gagal: ' + err.message + '. Gunakan default.';
+          console.error('Geolocation error:', err.message);
+          overlay.classList.add('hidden');
+          applyLocation(DEFAULT_LAT, DEFAULT_LON, DEFAULT_LABEL, null);
+        },
+        { enableHighAccuracy: true }
+      );
+    });
+
+    // ====== TOMBOL "LEWATI" ======
+    btnSkip.addEventListener('click', function() {
+      console.log('🔘 Tombol "Lewati" diklik');
+      overlay.classList.add('hidden');
+      applyLocation(DEFAULT_LAT, DEFAULT_LON, DEFAULT_LABEL, null);
+    });
+
+    // ====== TOMBOL "CARI" ======
+    btnSearch.addEventListener('click', function() {
+      var query = searchInput.value.trim();
+      if (!query) {
+        resultsDiv.innerHTML = 'Masukkan nama lokasi.';
+        return;
+      }
+      console.log('🔍 Mencari:', query);
+      resultsDiv.innerHTML = 'Mencari...';
+      fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=5')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data || data.length === 0) {
+            resultsDiv.innerHTML = 'Tidak ditemukan.';
+            return;
+          }
+          resultsDiv.innerHTML = '';
+          data.forEach(function(item) {
+            var div = document.createElement('div');
+            div.textContent = item.display_name;
+            div.addEventListener('click', function() {
+              var lat = parseFloat(item.lat), lon = parseFloat(item.lon);
+              overlay.classList.add('hidden');
+              applyLocation(lat, lon, item.display_name, null);
+            });
+            resultsDiv.appendChild(div);
+          });
+        })
+        .catch(function(err) {
+          console.error('Search error:', err);
+          resultsDiv.innerHTML = 'Gagal mencari.';
+        });
+    });
+
+    // ====== ENTER PADA INPUT PENCARIAN ======
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        btnSearch.click();
+      }
+    });
+
+    // ====== JIKA MODAL TIDAK DIAKSI, TETAP PAKAI DEFAULT ======
+    // Kita tidak pakai timeout agar user bisa memilih dengan tenang.
+    // Tapi jika user tidak mengklik apapun, modal tetap terlihat.
+    // Kita bisa tambahkan fallback: jika user klik di luar modal, tutup dan pakai default.
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        console.log('🖱️ Klik di luar modal -> tutup dan pakai default');
+        overlay.classList.add('hidden');
+        applyLocation(DEFAULT_LAT, DEFAULT_LON, DEFAULT_LABEL, null);
+      }
+    });
+
+    console.log('✅ Inisialisasi selesai. Modal siap.');
+
+    // ====== MUAT DEFAULT TERLEBIH DAHULU (AGAR TIDAK KOSONG) ======
+    // Tapi jangan timpa jika nanti user pilih lokasi lain.
+    // Kita load GEE dan Windy dengan default dulu, tapi hanya jika frame kosong.
+    var geeFrame = document.getElementById('gee-frame');
+    if (!geeFrame.src || geeFrame.src === '') {
+      loadGeeApp(DEFAULT_LAT, DEFAULT_LON);
+    }
+    var windyFrame = document.getElementById('windy-frame');
+    if (!windyFrame.src || windyFrame.src === '') {
+      loadWindy(DEFAULT_LAT, DEFAULT_LON);
+    }
   });
-
-  var lokasiMarker = L.circleMarker([DEFAULT_LAT, DEFAULT_LON], {
-    radius: 8,
-    color: '#0B7A5B',
-    weight: 3,
-    fillColor: '#0B7A5B',
-    fillOpacity: 0.25
-  }).addTo(map).bindPopup('<b>' + DEFAULT_LABEL + '</b>');
-
-  // ====== NAVIGASI MAP ======
-  var navMap = L.map('nav-map', { zoomControl: true, maxZoom: 18 }).setView([DEFAULT_LAT, DEFAULT_LON], 13);
-
-  var navBase = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(navMap);
-
-  var seamarkLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-    attribution: 'Sea marks © OpenSeaMap contributors',
-    maxZoom: 18,
-    opacity: 0.9
-  }).addTo(navMap);
-
-  var navMarker = L.circleMarker([DEFAULT_LAT, DEFAULT_LON], {
-    radius: 8,
-    color: '#0B7A5B',
-    weight: 3,
-    fillColor: '#0B7A5B',
-    fillOpacity: 0.25
-  }).addTo(navMap).bindPopup('<b>' + DEFAULT_LABEL + '</b>');
-
-  // ====== FUNGSI UPDATE GNSS ======
-  function updateGnssReadout(lat, lon, acc) {
-    document.getElementById('gnss-lat').textContent = lat.toFixed(6) + '° ' + (lat >= 0 ? 'LU' : 'LS');
-    document.getElementById('gnss-lon').textContent = Math.abs(lon).toFixed(6) + '° ' + (lon >= 0 ? 'BT' : 'BB');
-    document.getElementById('gnss-acc').textContent = acc ? ('±' + Math.round(acc) + ' m') : '—';
-  }
-  updateGnssReadout(DEFAULT_LAT, DEFAULT_LON, null);
-
-  // ====== KLIK PETA NAVIGASI ======
-  navMap.on('click', function(e) {
-    var lat = e.latlng.lat, lon = e.latlng.lng;
-    updateGnssReadout(lat, lon, null);
-    navMarker.setLatLng([lat, lon])
-      .bindPopup('<b>Titik dipilih</b><br>' + lat.toFixed(6) + ', ' + lon.toFixed(6))
-      .openPopup();
-  });
-
-  // ====== TOGGLE LAYER SENTINEL ======
-  document.querySelectorAll('.toolbar button[data-layer]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.toolbar button[data-layer]').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      if (btn.dataset.layer === 's2') {
-        map.removeLayer(osmLayer);
-        map.addLayer(s2Layer);
-      } else {
-        map.removeLayer(s2Lay
+</script>
+</body>
+</html>
