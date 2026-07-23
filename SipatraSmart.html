@@ -455,10 +455,10 @@ PERSIS SAMA supaya seluruh JS/Firebase di bawah tidak perlu diubah sedikit pun.
     </div>
   </div>
 
-  <div id="blok-identitas-pengguna" style="padding:10px 12px; margin-bottom:16px; background:rgba(255,255,255,0.12); border-radius:12px; color:#fff;">
-    <div style="font-size:10px; opacity:0.75;">👋 Selamat datang,</div>
-    <div id="teks-nama-pengguna" style="font-size:12px; font-weight:700; word-break:break-all; margin:2px 0 6px;">-</div>
-    <span id="badge-status-pengguna" style="display:inline-block; font-size:9.5px; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(255,255,255,0.25);">-</span>
+  <div id="blok-identitas-pengguna" style="padding:12px; margin-bottom:16px; background:#F9FAFB; border-radius:12px; color:var(--text); border:1px solid var(--line);">
+    <div style="font-size:10.5px; color:var(--text-dim); font-weight:600;">👋 Selamat datang,</div>
+    <div id="teks-nama-pengguna" style="font-size:12.5px; font-weight:800; word-break:break-all; margin:2px 0 6px; color:var(--text);">-</div>
+    <span id="badge-status-pengguna" style="display:inline-block; font-size:9.5px; font-weight:700; padding:3px 9px; border-radius:20px; background:#E8F5E9; color:var(--orange-dim);">-</span>
   </div>
 
   <nav class="sidebar-nav">
@@ -2058,6 +2058,16 @@ MAIN CONTENT
     blok.classList.remove('hidden');
   }
 
+  // Tampilan default di sidebar SEBELUM login / SETELAH logout -- sambutan perusahaan,
+  // bukan sekadar "-" kosong yang kurang informatif.
+  function tampilkanSambutanDefault(){
+    const blok = document.getElementById('blok-identitas-pengguna');
+    if (!blok) return;
+    document.getElementById('teks-nama-pengguna').textContent = 'PT. SEMEN TONASA';
+    document.getElementById('badge-status-pengguna').textContent = 'Silakan Masuk';
+    blok.classList.remove('hidden');
+  }
+
   // ---------- Batasan akses berdasarkan role ----------
   // guest/viewer -> hanya boleh LIHAT dashboard; tombol tracking/SOS/chat dinonaktifkan.
   // user, editor, admin -> akses penuh ke fitur inti (SOS, tracking, chat).
@@ -2152,6 +2162,7 @@ MAIN CONTENT
       document.getElementById('logout-btn').classList.add('hidden');
       document.getElementById('admin-panel-btn').classList.add('hidden');
       showForm('form-login');
+      tampilkanSambutanDefault();
     }
   });
 
