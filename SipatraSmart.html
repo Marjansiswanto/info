@@ -1313,6 +1313,12 @@ MAIN CONTENT
     <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Area / Equipment</label>
     <input type="text" id="input-area-gangguan" placeholder="mis. Finish Mill - MCC-05A" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
 
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Equipment Number <span style="color:var(--text-dim); font-weight:normal;">(opsional)</span></label>
+    <input type="text" id="input-equipment-number-gangguan" placeholder="mis. 401ME1" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+
+    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Equipment Name <span style="color:var(--text-dim); font-weight:normal;">(opsional)</span></label>
+    <input type="text" id="input-equipment-name-gangguan" placeholder="mis. Motor Fan Cooler" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px;">
+
     <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">No. WO <span style="color:var(--text-dim); font-weight:normal;">(opsional, isi manual dari WO SAP kalau sudah ada)</span></label>
     <input type="text" id="input-nomor-wo-gangguan" placeholder="mis. WO-2505-0012" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:4px;">
     <div style="font-size:10px; color:var(--amber); margin-bottom:8px;">⚠️ Cek kembali nomor WO sebelum kirim.</div>
@@ -4662,7 +4668,8 @@ MAIN CONTENT
       const namaAreaWO = document.getElementById('input-area-wo').value.trim() || 'Tanpa keterangan area';
       const btn = document.getElementById('btn-sudah-tiba');
       btn.disabled = true;
-      btn.textContent = 'Menyimpan catatan rute...';
+      btn.textContent = '⏳';
+      setTrackingStatus('Menyimpan catatan rute...');
       try{
         const jarakPergiKm = (hitungJarakMeter(
           titikAwalLokal.lat, titikAwalLokal.lon,
@@ -4684,11 +4691,13 @@ MAIN CONTENT
         });
         idRuteAktif = refDoc.id;
         titikTibaLokal = { lat: window.__posisiTerkiniSaya.lat, lon: window.__posisiTerkiniSaya.lon, waktuMs: waktuTibaSekarang };
-        btn.textContent = '✅ Kedatangan tercatat — rute pulang mulai dihitung';
+        btn.textContent = '✅';
+        setTrackingStatus('Kedatangan tercatat — rute pulang mulai dihitung.');
       }catch(err){
         alert('Gagal menyimpan catatan kedatangan: ' + err.message);
         btn.disabled = false;
-        btn.textContent = '🏁 SAYA SUDAH TIBA DI LOKASI WO';
+        btn.textContent = '🏁';
+        setTrackingStatus('Gagal menyimpan catatan kedatangan: ' + err.message);
       }
     });
 
@@ -5638,6 +5647,8 @@ MAIN CONTENT
       document.getElementById('nama-foto-wo-screenshot').textContent = '';
       document.getElementById('input-plant-gangguan').selectedIndex = 0;
       document.getElementById('input-area-gangguan').value = '';
+      document.getElementById('input-equipment-number-gangguan').value = '';
+      document.getElementById('input-equipment-name-gangguan').value = '';
       document.getElementById('input-nomor-wo-gangguan').value = '';
       document.getElementById('input-deskripsi-gangguan').value = '';
       document.getElementById('status-lapor-gangguan').textContent = '';
@@ -5675,6 +5686,8 @@ MAIN CONTENT
       if (!auth.currentUser) return;
       const plant = document.getElementById('input-plant-gangguan').value.trim();
       const area = document.getElementById('input-area-gangguan').value.trim();
+      const equipmentNumber = document.getElementById('input-equipment-number-gangguan').value.trim();
+      const equipmentName = document.getElementById('input-equipment-name-gangguan').value.trim();
       const nomorWO = document.getElementById('input-nomor-wo-gangguan').value.trim();
       const jenis = document.getElementById('input-jenis-gangguan').value;
       const prioritas = document.querySelector('input[name="prioritas-gangguan"]:checked').value;
@@ -5713,6 +5726,8 @@ MAIN CONTENT
           pelaporUid: auth.currentUser.uid,
           pelaporEmail: auth.currentUser.email,
           plant, area, jenis, prioritas, deskripsi,
+          equipmentNumber: equipmentNumber || null,
+          equipmentName: equipmentName || null,
           nomorWO: nomorWO || null,
           fotoWOScreenshotUrl: fotoWOScreenshotUrl || null,
           fotoUrl: fotoUrl || null,
@@ -5975,6 +5990,8 @@ MAIN CONTENT
     const waktu = g.waktuLapor && g.waktuLapor.toDate ? g.waktuLapor.toDate().toLocaleString('id-ID') : '-';
     let html = '<div><b>Plant:</b> ' + g.plant + '</div>'
       + '<div><b>Area:</b> ' + g.area + '</div>'
+      + (g.equipmentNumber ? ('<div><b>Equipment Number:</b> ' + g.equipmentNumber + '</div>') : '')
+      + (g.equipmentName ? ('<div><b>Equipment Name:</b> ' + g.equipmentName + '</div>') : '')
       + (g.nomorWO ? ('<div><b>No. WO:</b> ' + g.nomorWO + '</div>') : '')
       + '<div><b>Jenis:</b> ' + g.jenis + '</div>'
       + '<div><b>Prioritas:</b> <span style="color:' + warnaPrioritas[g.prioritas] + '; font-weight:700;">' + labelPrioritas[g.prioritas] + '</span></div>'
@@ -6198,6 +6215,8 @@ MAIN CONTENT
 
     let html = '<div><b>Plant:</b> ' + g.plant + '</div>'
       + '<div><b>Area:</b> ' + g.area + '</div>'
+      + (g.equipmentNumber ? ('<div><b>Equipment Number:</b> ' + g.equipmentNumber + '</div>') : '')
+      + (g.equipmentName ? ('<div><b>Equipment Name:</b> ' + g.equipmentName + '</div>') : '')
       + (g.nomorWO ? ('<div><b>No. WO:</b> ' + g.nomorWO + '</div>') : '')
       + '<div><b>Jenis:</b> ' + g.jenis + '</div>'
       + '<div><b>Dilaporkan oleh:</b> ' + (g.pelaporEmail || '-') + '</div>'
