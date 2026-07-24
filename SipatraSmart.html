@@ -107,7 +107,6 @@
   #sar-map{ width:100%; height:480px; }
   @media(min-width:921px){
     #sar-map{ height:700px; }
-    #gmap-panel, #streetview-panel{ height:450px !important; }
   }
   .leaflet-container{ background:#E5E7EB !important; }
 
@@ -170,6 +169,45 @@
     max-width:none !important; width:100% !important; height:100% !important; max-height:none !important;
     border-radius:0 !important; margin:0 !important; overflow-y:auto !important;
   }
+
+  /* ===== Gaya daftar ala Gojek (Riwayat Transaksi): header tanggal + baris ikon bulat ===== */
+  .wo-date-header{ font-size:13px; font-weight:800; color:var(--text); margin:18px 2px 8px; }
+  .wo-date-header:first-child{ margin-top:4px; }
+  .wo-list-item{
+    display:flex; align-items:flex-start; gap:12px; padding:12px 2px;
+    border-bottom:1px solid var(--line); cursor:pointer;
+  }
+  .wo-list-item:hover{ background:#F9FAFB; }
+  .wo-list-item .wo-icon-circle{
+    width:44px; height:44px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:19px;
+  }
+  .wo-list-item .wo-info{ flex:1; min-width:0; }
+  .wo-list-item .wo-title{ font-size:13.5px; font-weight:700; color:var(--text); }
+  .wo-list-item .wo-subtitle{ font-size:11px; color:var(--text-dim); margin-top:3px; line-height:1.5; }
+  .wo-list-item .wo-status-col{ text-align:right; flex-shrink:0; padding-left:6px; }
+  .wo-list-item .wo-status-label{ font-size:11.5px; font-weight:700; white-space:nowrap; }
+  .wo-list-item .wo-status-sub{ font-size:9.5px; color:var(--text-dim); margin-top:5px; white-space:nowrap; }
+
+  /* ===== Gaya halaman detail ala Gojek (Detail Transaksi) ===== */
+  .wo-detail-hero{ display:flex; flex-direction:column; align-items:center; text-align:center; padding:24px 20px 18px; }
+  .wo-detail-hero .wo-detail-icon-circle{
+    width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:28px; margin-bottom:14px;
+  }
+  .wo-detail-hero .wo-detail-title{ font-size:19px; font-weight:800; color:var(--text); }
+  .wo-detail-hero .wo-detail-subtitle{ font-size:13px; color:var(--text-dim); margin-top:4px; }
+  .wo-detail-dashed{ border-top:1px dashed var(--line-bright); margin:6px 20px; }
+  .wo-detail-rincian-head{
+    display:flex; justify-content:space-between; align-items:center; padding:16px 20px 10px;
+    font-size:14px; font-weight:800; color:var(--text);
+  }
+  .wo-detail-row{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+    padding:9px 20px; font-size:12.5px;
+  }
+  .wo-detail-row .wo-detail-label{ color:var(--text-dim); flex-shrink:0; }
+  .wo-detail-row .wo-detail-value{ color:var(--text); text-align:right; font-weight:600; }
   #btn-toggle-tracking{ padding:0 !important; overflow:hidden; position:relative; }
   #btn-toggle-tracking.active{
     box-shadow:0 0 0 3px rgba(0,170,19,0.35);
@@ -205,6 +243,43 @@
   .gmail-dropdown-item{ padding:10px 14px; font-size:11.5px; color:var(--text); cursor:pointer; font-family:var(--mono); }
   .gmail-dropdown-item:hover{ background:#F3F4F6; }
   .gmail-dropdown-item.active{ background:#E8F5E9; color:var(--orange); font-weight:700; }
+
+  /* ===== Bottom Sheet Filter (ala "Pilih tanggal transaksi" Gojek) ===== */
+  .bottom-sheet-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:5300;
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  .bottom-sheet-panel{
+    background:var(--panel); width:100%; max-width:520px; max-height:80vh; overflow-y:auto;
+    border-radius:20px 20px 0 0; padding:10px 20px 20px; box-sizing:border-box;
+    animation: slideUpSheet .22s ease-out;
+  }
+  @keyframes slideUpSheet{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+  .bottom-sheet-handle{ width:40px; height:4px; background:var(--line-bright); border-radius:3px; margin:4px auto 16px; }
+  .bottom-sheet-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .bottom-sheet-title{ font-size:17px; font-weight:800; color:var(--text); }
+  .bottom-sheet-clear-btn{
+    background:transparent; border:1px solid var(--line-bright); border-radius:20px;
+    padding:8px 16px; font-size:12px; font-weight:700; color:var(--text-dim); cursor:pointer;
+  }
+  .bottom-sheet-clear-btn:hover{ border-color:var(--orange); color:var(--orange); }
+  .bottom-sheet-option{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:15px 2px; border-bottom:1px solid var(--line); font-size:13.5px; cursor:pointer; color:var(--text);
+  }
+  .bottom-sheet-option:last-child{ border-bottom:none; }
+  .bottom-sheet-radio{
+    width:20px; height:20px; border-radius:50%; border:2px solid var(--line-bright); flex-shrink:0; box-sizing:border-box;
+  }
+  .bottom-sheet-option.active .bottom-sheet-radio{
+    border-color:var(--orange);
+    background: radial-gradient(circle, var(--orange) 0 42%, transparent 44%);
+  }
+  .bottom-sheet-cta{
+    width:100%; padding:15px; margin-top:16px; background:var(--orange); color:#fff;
+    border:none; border-radius:30px; font-size:14px; font-weight:800; cursor:pointer; font-family:var(--mono);
+  }
+  .bottom-sheet-cta:hover{ background:var(--orange-dim); }
 
   .stepper-wo{ position:relative; padding-left:14px; }
   .stepper-wo-item{ position:relative; padding-left:26px; padding-bottom:26px; }
@@ -981,26 +1056,22 @@ MAIN CONTENT
     </div>
   </div>
 
-  <!-- ===== PANEL STREET VIEW (Fitur Terpisah — Verifikasi Visual, BUKAN Basemap Tracking) ===== -->
-  <div class="panel" style="margin-top:20px;">
+  <!-- ===== PANEL GOOGLE MAPS & STREET VIEW (Fitur Terpisah -- Verifikasi Visual, BUKAN Basemap Tracking) ===== -->
+  <div id="streetview-panel" class="panel" style="margin-top:20px;">
     <div class="panel-head">
-      <span>GOOGLE STREET VIEW — VERIFIKASI VISUAL LOKASI</span>
-      <span class="tag" id="streetview-tag" style="background:var(--red);">BELUM AKTIF</span>
+      <span>GOOGLE MAPS & STREET VIEW — VERIFIKASI VISUAL LOKASI</span>
     </div>
-    <div style="padding:10px 14px; display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--line);">
-      <input type="text" id="sv-lat" placeholder="Latitude" style="width:120px; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px;">
-      <input type="text" id="sv-lon" placeholder="Longitude" style="width:120px; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px;">
-      <button id="btn-sv-lihat" class="icon-btn" style="width:auto; padding:8px 14px;">👁 LIHAT STREET VIEW</button>
-      <button id="btn-sv-dari-personel" class="icon-btn" style="width:auto; padding:8px 14px;">📍 Pakai Posisi Saya Terkini</button>
+    <div style="padding:14px 18px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-bottom:1px solid var(--line);">
+      <input type="text" id="sv-lat" placeholder="Latitude" style="flex:1; min-width:110px; background:#F9FAFB; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px;">
+      <input type="text" id="sv-lon" placeholder="Longitude" style="flex:1; min-width:110px; background:#F9FAFB; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px;">
+      <a id="link-sv-peta" href="https://www.google.com/maps/@-4.793,119.616,17z/data=!3m1!1e3" target="_blank" class="icon-square-btn" style="text-decoration:none; color:var(--orange); border-color:var(--orange);" title="Buka Peta Satelit">🗺️</a>
+      <a id="link-sv-streetview" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=-4.793,119.616" target="_blank" class="icon-square-btn" style="text-decoration:none; color:#1e40af; border-color:#1e40af;" title="Lihat Street View">👁️</a>
+      <button id="btn-sv-dari-personel" class="icon-square-btn" style="color:var(--red); border-color:var(--red);" title="Pakai Posisi Saya Terkini">📍</button>
     </div>
-    <div id="sv-status" style="padding:6px 14px; font-size:11px; color:var(--text-dim);"></div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0;">
-      <div id="gmap-panel" style="height:360px; background:#000;"></div>
-      <div id="streetview-panel" style="height:360px; background:#000;"></div>
-    </div>
-    <p style="color:var(--text-dim); font-size:10.5px; padding:10px 14px; line-height:1.6; margin:0;">
-      Catatan: Street View hanya tersedia di lokasi yang sudah difoto Google (mobil/trekker Street View) — area terpencil mungkin belum ada datanya.
-      Panel ini <b>terpisah dari peta tracking</b> di atas — dipakai sesekali untuk verifikasi visual, bukan basemap real-time.
+    <div id="sv-status" style="padding:6px 18px; font-size:11px; color:var(--text-dim);"></div>
+    <p style="color:var(--text-dim); font-size:10.5px; padding:0 18px 16px; line-height:1.6; margin:0;">
+      🗺️ = buka peta satelit di tab baru · 👁️ = buka Street View di tab baru · 📍 = isi otomatis dari posisi tracking Anda saat ini. Tombol ini membuka Google Maps langsung (bukan ditanam di halaman) — sama seperti tombol "Buka di Google Maps" pada Lapor Bahaya & Laporan Gangguan, jadi tidak butuh API key/billing dan tidak ada watermark.
+      Street View hanya tersedia di lokasi yang sudah difoto Google (mobil/trekker Street View) — area terpencil mungkin belum ada datanya.
     </p>
   </div>
 
@@ -1103,7 +1174,7 @@ MAIN CONTENT
     </div>
 
     <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Daftar Laporan (terbaru dulu)</div>
-    <div id="daftar-laporan-bahaya"></div>
+    <div id="daftar-laporan-bahaya" style="padding:0 20px 16px;"></div>
   </div>
 </div>
 
@@ -1112,11 +1183,11 @@ MAIN CONTENT
   <div class="panel modal-fullscreen-panel" style="max-width:460px; width:100%; max-height:90vh; overflow-y:auto;">
     <div class="panel-head"><h3>Detail Laporan Bahaya</h3><button id="btn-tutup-detail-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="isi-detail-bahaya"></div>
-    <div id="peta-detail-bahaya" style="height:200px; margin-top:10px; border:1px solid var(--line-bright);"></div>
-    <a id="link-gmaps-bahaya" href="#" target="_blank" class="icon-btn" style="display:block; text-align:center; margin-top:8px; padding:10px; background:var(--panel); border:1px solid var(--orange); color:var(--orange); text-decoration:none;">🗺️ Buka di Google Maps (Navigasi)</a>
+    <div id="peta-detail-bahaya" style="height:200px; margin:10px 20px 0; border:1px solid var(--line-bright); border-radius:10px;"></div>
+    <a id="link-gmaps-bahaya" href="#" target="_blank" class="icon-btn" style="display:block; text-align:center; margin:8px 20px 16px; padding:10px; background:var(--panel); border:1px solid var(--orange); color:var(--orange); text-decoration:none;">🗺️ Buka di Google Maps (Navigasi)</a>
 
     <!-- Ubah status -- HANYA terlihat untuk moderator (admin/editor/vip); ditampilkan/disembunyikan via JS -->
-    <div id="blok-status-bahaya" class="hidden" style="margin-top:14px; border-top:1px solid var(--line-bright); padding-top:12px;">
+    <div id="blok-status-bahaya" class="hidden" style="margin:14px 20px 20px; border-top:1px dashed var(--line-bright); padding-top:12px;">
       <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Status penanganan (moderator):</div>
       <div style="display:flex; gap:8px;">
         <button id="btn-status-ditindak" class="icon-btn" style="flex:1; padding:9px; background:var(--panel); border:1px solid var(--amber); color:var(--amber);" title="Tandai sedang ditindaklanjuti">🔧 Ditindak</button>
@@ -1170,7 +1241,7 @@ MAIN CONTENT
 <div id="modal-riwayat-sos-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
   <div class="panel modal-fullscreen-panel" style="max-width:520px; width:100%; max-height:90vh; overflow-y:auto;">
     <div class="panel-head"><h3>📟 Riwayat & Verifikasi SOS</h3><button id="btn-tutup-riwayat-sos" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
-    <div id="daftar-riwayat-sos"></div>
+    <div id="daftar-riwayat-sos" style="padding:0 20px 16px;"></div>
   </div>
 </div>
 
@@ -1240,16 +1311,16 @@ MAIN CONTENT
 <div id="modal-validasi-gangguan-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
   <div class="panel modal-fullscreen-panel" style="max-width:500px; width:100%; max-height:92vh; overflow-y:auto;">
     <div class="panel-head panel-head-wo"><h3>🔧 Validasi Gangguan & Dispatch</h3><button id="btn-tutup-validasi-gangguan" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
-    <div id="isi-detail-gangguan" style="font-size:12.5px; line-height:1.8; border:1px solid var(--line-bright); padding:10px; margin-bottom:12px;"></div>
+    <div id="isi-detail-gangguan" style="font-size:12.5px; line-height:1.8;"></div>
 
-    <div id="blok-tombol-validasi">
+    <div id="blok-tombol-validasi" style="padding:0 20px;">
       <div style="display:flex; gap:8px;">
         <button id="btn-tolak-gangguan" class="icon-btn" style="flex:1; padding:10px; background:var(--panel); border:1px solid var(--red); color:var(--red);">❌ Tolak</button>
         <button id="btn-validasi-gangguan" class="icon-btn" style="flex:1; padding:10px; background:#1e40af; color:#fff; font-weight:700;">✅ Validasi & Cari Personil</button>
       </div>
     </div>
 
-    <div id="blok-rekomendasi-dispatch" class="hidden">
+    <div id="blok-rekomendasi-dispatch" class="hidden" style="padding:0 20px;">
       <div style="font-size:11px; color:var(--text-dim); margin:12px 0 6px;">📡 Rekomendasi Personil (berdasarkan jarak terdekat & FIT% -- bukan AI, murni perhitungan aturan dari data real-time)</div>
       <div id="daftar-rekomendasi-personil"></div>
 
@@ -1259,7 +1330,7 @@ MAIN CONTENT
         <div id="daftar-dispatch-manual"></div>
       </div>
     </div>
-    <div id="status-aksi-gangguan" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
+    <div id="status-aksi-gangguan" style="font-size:10.5px; margin:8px 20px 20px; text-align:center;"></div>
   </div>
 </div>
 
@@ -1289,15 +1360,6 @@ MAIN CONTENT
         </div>
         <div style="position:relative;">
           <button id="btn-filter-wo" class="gmail-filter-btn">⚙ Filter <span id="label-filter-wo-aktif"></span></button>
-          <div id="dropdown-filter-wo" class="gmail-dropdown hidden">
-            <div class="gmail-dropdown-item active" data-status-wo="">Semua Status</div>
-            <div class="gmail-dropdown-item" data-status-wo="menunggu_validasi">🆕 Menunggu Validasi</div>
-            <div class="gmail-dropdown-item" data-status-wo="menunggu_dispatch">🔍 Menunggu Dispatch</div>
-            <div class="gmail-dropdown-item" data-status-wo="ditugaskan">📨 Ditugaskan</div>
-            <div class="gmail-dropdown-item" data-status-wo="dikerjakan">🔧 Dikerjakan</div>
-            <div class="gmail-dropdown-item" data-status-wo="selesai">✅ Selesai</div>
-            <div class="gmail-dropdown-item" data-status-wo="ditolak">❌ Ditolak</div>
-          </div>
         </div>
       </div>
     </div>
@@ -1305,18 +1367,39 @@ MAIN CONTENT
   </div>
 </div>
 
-<!-- ===== MODAL DETAIL WO (progress, checklist SHE, dokumentasi -- Personil yang ditugaskan) ===== -->
-<div id="modal-progress-wo-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4900; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:480px; width:100%; max-height:92vh; overflow-y:auto;">
-    <div class="panel-head panel-head-wo"><h3>Pelaksanaan Work Order</h3><button id="btn-tutup-progress-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
-    <div id="isi-progress-wo" style="font-size:12.5px; line-height:1.8; margin-bottom:10px;"></div>
+<!-- ===== BOTTOM SHEET: Filter Status WO (ala "Pilih tanggal transaksi" Gojek) ===== -->
+<div id="filter-wo-sheet-overlay" class="hidden bottom-sheet-overlay">
+  <div class="bottom-sheet-panel">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-header">
+      <div class="bottom-sheet-title">Pilih Status Work Order</div>
+      <button type="button" id="btn-filter-wo-hapus" class="bottom-sheet-clear-btn">Hapus</button>
+    </div>
+    <div id="dropdown-filter-wo">
+      <div class="bottom-sheet-option active" data-status-wo=""><span>Semua Status</span><span class="bottom-sheet-radio"></span></div>
+      <div class="bottom-sheet-option" data-status-wo="menunggu_validasi"><span>🆕 Menunggu Validasi</span><span class="bottom-sheet-radio"></span></div>
+      <div class="bottom-sheet-option" data-status-wo="menunggu_dispatch"><span>🔍 Menunggu Dispatch</span><span class="bottom-sheet-radio"></span></div>
+      <div class="bottom-sheet-option" data-status-wo="ditugaskan"><span>📨 Ditugaskan</span><span class="bottom-sheet-radio"></span></div>
+      <div class="bottom-sheet-option" data-status-wo="dikerjakan"><span>🔧 Dikerjakan</span><span class="bottom-sheet-radio"></span></div>
+      <div class="bottom-sheet-option" data-status-wo="selesai"><span>✅ Selesai</span><span class="bottom-sheet-radio"></span></div>
+      <div class="bottom-sheet-option" data-status-wo="ditolak"><span>❌ Ditolak</span><span class="bottom-sheet-radio"></span></div>
+    </div>
+    <button type="button" id="btn-filter-wo-terapkan" class="bottom-sheet-cta">Terapkan Filter</button>
+  </div>
+</div>
 
-    <div id="blok-terima-tolak-wo" class="hidden" style="display:flex; gap:8px; margin-bottom:12px;">
+<!-- ===== MODAL DETAIL WO (progress, checklist SHE, dokumentasi -- Personil yang ditugaskan) ===== -->
+<div id="modal-progress-wo-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4900; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:480px; width:100%; max-height:92vh; overflow-y:auto;">
+    <div class="panel-head panel-head-wo"><h3>Pelaksanaan Work Order</h3><button id="btn-tutup-progress-wo" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div id="isi-progress-wo" style="font-size:12.5px; line-height:1.8;"></div>
+
+    <div id="blok-terima-tolak-wo" class="hidden" style="display:flex; gap:8px; margin:12px 20px;">
       <button id="btn-tolak-wo" class="icon-btn" style="flex:1; padding:11px; background:var(--panel); border:1px solid var(--red); color:var(--red);">❌ TOLAK</button>
       <button id="btn-terima-wo" class="icon-btn" style="flex:1; padding:11px; background:var(--green); color:#fff; font-weight:700;">✅ TERIMA</button>
     </div>
 
-    <div id="blok-pengerjaan-wo" class="hidden">
+    <div id="blok-pengerjaan-wo" class="hidden" style="padding:0 20px;">
     <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:4px;">Catatan / Temuan</label>
     <textarea id="input-catatan-wo" rows="2" placeholder="Catatan pekerjaan..." style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:10px; resize:vertical; font-size:11px;"></textarea>
 
@@ -1330,7 +1413,7 @@ MAIN CONTENT
     <button id="btn-sap-sync-wo" class="icon-btn hidden" style="width:100%; padding:10px; background:var(--panel); border:1px solid #1e40af; color:#1e40af;">☁️ Tandai Sudah Disinkronkan ke SAP (Manual)</button>
     <div style="font-size:9px; color:var(--text-dim); margin-top:4px; text-align:center;">⚠️ Ini pencatatan manual -- BUKAN integrasi API otomatis ke SAP sungguhan.</div>
     </div>
-    <div id="status-progress-wo" style="font-size:10.5px; margin-top:8px; text-align:center;"></div>
+    <div id="status-progress-wo" style="font-size:10.5px; margin:8px 20px 16px; text-align:center;"></div>
   </div>
 </div>
 
@@ -1558,86 +1641,35 @@ MAIN CONTENT
      API key Google Maps sudah ditempel (key: Browser key auto-created by Firebase, project scie-tanggap)
      ==================================================================== -->
 <script>
-  function initGoogleMapsStreetView(){
-    document.getElementById('streetview-tag').textContent = 'AKTIF';
-    document.getElementById('streetview-tag').style.background = 'var(--green)';
+  /** Bikin URL Google Maps (peta satelit) & Street View dari sepasang koordinat --
+   *  murni link biasa (bukan embed API), sama seperti tombol "Buka di Google Maps"
+   *  yang dipakai di Lapor Bahaya & Laporan Gangguan. Tidak butuh API key/billing. */
+  function updateLinkGoogleMapsSV(lat, lon){
+    document.getElementById('link-sv-peta').href = 'https://www.google.com/maps/@' + lat + ',' + lon + ',18z/data=!3m1!1e3';
+    document.getElementById('link-sv-streetview').href = 'https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=' + lat + ',' + lon;
+  }
 
-    const defaultPos = { lat: -4.793, lng: 119.616 }; // default: Pabrik PT Semen Tonasa
-
-    const gmap = new google.maps.Map(document.getElementById('gmap-panel'), {
-      center: defaultPos, zoom: 16, mapTypeId: 'hybrid' // hybrid = satelit + label jalan, persis tampilan aplikasi Google Maps
-    });
-
-    const panorama = new google.maps.StreetViewPanorama(document.getElementById('streetview-panel'), {
-      position: defaultPos,
-      pov: { heading: 0, pitch: 0 },
-      addressControl: true
-    });
-    gmap.setStreetView(panorama);
-
-    const svService = new google.maps.StreetViewService();
-
-    let markerLokasi = null; // pin merah klasik -- untuk lokasi yang dicari manual
-    let markerPosisiSaya = null; // titik biru -- untuk posisi tracking pribadi ("Lokasi Anda")
-
-    function pindahKeLokasi(lat, lon, sumberPosisiSaya){
-      const pos = { lat, lng: lon };
-      gmap.setCenter(pos);
-
-      if (sumberPosisiSaya){
-        // Titik biru "Lokasi Anda" -- persis gaya aplikasi Google Maps native
-        if (markerPosisiSaya) markerPosisiSaya.setPosition(pos);
-        else {
-          markerPosisiSaya = new google.maps.Marker({
-            position: pos, map: gmap, title: 'Lokasi Anda',
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 9, fillColor: '#4285F4', fillOpacity: 1,
-              strokeColor: '#ffffff', strokeWeight: 3
-            },
-            zIndex: 999
-          });
-        }
-        if (markerLokasi){ markerLokasi.setMap(null); markerLokasi = null; }
-      } else {
-        // Pin merah klasik -- untuk lokasi yang dicari manual via input lat/lon
-        if (markerLokasi) markerLokasi.setPosition(pos);
-        else markerLokasi = new google.maps.Marker({ position: pos, map: gmap, title: 'Lokasi dicari' });
-        if (markerPosisiSaya){ markerPosisiSaya.setMap(null); markerPosisiSaya = null; }
-      }
-
-      svService.getPanorama({ location: pos, radius: 100 }, (data, status) => {
-        const statusEl = document.getElementById('sv-status');
-        if (status === 'OK'){
-          panorama.setPosition(data.location.latLng);
-          statusEl.textContent = 'Street View ditemukan (jarak ' + Math.round(data.location.description ? 0 : 0) + 'm dari titik diminta).';
-          statusEl.style.color = 'var(--green)';
-        } else {
-          statusEl.textContent = 'Street View TIDAK tersedia di sekitar titik ini (radius 100m) — kemungkinan area belum difoto Google.';
-          statusEl.style.color = 'var(--red)';
-        }
-      });
-    }
-
-    document.getElementById('btn-sv-lihat').addEventListener('click', ()=>{
-      const lat = parseFloat(document.getElementById('sv-lat').value);
-      const lon = parseFloat(document.getElementById('sv-lon').value);
-      if (isNaN(lat) || isNaN(lon)){
-        document.getElementById('sv-status').textContent = 'Masukkan latitude & longitude yang valid.';
-        return;
-      }
-      pindahKeLokasi(lat, lon, false);
-    });
-
+  function initStreetViewLinks(){
     document.getElementById('btn-sv-dari-personel').addEventListener('click', ()=>{
-      // Pakai posisi tracking pribadi kalau sedang aktif (memakai variabel global dari script utama)
       if (window.__posisiTerkiniSaya){
         document.getElementById('sv-lat').value = window.__posisiTerkiniSaya.lat;
         document.getElementById('sv-lon').value = window.__posisiTerkiniSaya.lon;
-        pindahKeLokasi(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon, true);
+        updateLinkGoogleMapsSV(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon);
+        document.getElementById('sv-status').textContent = 'Posisi Anda dimuat -- klik salah satu tombol di atas untuk membuka.';
+        document.getElementById('sv-status').style.color = 'var(--green)';
       } else {
         document.getElementById('sv-status').textContent = 'Aktifkan tracking Anda dulu di panel atas untuk pakai posisi terkini.';
+        document.getElementById('sv-status').style.color = 'var(--red)';
       }
+    });
+
+    // Update link otomatis saat lat/lon diketik manual
+    ['sv-lat', 'sv-lon'].forEach(id=>{
+      document.getElementById(id).addEventListener('input', ()=>{
+        const lat = parseFloat(document.getElementById('sv-lat').value);
+        const lon = parseFloat(document.getElementById('sv-lon').value);
+        if (!isNaN(lat) && !isNaN(lon)) updateLinkGoogleMapsSV(lat, lon);
+      });
     });
 
     // Dipanggil dari tombol "📍 Pakai koordinat ini" di dalam popup marker personel manapun di peta --
@@ -1645,20 +1677,14 @@ MAIN CONTENT
     window.pakaiKoordinatPersonel = function(lat, lon){
       document.getElementById('sv-lat').value = lat;
       document.getElementById('sv-lon').value = lon;
-      pindahKeLokasi(lat, lon, true);
-      document.getElementById('sv-status').textContent = 'Koordinat personel dimuat ke Street View.';
-      // Scroll otomatis ke panel Street View supaya hasilnya langsung terlihat
+      updateLinkGoogleMapsSV(lat, lon);
+      document.getElementById('sv-status').textContent = 'Koordinat personel dimuat -- klik salah satu tombol di atas untuk membuka.';
+      document.getElementById('sv-status').style.color = 'var(--green)';
       document.getElementById('sv-lat').scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
   }
-
-  function gmapsLoadError(){
-    document.getElementById('sv-status').textContent = 'Gagal memuat Google Maps — cek API key & billing di Google Cloud Console.';
-    document.getElementById('sv-status').style.color = 'var(--red)';
-  }
+  initStreetViewLinks();
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBu5UkKH_3vwGS2FlVagPB2IMTfTfdydKo&callback=initGoogleMapsStreetView&loading=async"
-        onerror="gmapsLoadError()" async defer></script>
 
 
 <script type="module">
@@ -5203,19 +5229,35 @@ MAIN CONTENT
     const warnaTingkat = { tinggi: 'var(--red)', sedang: 'var(--amber)', rendah: 'var(--green)' };
     const labelTingkat = { tinggi: '🔴 TINGGI', sedang: '🟡 SEDANG', rendah: '🟢 RENDAH' };
     const labelStatus = { baru: '🆕 Baru', ditindak: '🔧 Ditindak', selesai: '✅ Selesai' };
+    const ikonBgTingkat = { tinggi: '#FEE2E2', sedang: '#FEF3C7', rendah: '#D1FAE5' };
 
-    cont.innerHTML = daftarBahayaCache.map(l=>{
-      const waktu = l.waktuLapor && l.waktuLapor.toDate ? l.waktuLapor.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
+    let htmlBahaya = '';
+    let tanggalTerakhirBahaya = null;
+    daftarBahayaCache.forEach(l=>{
+      const tglObjB = l.waktuLapor && l.waktuLapor.toDate ? l.waktuLapor.toDate() : new Date();
+      const kunciTglB = tglObjB.toDateString();
+      if (kunciTglB !== tanggalTerakhirBahaya){
+        const namaHariB = tglObjB.toLocaleDateString('id-ID', { weekday: 'long' });
+        const tglFormatB = tglObjB.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        htmlBahaya += '<div class="wo-date-header">' + namaHariB + ', ' + tglFormatB + '</div>';
+        tanggalTerakhirBahaya = kunciTglB;
+      }
+      const jamB = tglObjB.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
       const statusL = l.status || 'baru';
       const opacityBaris = statusL === 'selesai' ? '0.55' : '1';
-      return '<div onclick="window.bukaDetailBahaya(\'' + l.id + '\')" style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaTingkat[l.tingkat] + '; padding:8px 10px; margin-bottom:6px; cursor:pointer; opacity:' + opacityBaris + ';">'
-        + '<div style="display:flex; justify-content:space-between; font-size:11px;">'
-        + '<span style="font-weight:700;">' + l.kategori + '</span>'
-        + '<span style="color:' + warnaTingkat[l.tingkat] + '; font-weight:700;">' + labelTingkat[l.tingkat] + '</span>'
+      htmlBahaya += '<div class="wo-list-item" style="opacity:' + opacityBaris + ';" onclick="window.bukaDetailBahaya(\'' + l.id + '\')">'
+        + '<div class="wo-icon-circle" style="background:' + ikonBgTingkat[l.tingkat] + '; color:' + warnaTingkat[l.tingkat] + ';">⚠️</div>'
+        + '<div class="wo-info">'
+        + '<div class="wo-title">' + l.kategori + '</div>'
+        + '<div class="wo-subtitle">' + (l.pelaporEmail || '-') + ' · ' + labelStatus[statusL] + '</div>'
         + '</div>'
-        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + (l.pelaporEmail || '-') + ' · ' + waktu + ' · ' + labelStatus[statusL] + '</div>'
+        + '<div class="wo-status-col">'
+        + '<div class="wo-status-label" style="color:' + warnaTingkat[l.tingkat] + ';">' + labelTingkat[l.tingkat] + '</div>'
+        + '<div class="wo-status-sub">' + jamB + '</div>'
+        + '</div>'
         + '</div>';
-    }).join('');
+    });
+    cont.innerHTML = htmlBahaya;
   }
 
   /** Buka detail 1 laporan bahaya -- dipanggil dari klik baris di daftar laporan */
@@ -5225,21 +5267,26 @@ MAIN CONTENT
     const warnaTingkat = { tinggi: 'var(--red)', sedang: 'var(--amber)', rendah: 'var(--green)' };
     const labelTingkat = { tinggi: '🔴 TINGGI', sedang: '🟡 SEDANG', rendah: '🟢 RENDAH' };
     const labelStatus = { baru: '🆕 Baru', ditindak: '🔧 Sedang Ditindaklanjuti', selesai: '✅ Selesai Ditangani' };
+    const ikonBgTingkat = { tinggi: '#FEE2E2', sedang: '#FEF3C7', rendah: '#D1FAE5' };
     const waktu = l.waktuLapor && l.waktuLapor.toDate ? l.waktuLapor.toDate().toLocaleString('id-ID') : '-';
 
-    let html = '<div style="font-size:12px; line-height:1.8;">'
-      + '<div><b>Kategori:</b> ' + l.kategori + '</div>'
-      + '<div><b>Tingkat:</b> <span style="color:' + warnaTingkat[l.tingkat] + '; font-weight:700;">' + labelTingkat[l.tingkat] + '</span></div>'
-      + '<div><b>Pelapor:</b> ' + (l.pelaporEmail || '-') + '</div>'
-      + '<div><b>Waktu:</b> ' + waktu + '</div>'
-      + '<div><b>Status:</b> ' + labelStatus[l.status || 'baru'] + '</div>'
-      + '<div style="margin-top:6px;"><b>Deskripsi:</b><br>' + (l.deskripsi || '-').replace(/</g,'&lt;') + '</div>'
-      + '</div>';
+    let html = '<div class="wo-detail-hero">'
+        + '<div class="wo-detail-icon-circle" style="background:' + ikonBgTingkat[l.tingkat] + '; color:' + warnaTingkat[l.tingkat] + ';">⚠️</div>'
+        + '<div class="wo-detail-title">' + l.kategori + '</div>'
+        + '<div class="wo-detail-subtitle" style="color:' + warnaTingkat[l.tingkat] + '; font-weight:700;">' + labelTingkat[l.tingkat] + '</div>'
+      + '</div>'
+      + '<div class="wo-detail-dashed"></div>'
+      + '<div class="wo-detail-rincian-head">Rincian Laporan</div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Pelapor</span><span class="wo-detail-value">' + (l.pelaporEmail || '-') + '</span></div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Waktu</span><span class="wo-detail-value">' + waktu + '</span></div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Status</span><span class="wo-detail-value">' + labelStatus[l.status || 'baru'] + '</span></div>'
+      + '<div class="wo-detail-dashed" style="margin-top:10px;"></div>'
+      + '<div style="padding:14px 20px 4px; font-size:12.5px; line-height:1.7;"><b>Deskripsi</b><br>' + (l.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
     if (l.fotoUrl){
-      html += '<img src="' + l.fotoUrl + '" style="width:100%; margin-top:10px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + l.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+      html += '<div style="padding:10px 20px 0;"><img src="' + l.fotoUrl + '" style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + l.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')"></div>';
     }
     if (l.videoUrl){
-      html += '<video src="' + l.videoUrl + '" controls style="width:100%; margin-top:10px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + l.videoUrl.replace(/'/g,"\\'") + '\', \'video\')"></video>';
+      html += '<div style="padding:10px 20px 0;"><video src="' + l.videoUrl + '" controls style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + l.videoUrl.replace(/'/g,"\\'") + '\', \'video\')"></video></div>';
     }
     document.getElementById('isi-detail-bahaya').innerHTML = html;
 
@@ -5479,20 +5526,42 @@ MAIN CONTENT
       palsu_dibatalkan: 'var(--text-dim)',
       dibatalkan_sendiri: 'var(--green)'
     };
-    cont.innerHTML = daftarSemuaInsidenSOS.map(x=>{
-      const waktu = x.waktu && x.waktu.toDate ? x.waktu.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
-      let html = '<div style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaStatus[x.status] + '; padding:8px 10px; margin-bottom:6px;">'
-        + '<div style="display:flex; justify-content:space-between; font-size:11px;">'
-        + '<span style="font-weight:700;">' + (x.personilEmail || '-') + '</span>'
-        + '<span style="color:' + warnaStatus[x.status] + '; font-weight:700; font-size:10px;">' + (labelStatus[x.status] || x.status) + '</span>'
+    const ikonBgStatus = {
+      menunggu_verifikasi: '#FEE2E2', diteruskan_basarnas: '#FEF3C7',
+      palsu_dibatalkan: '#F3F4F6', dibatalkan_sendiri: '#D1FAE5'
+    };
+
+    let htmlSOS = '';
+    let tanggalTerakhirSOS = null;
+    daftarSemuaInsidenSOS.forEach(x=>{
+      const tglObjS = x.waktu && x.waktu.toDate ? x.waktu.toDate() : new Date();
+      const kunciTglS = tglObjS.toDateString();
+      if (kunciTglS !== tanggalTerakhirSOS){
+        const namaHariS = tglObjS.toLocaleDateString('id-ID', { weekday: 'long' });
+        const tglFormatS = tglObjS.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        htmlSOS += '<div class="wo-date-header">' + namaHariS + ', ' + tglFormatS + '</div>';
+        tanggalTerakhirSOS = kunciTglS;
+      }
+      const jamS = tglObjS.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+      let subtitle = (x.lat ? ('📍 ' + x.lat.toFixed(5) + ', ' + x.lon.toFixed(5)) : 'Lokasi tidak tersedia') + (x.diLuarZonaKerja ? ' · <span style="color:var(--amber);">⚠️ Luar Zona Kerja</span>' : '');
+      if (x.catatanVerifikasi) subtitle += '<br><b>Catatan:</b> ' + x.catatanVerifikasi.replace(/</g,'&lt;');
+      if (x.diprosesOleh) subtitle += '<br>Diproses oleh: ' + x.diprosesOleh;
+
+      htmlSOS += '<div class="wo-list-item" style="cursor:default;">'
+        + '<div class="wo-icon-circle" style="background:' + ikonBgStatus[x.status] + '; color:' + warnaStatus[x.status] + ';">🆘</div>'
+        + '<div class="wo-info">'
+        + '<div class="wo-title">' + (x.personilEmail || '-') + '</div>'
+        + '<div class="wo-subtitle">' + subtitle + '</div>'
+        + (x.status === 'menunggu_verifikasi' ? '<button onclick="window.bukaVerifikasiSOSManual(\'' + x.id + '\')" style="margin-top:8px; width:100%; padding:8px; background:var(--red); color:#fff; border:none; border-radius:8px; font-family:var(--mono); font-size:11px; cursor:pointer;">Buka untuk Verifikasi</button>' : '')
         + '</div>'
-        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + waktu + (x.lat ? (' · 📍 ' + x.lat.toFixed(5) + ', ' + x.lon.toFixed(5)) : '') + (x.diLuarZonaKerja ? ' · <span style="color:var(--amber);">⚠️ Luar Zona Kerja</span>' : '') + '</div>';
-      if (x.catatanVerifikasi) html += '<div style="font-size:10px; color:var(--text-dim); margin-top:4px;"><b>Catatan:</b> ' + x.catatanVerifikasi.replace(/</g,'&lt;') + '</div>';
-      if (x.diprosesOleh) html += '<div style="font-size:9.5px; color:var(--text-dim); margin-top:2px;">Diproses oleh: ' + x.diprosesOleh + '</div>';
-      if (x.status === 'menunggu_verifikasi') html += '<button onclick="window.bukaVerifikasiSOSManual(\'' + x.id + '\')" style="margin-top:6px; width:100%; padding:6px; background:var(--red); color:#fff; border:none; font-family:var(--mono); font-size:10px; cursor:pointer;">Buka untuk Verifikasi</button>';
-      html += '</div>';
-      return html;
-    }).join('');
+        + '<div class="wo-status-col">'
+        + '<div class="wo-status-label" style="color:' + warnaStatus[x.status] + '; font-size:10px;">' + (labelStatus[x.status] || x.status) + '</div>'
+        + '<div class="wo-status-sub">' + jamS + '</div>'
+        + '</div>'
+        + '</div>';
+    });
+    cont.innerHTML = htmlSOS;
   }
 
   window.bukaVerifikasiSOSManual = function(id){
@@ -5760,20 +5829,30 @@ MAIN CONTENT
     });
     document.getElementById('btn-filter-wo').addEventListener('click', (e)=>{
       e.stopPropagation();
-      document.getElementById('dropdown-filter-wo').classList.toggle('hidden');
+      document.getElementById('filter-wo-sheet-overlay').classList.remove('hidden');
     });
-    document.querySelectorAll('[data-status-wo]').forEach(item=>{
+    document.querySelectorAll('.bottom-sheet-option[data-status-wo]').forEach(item=>{
       item.addEventListener('click', ()=>{
-        document.querySelectorAll('[data-status-wo]').forEach(i=> i.classList.remove('active'));
+        document.querySelectorAll('.bottom-sheet-option[data-status-wo]').forEach(i=> i.classList.remove('active'));
         item.classList.add('active');
-        filterStatusWO = item.dataset.statusWo;
-        document.getElementById('label-filter-wo-aktif').textContent = filterStatusWO ? ('· ' + item.textContent.trim()) : '';
-        document.getElementById('dropdown-filter-wo').classList.add('hidden');
-        renderPanelWO();
       });
     });
-    document.addEventListener('click', ()=>{
-      document.getElementById('dropdown-filter-wo').classList.add('hidden');
+    document.getElementById('btn-filter-wo-hapus').addEventListener('click', ()=>{
+      document.querySelectorAll('.bottom-sheet-option[data-status-wo]').forEach(i=> i.classList.remove('active'));
+      document.querySelector('.bottom-sheet-option[data-status-wo=""]').classList.add('active');
+    });
+    document.getElementById('btn-filter-wo-terapkan').addEventListener('click', ()=>{
+      const dipilih = document.querySelector('.bottom-sheet-option[data-status-wo].active');
+      filterStatusWO = dipilih ? dipilih.dataset.statusWo : '';
+      document.getElementById('label-filter-wo-aktif').textContent = filterStatusWO ? ('· ' + dipilih.querySelector('span').textContent.trim()) : '';
+      document.getElementById('filter-wo-sheet-overlay').classList.add('hidden');
+      renderPanelWO();
+    });
+    // Tutup sheet kalau klik area gelap di luar panel (tidak menerapkan filter)
+    document.getElementById('filter-wo-sheet-overlay').addEventListener('click', (e)=>{
+      if (e.target.id === 'filter-wo-sheet-overlay'){
+        document.getElementById('filter-wo-sheet-overlay').classList.add('hidden');
+      }
     });
 
     // Banner klik -> buka gangguan tertua yang masih menunggu validasi (khusus moderator)
@@ -5925,22 +6004,31 @@ MAIN CONTENT
     idGangguanSedangDivalidasi = id;
     const labelPrioritas = { tinggi: '🔴 TINGGI', sedang: '🟡 SEDANG', rendah: '🟢 RENDAH' };
     const warnaPrioritas = { tinggi: 'var(--red)', sedang: 'var(--amber)', rendah: 'var(--green)' };
+    const ikonBgPrioritas = { tinggi: '#FEE2E2', sedang: '#FEF3C7', rendah: '#D1FAE5' };
+    const ikonJenisValidasi = { Listrik: '⚡', Mekanik: '🔧' };
     const waktu = g.waktuLapor && g.waktuLapor.toDate ? g.waktuLapor.toDate().toLocaleString('id-ID') : '-';
-    let html = '<div><b>Plant:</b> ' + g.plant + '</div>'
-      + '<div><b>Area:</b> ' + g.area + '</div>'
-      + (g.nomorWO ? ('<div><b>No. WO:</b> ' + g.nomorWO + '</div>') : '')
-      + '<div><b>Jenis:</b> ' + g.jenis + '</div>'
-      + '<div><b>Prioritas:</b> <span style="color:' + warnaPrioritas[g.prioritas] + '; font-weight:700;">' + labelPrioritas[g.prioritas] + '</span></div>'
-      + '<div><b>Dilaporkan oleh:</b> ' + g.pelaporEmail + '</div>'
-      + '<div><b>Waktu:</b> ' + waktu + '</div>'
-      + '<div style="margin-top:6px;"><b>Deskripsi:</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
+    let html = '<div class="wo-detail-hero">'
+        + '<div class="wo-detail-icon-circle" style="background:' + ikonBgPrioritas[g.prioritas] + '; color:' + warnaPrioritas[g.prioritas] + ';">' + (ikonJenisValidasi[g.jenis] || '🔧') + '</div>'
+        + '<div class="wo-detail-title">' + g.plant + ' – ' + g.area + '</div>'
+        + '<div class="wo-detail-subtitle" style="color:' + warnaPrioritas[g.prioritas] + '; font-weight:700;">' + labelPrioritas[g.prioritas] + '</div>'
+      + '</div>'
+      + '<div class="wo-detail-dashed"></div>'
+      + '<div class="wo-detail-rincian-head">Rincian Gangguan</div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Plant</span><span class="wo-detail-value">' + g.plant + '</span></div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Area</span><span class="wo-detail-value">' + g.area + '</span></div>'
+      + (g.nomorWO ? ('<div class="wo-detail-row"><span class="wo-detail-label">No. WO</span><span class="wo-detail-value">' + g.nomorWO + '</span></div>') : '')
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Jenis</span><span class="wo-detail-value">' + g.jenis + '</span></div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Dilaporkan oleh</span><span class="wo-detail-value">' + g.pelaporEmail + '</span></div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Waktu</span><span class="wo-detail-value">' + waktu + '</span></div>'
+      + '<div class="wo-detail-dashed" style="margin-top:10px;"></div>'
+      + '<div style="padding:14px 20px 4px; font-size:12.5px; line-height:1.7;"><b>Deskripsi</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
     if (g.fotoWOScreenshotUrl){
-      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:8px;">📄 Screenshot WO:</div>'
-        + '<img src="' + g.fotoWOScreenshotUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoWOScreenshotUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">📄 Screenshot WO:</div>'
+        + '<div style="padding:6px 20px 0;"><img src="' + g.fotoWOScreenshotUrl + '" style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoWOScreenshotUrl.replace(/'/g,"\\'") + '\', \'foto\')"></div>';
     }
     if (g.fotoUrl){
-      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:8px;">📷 Foto Kondisi:</div>'
-        + '<img src="' + g.fotoUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">📷 Foto Kondisi:</div>'
+        + '<div style="padding:6px 20px 16px;"><img src="' + g.fotoUrl + '" style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')"></div>';
     }
     document.getElementById('isi-detail-gangguan').innerHTML = html;
 
@@ -6098,6 +6186,11 @@ MAIN CONTENT
       menunggu_validasi: '#1e40af', ditolak: 'var(--text-dim)', menunggu_dispatch: 'var(--amber)',
       ditugaskan: 'var(--amber)', dikerjakan: '#1e40af', selesai: 'var(--green)'
     };
+    const ikonJenisWO = {
+      Listrik: { emoji: '⚡', bg: '#FEF3C7', warna: '#B45309' },
+      Mekanik: { emoji: '🔧', bg: '#DBEAFE', warna: '#1e40af' }
+    };
+    const ikonDefaultWO = { emoji: '🔧', bg: '#F3F4F6', warna: 'var(--text-dim)' };
 
     const cont = document.getElementById('daftar-panel-wo');
     if (daftarSemuaGangguanWO.length === 0){
@@ -6121,17 +6214,35 @@ MAIN CONTENT
       return;
     }
 
-    cont.innerHTML = daftarTampil.map(g=>{
-      const waktu = g.waktuLapor && g.waktuLapor.toDate ? g.waktuLapor.toDate().toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
+    // Daftar dikelompokkan per tanggal (ala "Riwayat Transaksi" Gojek) -- header tanggal muncul
+    // setiap kali tanggal laporan berganti, item dalam grup yang sama tidak diulang headernya.
+    let htmlDaftar = '';
+    let tanggalTerakhirWO = null;
+    daftarTampil.forEach(g=>{
+      const tglObj = g.waktuLapor && g.waktuLapor.toDate ? g.waktuLapor.toDate() : new Date();
+      const kunciTglWO = tglObj.toDateString();
+      if (kunciTglWO !== tanggalTerakhirWO){
+        const namaHariWO = tglObj.toLocaleDateString('id-ID', { weekday: 'long' });
+        const tglFormatWO = tglObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        htmlDaftar += '<div class="wo-date-header">' + namaHariWO + ', ' + tglFormatWO + '</div>';
+        tanggalTerakhirWO = kunciTglWO;
+      }
+      const jamWO = tglObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const ikonWO = ikonJenisWO[g.jenis] || ikonDefaultWO;
       const fungsiKlik = (g.status === 'menunggu_validasi' || g.status === 'menunggu_dispatch' || g.status === 'ditolak') ? 'bukaValidasiGangguan' : 'bukaProgressWO';
-      return '<div onclick="window.' + fungsiKlik + '(\'' + g.id + '\')" style="border:1px solid var(--line-bright); border-left:3px solid ' + warnaStatus[g.status] + '; padding:8px 10px; margin-bottom:6px; cursor:pointer;">'
-        + '<div style="display:flex; justify-content:space-between; font-size:11px;">'
-        + '<span style="font-weight:700;">' + g.plant + ' - ' + g.area + '</span>'
-        + '<span style="color:' + warnaStatus[g.status] + '; font-weight:700; font-size:9.5px;">' + labelStatus[g.status] + '</span>'
+      htmlDaftar += '<div class="wo-list-item" onclick="window.' + fungsiKlik + '(\'' + g.id + '\')">'
+        + '<div class="wo-icon-circle" style="background:' + ikonWO.bg + '; color:' + ikonWO.warna + ';">' + ikonWO.emoji + '</div>'
+        + '<div class="wo-info">'
+        + '<div class="wo-title">' + g.plant + ' – ' + g.area + '</div>'
+        + '<div class="wo-subtitle">' + g.jenis + (g.nomorWO ? (' · 📄 ' + g.nomorWO) : '') + (g.personilEmail ? (' · 👤 ' + g.personilEmail) : '') + (g.sapSync ? ' · ☁️ SAP' : '') + '</div>'
         + '</div>'
-        + '<div style="font-size:10px; color:var(--text-dim); margin-top:2px;">' + g.jenis + (g.nomorWO ? (' · 📄 ' + g.nomorWO) : '') + ' · ' + waktu + (g.personilEmail ? (' · 👤 ' + g.personilEmail) : '') + (g.sapSync ? ' · ☁️ SAP' : '') + '</div>'
+        + '<div class="wo-status-col">'
+        + '<div class="wo-status-label" style="color:' + warnaStatus[g.status] + ';">' + labelStatus[g.status] + '</div>'
+        + '<div class="wo-status-sub">' + jamWO + '</div>'
+        + '</div>'
         + '</div>';
-    }).join('');
+    });
+    cont.innerHTML = htmlDaftar;
   }
 
   function bukaProgressWO(id){
@@ -6140,29 +6251,39 @@ MAIN CONTENT
     idWOSedangDikerjakan = id;
 
     // Hitung jarak dari posisi saya saat ini ke lokasi gangguan (kalau kedua posisi tersedia)
-    let infoJarak = '';
+    let barisJarak = '';
     if (g.lat && g.lon && window.__posisiTerkiniSaya){
       const jarakM = hitungJarakMeter(window.__posisiTerkiniSaya.lat, window.__posisiTerkiniSaya.lon, g.lat, g.lon);
       const jarakKm = (jarakM / 1000).toFixed(2);
       const estMenit = Math.max(1, Math.round((jarakM / 1000) / 30 * 60)); // asumsi kasar ~30 km/jam di area pabrik
-      infoJarak = '<div style="background:#eff6ff; border:1px solid #1e40af; padding:8px 10px; margin:8px 0; font-size:11px; color:#1e40af;">'
-        + '📍 <b>' + jarakKm + ' km</b> dari posisi Anda · Estimasi tempuh ~' + estMenit + ' menit</div>';
+      barisJarak = '<div class="wo-detail-row"><span class="wo-detail-label">📍 Jarak dari Anda</span><span class="wo-detail-value">' + jarakKm + ' km (~' + estMenit + ' menit)</span></div>';
     }
 
-    let html = '<div><b>Plant:</b> ' + g.plant + '</div>'
-      + '<div><b>Area:</b> ' + g.area + '</div>'
-      + (g.nomorWO ? ('<div><b>No. WO:</b> ' + g.nomorWO + '</div>') : '')
-      + '<div><b>Jenis:</b> ' + g.jenis + '</div>'
-      + '<div><b>Dilaporkan oleh:</b> ' + (g.pelaporEmail || '-') + '</div>'
-      + infoJarak
-      + '<div style="margin-top:4px;"><b>Deskripsi:</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
+    const ikonJenisDetail = { Listrik: { emoji: '⚡', bg: '#FEF3C7', warna: '#B45309' }, Mekanik: { emoji: '🔧', bg: '#DBEAFE', warna: '#1e40af' } };
+    const ikonWODetail = ikonJenisDetail[g.jenis] || { emoji: '🔧', bg: '#F3F4F6', warna: 'var(--text-dim)' };
+
+    let html = '<div class="wo-detail-hero">'
+        + '<div class="wo-detail-icon-circle" style="background:' + ikonWODetail.bg + '; color:' + ikonWODetail.warna + ';">' + ikonWODetail.emoji + '</div>'
+        + '<div class="wo-detail-title">' + g.plant + ' – ' + g.area + '</div>'
+        + '<div class="wo-detail-subtitle">' + g.jenis + '</div>'
+      + '</div>'
+      + '<div class="wo-detail-dashed"></div>'
+      + '<div class="wo-detail-rincian-head">Rincian Work Order</div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Plant</span><span class="wo-detail-value">' + g.plant + '</span></div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Area</span><span class="wo-detail-value">' + g.area + '</span></div>'
+      + (g.nomorWO ? ('<div class="wo-detail-row"><span class="wo-detail-label">No. WO</span><span class="wo-detail-value">' + g.nomorWO + '</span></div>') : '')
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Jenis</span><span class="wo-detail-value">' + g.jenis + '</span></div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Dilaporkan oleh</span><span class="wo-detail-value">' + (g.pelaporEmail || '-') + '</span></div>'
+      + barisJarak
+      + '<div class="wo-detail-dashed" style="margin-top:10px;"></div>'
+      + '<div style="padding:14px 20px 4px; font-size:12.5px; line-height:1.7;"><b>Deskripsi</b><br>' + (g.deskripsi || '-').replace(/</g,'&lt;') + '</div>';
     if (g.fotoWOScreenshotUrl){
-      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:8px;">📄 Screenshot WO dari Operator:</div>'
-        + '<img src="' + g.fotoWOScreenshotUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoWOScreenshotUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">📄 Screenshot WO dari Operator:</div>'
+        + '<div style="padding:6px 20px 0;"><img src="' + g.fotoWOScreenshotUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoWOScreenshotUrl.replace(/'/g,"\\'") + '\', \'foto\')"></div>';
     }
     if (g.fotoUrl){
-      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:8px;">📷 Foto Kondisi dari Operator:</div>'
-        + '<img src="' + g.fotoUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+      html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">📷 Foto Kondisi dari Operator:</div>'
+        + '<div style="padding:6px 20px 16px;"><img src="' + g.fotoUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + g.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')"></div>';
     }
     document.getElementById('isi-progress-wo').innerHTML = html;
 
@@ -6173,7 +6294,7 @@ MAIN CONTENT
     if (!blokNavDM){
       blokNavDM = document.createElement('div');
       blokNavDM.id = 'blok-nav-dm-wo';
-      blokNavDM.style.cssText = 'display:flex; gap:8px; margin:10px 0;';
+      blokNavDM.style.cssText = 'display:flex; gap:8px; margin:10px 20px;';
       document.getElementById('isi-progress-wo').insertAdjacentElement('afterend', blokNavDM);
     }
     blokNavDM.innerHTML = navDMHtml;
