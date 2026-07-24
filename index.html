@@ -44,7 +44,6 @@
   </a>
   <nav class="links">
     <a href="index.html" class="active">Laporan Riset</a>
-    <a href="kredit-etika-pemasaran.html">Artikel</a>
     <a href="anatomi-algoritma-fyp.html">Riset FYP</a>
     <a href="itujisamaji.html">ItujiSamaji</a>
     <a href="itujisamaji-galeri.html">Galeri</a>
@@ -82,48 +81,50 @@
   .scie-feature-section { padding: 40px clamp(16px,4vw,60px); }
   .scie-feature-card {
     position: relative; max-width: 640px; margin: 0 auto;
-    background: linear-gradient(135deg, rgba(20,14,4,0.9), rgba(6,4,2,0.95));
-    border: 1px solid #3a2a12; border-radius: 14px; padding: 22px 26px;
+    background: linear-gradient(135deg, rgba(4,20,26,0.9), rgba(2,10,14,0.95));
+    border: 1px solid #0d3a44; border-radius: 14px; padding: 22px 26px;
     display:flex; align-items:center; gap:20px; cursor:pointer;
     transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 0 18px rgba(0,229,255,0.08), inset 0 0 30px rgba(0,229,255,0.03);
   }
-  .scie-feature-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,159,10,0.15); }
+  .scie-feature-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,229,255,0.25); }
   .scie-preview-globe {
     flex: 0 0 74px; width: 74px; height: 74px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ffe3a3, #d98a1c 55%, #2a1a02 100%);
-    box-shadow: 0 0 22px rgba(255,159,10,0.35), inset -8px -8px 20px rgba(0,0,0,0.4);
+    background: radial-gradient(circle at 35% 30%, #baf6ff, #22d3ee 45%, #0a2a33 100%);
+    box-shadow: 0 0 26px rgba(34,211,238,0.5), inset -8px -8px 20px rgba(0,0,0,0.45);
     animation: scie-spin 7s linear infinite; position: relative;
   }
   .scie-preview-globe::before, .scie-preview-globe::after {
-    content:''; position:absolute; border:1px solid rgba(255,230,180,0.25); border-radius:50%;
+    content:''; position:absolute; border:1px solid rgba(180,240,255,0.35); border-radius:50%;
   }
   .scie-preview-globe::before { inset: 10%; }
   .scie-preview-globe::after { inset: 25%; }
-  @keyframes scie-spin { from { filter:hue-rotate(0deg); } to { filter:hue-rotate(20deg); } }
+  @keyframes scie-spin { from { filter:hue-rotate(0deg); } to { filter:hue-rotate(-20deg); } }
   .scie-feature-text { flex: 1; }
   .scie-feature-card .badge {
-    display:inline-block; font-size:10px; letter-spacing:1px; color:#ffb84d;
-    border:1px solid #3a2a12; padding:2px 8px; border-radius:20px; margin-bottom:8px;
+    display:inline-block; font-size:10px; letter-spacing:1px; color:#22d3ee;
+    border:1px solid #0d3a44; padding:2px 8px; border-radius:20px; margin-bottom:8px;
+    text-shadow: 0 0 6px rgba(34,211,238,0.5);
   }
-  .scie-feature-card h3 { margin:0 0 6px 0; font-size:17px; color:#fff5e6; }
-  .scie-feature-card p { margin:0 0 10px 0; font-size:12.5px; line-height:1.55; color:#d9b98a; }
-  .scie-cta { font-size:12px; color:#ffb84d; font-weight:bold; }
+  .scie-feature-card h3 { margin:0 0 6px 0; font-size:17px; color:#e6fbff; text-shadow: 0 0 10px rgba(34,211,238,0.3); }
+  .scie-feature-card p { margin:0 0 10px 0; font-size:12.5px; line-height:1.55; color:#8fd8e8; }
+  .scie-cta { font-size:12px; color:#22d3ee; font-weight:bold; text-shadow: 0 0 8px rgba(34,211,238,0.4); }
   .scie-cta span:last-child { display:inline-block; transition: transform 0.2s; }
   .scie-feature-card:hover .scie-cta span:last-child { transform: translateX(4px); }
 
   #scie-modal-overlay {
-    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:9999;
+    display:none; position:fixed; inset:0; background:rgba(0,4,6,0.9); z-index:9999;
   }
   #scie-modal-overlay.open { display:flex; align-items:center; justify-content:center; }
-  #scie-modal-box { width:94vw; height:90vh; background:#000; border:1px solid #3a2a12; border-radius:12px; overflow:hidden; position:relative; }
+  #scie-modal-box { width:94vw; height:90vh; background:#000; border:1px solid #0d3a44; border-radius:12px; overflow:hidden; position:relative; box-shadow:0 0 40px rgba(0,229,255,0.15); }
   #scie-modal-box iframe { width:100%; height:100%; border:none; }
   #scie-modal-close {
-    position:absolute; top:10px; right:14px; z-index:2; background:rgba(20,14,4,0.85);
-    color:#ffe3a3; border:1px solid #3a2a12; width:34px; height:34px; border-radius:50%; font-size:16px; cursor:pointer;
+    position:absolute; top:10px; right:14px; z-index:2; background:rgba(4,20,26,0.85);
+    color:#baf6ff; border:1px solid #0d3a44; width:34px; height:34px; border-radius:50%; font-size:16px; cursor:pointer;
   }
   #scie-modal-loading {
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    color:#ffb84d; font-family:'Courier New',monospace; font-size:13px; background:#000;
+    color:#22d3ee; font-family:'Courier New',monospace; font-size:13px; background:#000;
   }
 </style>
 
@@ -330,17 +331,11 @@
     </div>
     <div class="disclaimer-box">
       <span class="label">Disclaimer</span>
-      <p>Laporan ini merupakan hasil agregasi dan analisis dari berbagai sumber publik, laporan riset pihak ketiga, dan estimasi industri (lihat halaman <a href="sumber-data.html" style="color:var(--accent);">Sumber Data</a> untuk rincian dan tingkat keandalan tiap angka). Sebagian data bersifat estimasi/proyeksi, bukan angka resmi yang dipublikasikan platform, dan dapat berubah seiring waktu.</p>
-      <p>Konten ini disusun sebagai bahan referensi strategis, bukan pengganti riset primer, audit data, atau due diligence independen untuk keputusan bisnis maupun investasi. SCIE dan penyusun laporan tidak bertanggung jawab atas keputusan yang diambil semata berdasarkan angka dalam laporan ini tanpa verifikasi lebih lanjut.</p>
+      <p>Laporan ini merupakan hasil agregasi dan analisis dari berbagai sumber publik, laporan riset pihak ketiga, dan estimasi industri (lihat halaman <a href="sumber-data.html" style="color:var(--accent);">Sumber Data</a> untuk rincian dan tingkat kepercayaan tiap angka).</p>
     </div>
   </section>
 
 </main>
-
-<footer>
-  <div>© 2026 SCIE — Strategic Cognitive Intelligence Engine.<br>Framework oleh Marjan Siswanto. Tidak berafiliasi dengan organisasi manapun.</div>
-  <div><a href="sumber-data.html">Lihat akuntabilitas & sumber data →</a></div>
-</footer>
 
 </body>
 </html>
