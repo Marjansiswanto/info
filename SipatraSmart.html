@@ -3902,7 +3902,8 @@ MAIN CONTENT
           zonaMarkasLayers[id].setRadius(z.radiusMeter);
         } else {
           zonaMarkasLayers[id] = L.circle([z.lat, z.lon], {
-            radius: z.radiusMeter, color: '#5fd68a', weight: 2, fillColor: '#5fd68a', fillOpacity: 0.12
+            radius: z.radiusMeter, color: '#5fd68a', weight: 2, fillColor: '#5fd68a', fillOpacity: 0.12,
+            interactive: false // tidak punya panel detail sendiri -- pastikan tidak menghalangi klik ke layer lain
           }).addTo(map).bindTooltip('🏠 ' + z.nama, { permanent: true, direction: 'center', className: 'zona-markas-label' });
         }
 
@@ -4077,13 +4078,26 @@ MAIN CONTENT
         if (wilayahKerjaLayers[id]) { map.removeLayer(wilayahKerjaLayers[id]); delete wilayahKerjaLayers[id]; }
         if (tipe === 'lingkaran'){
           wilayahKerjaLayers[id] = L.circle([z.lat, z.lon], {
-            radius: z.radiusMeter, color: '#ffb84d', weight: 2, fillColor: '#ffb84d', fillOpacity: 0.05, dashArray: '6,6'
-          }).addTo(map).bindTooltip('🚧 ' + z.nama, { permanent: false, direction: 'center' });
+            radius: z.radiusMeter, color: '#ffb84d', weight: 2, fillColor: '#ffb84d', fillOpacity: 0.05, dashArray: '6,6',
+            interactive: false // Wilayah Kerja SENGAJA dibuat tidak bisa menangkap klik sama sekali --
+            // dia poligon/lingkaran BESAR yang membungkus Zona Bahaya & marker lain di dalamnya.
+            // bringToBack() saja terbukti tidak cukup diandalkan (urutan render Firestore
+            // onSnapshot bisa berubah-ubah); dengan interactive:false, klik DIJAMIN selalu
+            // tembus ke layer di bawahnya, apa pun urutan pemuatan datanya.
+          }).addTo(map).bindTooltip('🚧 ' + z.nama, { permanent: true, direction: 'center', className: 'zona-wilayah-kerja-label' });
         } else {
           wilayahKerjaLayers[id] = L.polygon((z.titik || []).map(t => [t.lat, t.lon]), {
-            color: '#ffb84d', weight: 2, fillColor: '#ffb84d', fillOpacity: 0.05, dashArray: '6,6'
-          }).addTo(map).bindTooltip('🚧 ' + z.nama, { permanent: false, direction: 'center' });
+            color: '#ffb84d', weight: 2, fillColor: '#ffb84d', fillOpacity: 0.05, dashArray: '6,6',
+            interactive: false
+          }).addTo(map).bindTooltip('🚧 ' + z.nama, { permanent: true, direction: 'center', className: 'zona-wilayah-kerja-label' });
         }
+        // Wilayah Kerja adalah poligon BESAR yang biasanya membungkus zona bahaya/marker lain
+        // di dalamnya -- kalau tidak dipaksa ke belakang, dia bisa "menutupi" klik yang seharusnya
+        // menuju Zona Bahaya/marker di bawahnya (urutan render tergantung onSnapshot mana duluan
+        // selesai, jadi tidak konsisten -- ini yang bikin klik Zona Bahaya kadang tidak berfungsi
+        // setelah refresh halaman). bringToBack() memastikan Wilayah Kerja SELALU di lapisan paling
+        // bawah, apa pun urutan pemuatan datanya.
+        wilayahKerjaLayers[id].bringToBack();
 
         const row = document.createElement('div');
         row.className = 'zona-row';
@@ -4269,7 +4283,8 @@ MAIN CONTENT
           zonaAmanLayers[id].setRadius(z.radiusMeter);
         } else {
           zonaAmanLayers[id] = L.circle([z.lat, z.lon], {
-            radius: z.radiusMeter, color: '#4aa3ff', weight: 2, fillColor: '#4aa3ff', fillOpacity: 0.12
+            radius: z.radiusMeter, color: '#4aa3ff', weight: 2, fillColor: '#4aa3ff', fillOpacity: 0.12,
+            interactive: false // tidak punya panel detail sendiri -- pastikan tidak menghalangi klik ke layer lain
           }).addTo(map).bindTooltip('🛟 ' + z.nama, { permanent: true, direction: 'center', className: 'zona-aman-label' });
         }
 
