@@ -957,6 +957,19 @@ MAIN CONTENT
           <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
             Atau klik di peta untuk menandai titik pusat Markas secara manual. Kalau Markas pindah, hapus yang lama lalu tandai titik baru.
           </div>
+          <textarea id="input-keterangan-markas" rows="2" placeholder="Keterangan tambahan (opsional)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px; resize:vertical;"></textarea>
+          <div style="font-size:10px; color:var(--text-dim); margin-bottom:4px;">Lampiran (opsional) -- foto/video/dokumen pendukung</div>
+          <div style="display:flex; gap:8px; margin-bottom:6px;">
+            <button type="button" id="btn-markas-foto-kamera" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Ambil Foto (Kamera)">📷</button>
+            <button type="button" id="btn-markas-foto-galeri" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Pilih Foto dari Galeri">🖼️</button>
+            <button type="button" id="btn-markas-video" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Pilih Video">🎥</button>
+            <button type="button" id="btn-markas-dokumen" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Pilih Dokumen (PDF/Word/dll.)">📄</button>
+          </div>
+          <div id="nama-lampiran-markas" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;"></div>
+          <input type="file" id="input-markas-foto-kamera" accept="image/*" capture="environment" class="hidden">
+          <input type="file" id="input-markas-foto-galeri" accept="image/*" class="hidden">
+          <input type="file" id="input-markas-video" accept="video/*" class="hidden">
+          <input type="file" id="input-markas-dokumen" accept=".pdf,.doc,.docx,.xls,.xlsx" class="hidden">
           <div id="status-titik-markas" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;">Belum ada titik pusat dipilih.</div>
           <div style="display:flex; gap:8px;">
             <button id="btn-simpan-markas" class="icon-btn icon-square-btn" style="background:var(--green); color:#0a0c0d;" title="Simpan Markas">💾</button>
@@ -973,6 +986,19 @@ MAIN CONTENT
           <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
             Zona Aman = titik kumpul/evakuasi darurat (bencana, kebakaran, kecelakaan kerja) — bisa lebih dari satu, terpisah dari Zona Markas operasional.
           </div>
+          <textarea id="input-keterangan-aman" rows="2" placeholder="Keterangan tambahan (opsional)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px; resize:vertical;"></textarea>
+          <div style="font-size:10px; color:var(--text-dim); margin-bottom:4px;">Lampiran (opsional) -- foto/video/dokumen pendukung</div>
+          <div style="display:flex; gap:8px; margin-bottom:6px;">
+            <button type="button" id="btn-aman-foto-kamera" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Ambil Foto (Kamera)">📷</button>
+            <button type="button" id="btn-aman-foto-galeri" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Pilih Foto dari Galeri">🖼️</button>
+            <button type="button" id="btn-aman-video" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Pilih Video">🎥</button>
+            <button type="button" id="btn-aman-dokumen" class="icon-btn icon-square-btn" style="background:var(--panel); border:1px solid var(--line-bright); color:var(--text-dim);" title="Pilih Dokumen (PDF/Word/dll.)">📄</button>
+          </div>
+          <div id="nama-lampiran-aman" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;"></div>
+          <input type="file" id="input-aman-foto-kamera" accept="image/*" capture="environment" class="hidden">
+          <input type="file" id="input-aman-foto-galeri" accept="image/*" class="hidden">
+          <input type="file" id="input-aman-video" accept="video/*" class="hidden">
+          <input type="file" id="input-aman-dokumen" accept=".pdf,.doc,.docx,.xls,.xlsx" class="hidden">
           <div id="status-titik-aman" style="font-size:10.5px; color:var(--text-dim); margin-bottom:8px;">Belum ada titik pusat dipilih.</div>
           <div style="display:flex; gap:8px;">
             <button id="btn-simpan-aman" class="icon-btn icon-square-btn" style="background:#4aa3ff; color:#0a0c0d;" title="Simpan Zona Aman">💾</button>
@@ -1625,6 +1651,22 @@ MAIN CONTENT
   <div class="panel modal-fullscreen-panel" style="max-width:440px; width:100%; max-height:88vh; overflow-y:auto;">
     <div class="panel-head"><h3 id="judul-detail-zona">⚠️ Zona Bahaya</h3><button id="btn-tutup-detail-zona" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="isi-detail-zona" style="font-size:12.5px; line-height:1.8;"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL DETAIL ZONA AMAN/EVAKUASI (klik lingkaran biru di peta) ===== -->
+<div id="modal-detail-zona-aman-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:440px; width:100%; max-height:88vh; overflow-y:auto;">
+    <div class="panel-head"><h3>🛟 Zona Aman/Evakuasi</h3><button id="btn-tutup-detail-zona-aman" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div id="isi-detail-zona-aman" style="font-size:12.5px; line-height:1.8;"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL DETAIL ZONA MARKAS (klik lingkaran hijau di peta) ===== -->
+<div id="modal-detail-zona-markas-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:440px; width:100%; max-height:88vh; overflow-y:auto;">
+    <div class="panel-head"><h3>🏠 Zona Markas</h3><button id="btn-tutup-detail-zona-markas" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div id="isi-detail-zona-markas" style="font-size:12.5px; line-height:1.8;"></div>
   </div>
 </div>
 
@@ -3808,6 +3850,80 @@ MAIN CONTENT
       document.getElementById('modal-detail-zona-overlay').classList.add('hidden');
     });
 
+    /** Panel detail Zona Aman/Evakuasi -- dipanggil dari klik lingkaran biru di peta */
+    window.bukaDetailZonaAman = function(id){
+      const z = zonaAmanCache.find(x=> x.id === id);
+      if (!z) return;
+      let html = '<div class="wo-detail-hero">'
+          + '<div class="wo-detail-icon-circle" style="background:#DBEAFE; color:#1e40af;">🛟</div>'
+          + '<div class="wo-detail-title">' + z.nama + '</div>'
+          + '<div class="wo-detail-subtitle">Zona Aman/Evakuasi</div>'
+        + '</div>'
+        + '<div class="wo-detail-dashed"></div>'
+        + '<div class="wo-detail-rincian-head">Rincian Zona</div>'
+        + '<div class="wo-detail-row"><span class="wo-detail-label">Radius</span><span class="wo-detail-value">' + z.radiusMeter + ' meter</span></div>'
+        + (z.dibuatOleh ? ('<div class="wo-detail-row"><span class="wo-detail-label">Ditandai oleh</span><span class="wo-detail-value">' + z.dibuatOleh + '</span></div>') : '')
+        + '<div class="wo-detail-row"><span class="wo-detail-label">Koordinat</span><span class="wo-detail-value">' + z.lat.toFixed(5) + ', ' + z.lon.toFixed(5) + '</span></div>';
+      if (z.keterangan){
+        html += '<div class="wo-detail-dashed" style="margin-top:10px;"></div>'
+          + '<div style="padding:14px 20px 4px; font-size:12.5px; line-height:1.7;"><b>Keterangan</b><br>' + z.keterangan.replace(/</g,'&lt;') + '</div>';
+      }
+      if (z.fotoUrl){
+        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">📷 Foto:</div>'
+          + '<div style="padding:6px 20px 0;"><img src="' + z.fotoUrl + '" style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + z.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')"></div>';
+      }
+      if (z.videoUrl){
+        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">🎥 Video:</div>'
+          + '<div style="padding:6px 20px 0;"><video src="' + z.videoUrl + '" controls style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + z.videoUrl.replace(/'/g,"\\'") + '\', \'video\')"></video></div>';
+      }
+      if (z.dokumenUrl){
+        html += '<div style="padding:10px 20px 0;"><a href="' + z.dokumenUrl + '" target="_blank" style="display:block; padding:10px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text); text-decoration:none; font-size:11px; border-radius:8px;">📄 ' + (z.dokumenNama || 'Buka Dokumen') + '</a></div>';
+      }
+      html += '<div style="padding:16px 20px 20px;"><a href="https://www.google.com/maps?q=' + z.lat + ',' + z.lon + '" target="_blank" class="icon-btn" style="display:block; text-align:center; padding:10px; background:var(--panel); border:1px solid #1e40af; color:#1e40af; text-decoration:none; border-radius:8px;">🗺️ Buka di Google Maps</a></div>';
+      document.getElementById('isi-detail-zona-aman').innerHTML = html;
+      document.getElementById('modal-detail-zona-aman-overlay').classList.remove('hidden');
+    };
+    document.getElementById('btn-tutup-detail-zona-aman').addEventListener('click', ()=>{
+      document.getElementById('modal-detail-zona-aman-overlay').classList.add('hidden');
+    });
+
+    /** Panel detail Zona Markas -- dipanggil dari klik lingkaran hijau di peta */
+    window.bukaDetailZonaMarkas = function(id){
+      const z = zonaMarkasCache.find(x=> x.id === id);
+      if (!z) return;
+      let html = '<div class="wo-detail-hero">'
+          + '<div class="wo-detail-icon-circle" style="background:#D1FAE5; color:var(--green);">🏠</div>'
+          + '<div class="wo-detail-title">' + z.nama + '</div>'
+          + '<div class="wo-detail-subtitle">Zona Markas</div>'
+        + '</div>'
+        + '<div class="wo-detail-dashed"></div>'
+        + '<div class="wo-detail-rincian-head">Rincian Zona</div>'
+        + '<div class="wo-detail-row"><span class="wo-detail-label">Radius</span><span class="wo-detail-value">' + z.radiusMeter + ' meter</span></div>'
+        + (z.dibuatOleh ? ('<div class="wo-detail-row"><span class="wo-detail-label">Ditandai oleh</span><span class="wo-detail-value">' + z.dibuatOleh + '</span></div>') : '')
+        + '<div class="wo-detail-row"><span class="wo-detail-label">Koordinat</span><span class="wo-detail-value">' + z.lat.toFixed(5) + ', ' + z.lon.toFixed(5) + '</span></div>';
+      if (z.keterangan){
+        html += '<div class="wo-detail-dashed" style="margin-top:10px;"></div>'
+          + '<div style="padding:14px 20px 4px; font-size:12.5px; line-height:1.7;"><b>Keterangan</b><br>' + z.keterangan.replace(/</g,'&lt;') + '</div>';
+      }
+      if (z.fotoUrl){
+        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">📷 Foto:</div>'
+          + '<div style="padding:6px 20px 0;"><img src="' + z.fotoUrl + '" style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + z.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')"></div>';
+      }
+      if (z.videoUrl){
+        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">🎥 Video:</div>'
+          + '<div style="padding:6px 20px 0;"><video src="' + z.videoUrl + '" controls style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + z.videoUrl.replace(/'/g,"\\'") + '\', \'video\')"></video></div>';
+      }
+      if (z.dokumenUrl){
+        html += '<div style="padding:10px 20px 0;"><a href="' + z.dokumenUrl + '" target="_blank" style="display:block; padding:10px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text); text-decoration:none; font-size:11px; border-radius:8px;">📄 ' + (z.dokumenNama || 'Buka Dokumen') + '</a></div>';
+      }
+      html += '<div style="padding:16px 20px 20px;"><a href="https://www.google.com/maps?q=' + z.lat + ',' + z.lon + '" target="_blank" class="icon-btn" style="display:block; text-align:center; padding:10px; background:var(--panel); border:1px solid var(--green); color:var(--green); text-decoration:none; border-radius:8px;">🗺️ Buka di Google Maps</a></div>';
+      document.getElementById('isi-detail-zona-markas').innerHTML = html;
+      document.getElementById('modal-detail-zona-markas-overlay').classList.remove('hidden');
+    };
+    document.getElementById('btn-tutup-detail-zona-markas').addEventListener('click', ()=>{
+      document.getElementById('modal-detail-zona-markas-overlay').classList.add('hidden');
+    });
+
     // ==========================================================
     // ZONA MARKAS/AMAN (lingkaran sederhana: titik pusat + radius)
     // Dipakai untuk mengunci tombol "Hentikan Tracking" sampai personel benar-benar kembali
@@ -3829,12 +3945,32 @@ MAIN CONTENT
         'Titik pusat: ' + titikMarkasSementara.lat.toFixed(6) + ', ' + titikMarkasSementara.lon.toFixed(6) + ' · radius ' + radius + 'm';
     }
 
+    let lampiranMarkasTerpilih = null; // { file, tipe: 'foto'|'video'|'dokumen' }
+
     function resetGambarMarkas(){
       titikMarkasSementara = null;
       if (lingkaranMarkasSementara){ map.removeLayer(lingkaranMarkasSementara); lingkaranMarkasSementara = null; }
       document.getElementById('status-titik-markas').textContent = 'Belum ada titik pusat dipilih.';
       document.getElementById('input-nama-markas').value = '';
+      document.getElementById('input-keterangan-markas').value = '';
+      document.getElementById('nama-lampiran-markas').textContent = '';
+      lampiranMarkasTerpilih = null;
     }
+
+    document.getElementById('btn-markas-foto-kamera').addEventListener('click', ()=> document.getElementById('input-markas-foto-kamera').click());
+    document.getElementById('btn-markas-foto-galeri').addEventListener('click', ()=> document.getElementById('input-markas-foto-galeri').click());
+    document.getElementById('btn-markas-video').addEventListener('click', ()=> document.getElementById('input-markas-video').click());
+    document.getElementById('btn-markas-dokumen').addEventListener('click', ()=> document.getElementById('input-markas-dokumen').click());
+    [['input-markas-foto-kamera', 'foto'], ['input-markas-foto-galeri', 'foto'], ['input-markas-video', 'video'], ['input-markas-dokumen', 'dokumen']].forEach(([idInput, tipe])=>{
+      document.getElementById(idInput).addEventListener('change', (e)=>{
+        const file = e.target.files[0];
+        if (file){
+          lampiranMarkasTerpilih = { file, tipe };
+          document.getElementById('nama-lampiran-markas').textContent = '✅ ' + file.name + ' (' + tipe + ')';
+        }
+        e.target.value = '';
+      });
+    });
 
     document.getElementById('btn-tandai-markas').addEventListener('click', ()=>{
       if (window.__userRole !== 'admin' && window.__userRole !== 'vip') return;
@@ -3875,12 +4011,29 @@ MAIN CONTENT
       }
       const nama = document.getElementById('input-nama-markas').value.trim() || 'Markas';
       const radiusMeter = parseFloat(document.getElementById('input-radius-markas').value) || 50;
+      const keterangan = document.getElementById('input-keterangan-markas').value.trim();
+      const btnSimpanMarkas = document.getElementById('btn-simpan-markas');
+      btnSimpanMarkas.disabled = true;
       try{
+        let fotoUrl = null, videoUrl = null, dokumenUrl = null, dokumenNama = null;
+        if (lampiranMarkasTerpilih){
+          if (lampiranMarkasTerpilih.tipe === 'foto'){
+            const fileKompresi = await kompresGambar(lampiranMarkasTerpilih.file);
+            fotoUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', 'markas.' + (fileKompresi.type === 'image/webp' ? 'webp' : 'jpg'));
+          } else if (lampiranMarkasTerpilih.tipe === 'video'){
+            videoUrl = await uploadKeR2DenganProgres(lampiranMarkasTerpilih.file, 'video', lampiranMarkasTerpilih.file.name);
+          } else if (lampiranMarkasTerpilih.tipe === 'dokumen'){
+            dokumenUrl = await uploadKeR2DenganProgres(lampiranMarkasTerpilih.file, 'dokumen', lampiranMarkasTerpilih.file.name);
+            dokumenNama = lampiranMarkasTerpilih.file.name;
+          }
+        }
         await addDoc(collection(db, 'zonaMarkas'), {
           nama,
           lat: titikMarkasSementara.lat,
           lon: titikMarkasSementara.lon,
           radiusMeter,
+          keterangan: keterangan || null,
+          fotoUrl, videoUrl, dokumenUrl, dokumenNama,
           dibuatOleh: auth.currentUser ? auth.currentUser.email : 'tidak diketahui',
           waktu: serverTimestamp()
         });
@@ -3891,6 +4044,7 @@ MAIN CONTENT
       }catch(err){
         alert('Gagal menyimpan Zona Markas: ' + err.message);
       }
+      btnSimpanMarkas.disabled = false;
     });
 
     onSnapshot(collection(db, 'zonaMarkas'), (snap)=>{
@@ -3902,17 +4056,17 @@ MAIN CONTENT
         const z = docSnap.data();
         const id = docSnap.id;
         idAktif.add(id);
-        zonaMarkasCache.push({ id, nama: z.nama, lat: z.lat, lon: z.lon, radiusMeter: z.radiusMeter });
+        zonaMarkasCache.push({ id, nama: z.nama, lat: z.lat, lon: z.lon, radiusMeter: z.radiusMeter, dibuatOleh: z.dibuatOleh, keterangan: z.keterangan, fotoUrl: z.fotoUrl, videoUrl: z.videoUrl, dokumenUrl: z.dokumenUrl, dokumenNama: z.dokumenNama });
 
         if (zonaMarkasLayers[id]){
           zonaMarkasLayers[id].setLatLng([z.lat, z.lon]);
           zonaMarkasLayers[id].setRadius(z.radiusMeter);
         } else {
           zonaMarkasLayers[id] = L.circle([z.lat, z.lon], {
-            radius: z.radiusMeter, color: '#5fd68a', weight: 2, fillColor: '#5fd68a', fillOpacity: 0.12,
-            interactive: false // tidak punya panel detail sendiri -- pastikan tidak menghalangi klik ke layer lain
+            radius: z.radiusMeter, color: '#5fd68a', weight: 2, fillColor: '#5fd68a', fillOpacity: 0.12
           }).addTo(map).bindTooltip('🏠 ' + z.nama, { permanent: true, direction: 'center', className: 'zona-markas-label' });
         }
+        zonaMarkasLayers[id].off('click').on('click', ()=> window.bukaDetailZonaMarkas(id));
 
         const row = document.createElement('div');
         row.className = 'zona-row';
@@ -4210,12 +4364,32 @@ MAIN CONTENT
         'Titik pusat: ' + titikAmanSementara.lat.toFixed(6) + ', ' + titikAmanSementara.lon.toFixed(6) + ' · radius ' + radius + 'm';
     }
 
+    let lampiranAmanTerpilih = null; // { file, tipe: 'foto'|'video'|'dokumen' }
+
     function resetGambarAman(){
       titikAmanSementara = null;
       if (lingkaranAmanSementara){ map.removeLayer(lingkaranAmanSementara); lingkaranAmanSementara = null; }
       document.getElementById('status-titik-aman').textContent = 'Belum ada titik pusat dipilih.';
       document.getElementById('input-nama-aman').value = '';
+      document.getElementById('input-keterangan-aman').value = '';
+      document.getElementById('nama-lampiran-aman').textContent = '';
+      lampiranAmanTerpilih = null;
     }
+
+    document.getElementById('btn-aman-foto-kamera').addEventListener('click', ()=> document.getElementById('input-aman-foto-kamera').click());
+    document.getElementById('btn-aman-foto-galeri').addEventListener('click', ()=> document.getElementById('input-aman-foto-galeri').click());
+    document.getElementById('btn-aman-video').addEventListener('click', ()=> document.getElementById('input-aman-video').click());
+    document.getElementById('btn-aman-dokumen').addEventListener('click', ()=> document.getElementById('input-aman-dokumen').click());
+    [['input-aman-foto-kamera', 'foto'], ['input-aman-foto-galeri', 'foto'], ['input-aman-video', 'video'], ['input-aman-dokumen', 'dokumen']].forEach(([idInput, tipe])=>{
+      document.getElementById(idInput).addEventListener('change', (e)=>{
+        const file = e.target.files[0];
+        if (file){
+          lampiranAmanTerpilih = { file, tipe };
+          document.getElementById('nama-lampiran-aman').textContent = '✅ ' + file.name + ' (' + tipe + ')';
+        }
+        e.target.value = '';
+      });
+    });
 
     document.getElementById('btn-tandai-aman').addEventListener('click', ()=>{
       if (window.__userRole !== 'admin' && window.__userRole !== 'vip' && window.__userRole !== 'user') return;
@@ -4256,12 +4430,29 @@ MAIN CONTENT
       }
       const nama = document.getElementById('input-nama-aman').value.trim() || 'Zona Aman';
       const radiusMeter = parseFloat(document.getElementById('input-radius-aman').value) || 30;
+      const keterangan = document.getElementById('input-keterangan-aman').value.trim();
+      const btnSimpanAman = document.getElementById('btn-simpan-aman');
+      btnSimpanAman.disabled = true;
       try{
+        let fotoUrl = null, videoUrl = null, dokumenUrl = null, dokumenNama = null;
+        if (lampiranAmanTerpilih){
+          if (lampiranAmanTerpilih.tipe === 'foto'){
+            const fileKompresi = await kompresGambar(lampiranAmanTerpilih.file);
+            fotoUrl = await uploadKeR2DenganProgres(fileKompresi, 'foto', 'aman.' + (fileKompresi.type === 'image/webp' ? 'webp' : 'jpg'));
+          } else if (lampiranAmanTerpilih.tipe === 'video'){
+            videoUrl = await uploadKeR2DenganProgres(lampiranAmanTerpilih.file, 'video', lampiranAmanTerpilih.file.name);
+          } else if (lampiranAmanTerpilih.tipe === 'dokumen'){
+            dokumenUrl = await uploadKeR2DenganProgres(lampiranAmanTerpilih.file, 'dokumen', lampiranAmanTerpilih.file.name);
+            dokumenNama = lampiranAmanTerpilih.file.name;
+          }
+        }
         await addDoc(collection(db, 'zonaAman'), {
           nama,
           lat: titikAmanSementara.lat,
           lon: titikAmanSementara.lon,
           radiusMeter,
+          keterangan: keterangan || null,
+          fotoUrl, videoUrl, dokumenUrl, dokumenNama,
           dibuatOleh: auth.currentUser ? auth.currentUser.email : 'tidak diketahui',
           waktu: serverTimestamp()
         });
@@ -4272,6 +4463,7 @@ MAIN CONTENT
       }catch(err){
         alert('Gagal menyimpan Zona Aman: ' + err.message);
       }
+      btnSimpanAman.disabled = false;
     });
 
     onSnapshot(collection(db, 'zonaAman'), (snap)=>{
@@ -4283,17 +4475,20 @@ MAIN CONTENT
         const z = docSnap.data();
         const id = docSnap.id;
         idAktif.add(id);
-        zonaAmanCache.push({ id, nama: z.nama, lat: z.lat, lon: z.lon, radiusMeter: z.radiusMeter });
+        zonaAmanCache.push({ id, nama: z.nama, lat: z.lat, lon: z.lon, radiusMeter: z.radiusMeter, dibuatOleh: z.dibuatOleh, keterangan: z.keterangan, fotoUrl: z.fotoUrl, videoUrl: z.videoUrl, dokumenUrl: z.dokumenUrl, dokumenNama: z.dokumenNama });
 
         if (zonaAmanLayers[id]){
           zonaAmanLayers[id].setLatLng([z.lat, z.lon]);
           zonaAmanLayers[id].setRadius(z.radiusMeter);
         } else {
           zonaAmanLayers[id] = L.circle([z.lat, z.lon], {
-            radius: z.radiusMeter, color: '#4aa3ff', weight: 2, fillColor: '#4aa3ff', fillOpacity: 0.12,
-            interactive: false // tidak punya panel detail sendiri -- pastikan tidak menghalangi klik ke layer lain
+            radius: z.radiusMeter, color: '#4aa3ff', weight: 2, fillColor: '#4aa3ff', fillOpacity: 0.12
           }).addTo(map).bindTooltip('🛟 ' + z.nama, { permanent: true, direction: 'center', className: 'zona-aman-label' });
         }
+        // Klik area zona -> buka panel detail. Dipasang di LUAR if/else (pakai .off() dulu supaya
+        // tidak dobel) -- sama seperti pola Zona Bahaya, supaya klik selalu terpasang di semua kondisi
+        // render ulang, termasuk saat halaman baru di-refresh.
+        zonaAmanLayers[id].off('click').on('click', ()=> window.bukaDetailZonaAman(id));
 
         const row = document.createElement('div');
         row.className = 'zona-row';
