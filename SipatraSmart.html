@@ -3842,7 +3842,15 @@ MAIN CONTENT
       if (!z.keterangan && !z.fotoUrl && !z.videoUrl && !z.dokumenUrl){
         html += '<div style="font-size:11px; color:var(--text-dim); padding:14px 20px 4px;">Tidak ada keterangan/lampiran tambahan untuk zona ini.</div>';
       }
-      html += '<div style="height:16px;"></div>';
+      if (z.titik && z.titik.length > 0){
+        // Zona Bahaya berbentuk poligon (banyak titik batas), bukan 1 titik pusat seperti
+        // Zona Aman/Markas -- pakai titik tengah (centroid) dari semua titik batas untuk link Maps.
+        const tengahLat = z.titik.reduce((jml, t)=> jml + t.lat, 0) / z.titik.length;
+        const tengahLon = z.titik.reduce((jml, t)=> jml + t.lon, 0) / z.titik.length;
+        html += '<div style="padding:16px 20px 20px;"><a href="https://www.google.com/maps?q=' + tengahLat + ',' + tengahLon + '" target="_blank" class="icon-btn" style="display:block; text-align:center; padding:10px; background:var(--panel); border:1px solid #1e40af; color:#1e40af; text-decoration:none; border-radius:8px;">🗺️ Buka di Google Maps</a></div>';
+      } else {
+        html += '<div style="height:16px;"></div>';
+      }
       document.getElementById('isi-detail-zona').innerHTML = html;
       document.getElementById('modal-detail-zona-overlay').classList.remove('hidden');
     };
