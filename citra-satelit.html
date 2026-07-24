@@ -152,6 +152,9 @@
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
   }
+  .panel:fullscreen { border-radius: 0; }
+  .panel:fullscreen .panel-body { height: calc(100vh - 96px); }
+  .panel:fullscreen .fs-brand { display: inline; }
 
   .panel-head {
     display: flex;
@@ -532,11 +535,11 @@
   <div class="grid">
 
     <!-- PANEL 1 : GOOGLE EARTH ENGINE -->
-    <div class="panel">
+    <div class="panel" id="panel-gee">
       <div class="panel-head">
         <span><span class="fs-brand">INFOSCIE</span> SUMBER_01 · GEE APP</span>
         <span>
-          <button class="fs-btn" title="Layar penuh">⛶</button>
+          <button class="fs-btn" data-target="panel-gee" title="Layar penuh">⛶</button>
           <span class="tag">AKTIF</span>
         </span>
       </div>
@@ -549,11 +552,11 @@
     </div>
 
     <!-- PANEL 2 : SENTINEL-2 -->
-    <div class="panel">
+    <div class="panel" id="panel-s2">
       <div class="panel-head">
         <span><span class="fs-brand">INFOSCIE</span> SUMBER_02 · SENTINEL-2 CLOUDLESS</span>
         <span>
-          <button class="fs-btn" title="Layar penuh">⛶</button>
+          <button class="fs-btn" data-target="panel-s2" title="Layar penuh">⛶</button>
           <span class="tag pub">AKTIF</span>
         </span>
       </div>
@@ -567,11 +570,11 @@
     </div>
 
     <!-- PANEL 3 : WINDY CUACA -->
-    <div class="panel">
+    <div class="panel" id="panel-windy">
       <div class="panel-head">
         <span><span class="fs-brand">INFOSCIE</span> SUMBER_03 · CUACA LIVE (WINDY)</span>
         <span>
-          <button class="fs-btn" title="Layar penuh">⛶</button>
+          <button class="fs-btn" data-target="panel-windy" title="Layar penuh">⛶</button>
           <span class="tag pub">LIVE</span>
         </span>
       </div>
@@ -584,11 +587,11 @@
     </div>
 
     <!-- PANEL 4 : NAVIGASI -->
-    <div class="panel">
+    <div class="panel" id="panel-nav">
       <div class="panel-head">
         <span><span class="fs-brand">INFOSCIE</span> SUMBER_04 · NAVIGASI (GNSS)</span>
         <span>
-          <button class="fs-btn" title="Layar penuh">⛶</button>
+          <button class="fs-btn" data-target="panel-nav" title="Layar penuh">⛶</button>
           <span class="tag">AKTIF</span>
         </span>
       </div>
@@ -638,6 +641,18 @@
     var DEFAULT_LAT = 21.4225, DEFAULT_LON = 39.8262, DEFAULT_LABEL = 'Ka\'bah — Masjidil Haram, Mekkah';
     var GEE_APP_BASE = 'https://sipatra-smart.projects.earthengine.app/view/sipatra-satelit';
 
+    function windyUrl(lat, lon){
+      return 'https://embed.windy.com/embed2.html?lat=' + lat + '&lon=' + lon
+        + '&detailLat=' + lat + '&detailLon=' + lon
+        + '&width=650&height=450&zoom=7&level=surface&overlay=clouds'
+        + '&menu=&message=true&marker=true&calendar=now&pressure=&type=map'
+        + '&location=coordinates&detail=true&metricWind=default&metricTemp=default&radarRange=-1';
+    }
+
+    // ====== ISI IFRAME GEE & WINDY (kosong sebelumnya) ======
+    document.getElementById('gee-frame').src = GEE_APP_BASE;
+    document.getElementById('windy-frame').src = windyUrl(DEFAULT_LAT, DEFAULT_LON);
+
     // ====== SENTINEL-2 MAP ======
     var map = L.map('s2-map', { zoomControl: true, maxZoom: 18 }).setView([DEFAULT_LAT, DEFAULT_LON], 15);
 
@@ -659,6 +674,22 @@
       fillColor: '#00AA13',
       fillOpacity: 0.3
     }).addTo(map).bindPopup('<b>' + DEFAULT_LABEL + '</b>');
+
+    // ---- Toolbar Panel 2: ganti antara Sentinel-2 dan Peta Dasar OSM ----
+    var s2ToolbarBtns = document.querySelectorAll('[data-layer]');
+    s2ToolbarBtns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        s2ToolbarBtns.forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        if (btn.dataset.layer === 's2'){
+          if (map.hasLayer(osmLayer)) map.removeLayer(osmLayer);
+          if (!map.hasLayer(s2Layer)) map.addLayer(s2Layer);
+        } else {
+          if (map.hasLayer(s2Layer)) map.removeLayer(s2Layer);
+          if (!map.hasLayer(osmLayer)) map.addLayer(osmLayer);
+        }
+      });
+    });
 
     // ====== NAVIGASI MAP ======
     var navMap = L.map('nav-map', { zoomControl: true, maxZoom: 18 }).setView([DEFAULT_LAT, DEFAULT_LON], 13);
@@ -682,6 +713,20 @@
       fillOpacity: 0.3
     }).addTo(navMap).bindPopup('<b>' + DEFAULT_LABEL + '</b>');
 
+    // ---- Toolbar Panel 4: tampil/sembunyikan lapisan rambu laut (OpenSeaMap) ----
+    var navToolbarBtns = document.querySelectorAll('[data-nav]');
+    navToolbarBtns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        navToolbarBtns.forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        if (btn.dataset.nav === 'seamark'){
+          if (!navMap.hasLayer(seamarkLayer)) navMap.addLayer(seamarkLayer);
+        } else {
+          if (navMap.hasLayer(seamarkLayer)) navMap.removeLayer(seamarkLayer);
+        }
+      });
+    });
+
     // ====== FUNGSI UPDATE GNSS ======
     function updateGnssReadout(lat, lon, acc) {
       document.getElementById('gnss-lat').textContent = lat.toFixed(6) + '° ' + (lat >= 0 ? 'LU' : 'LS');
@@ -691,181 +736,104 @@
     }
     updateGnssReadout(DEFAULT_LAT, DEFAULT_LON, null);
 
-    // ====== KLIK PETA NAVIGASI ======
+    // ====== KLIK PETA NAVIGASI -> pindahkan marker & baca koordinat ======
     navMap.on('click', function(e) {
       var lat = e.latlng.lat, lon = e.latlng.lng;
+      navMarker.setLatLng([lat, lon]).setPopupContent('<b>Titik dipilih</b><br>' + lat.toFixed(5) + ', ' + lon.toFixed(5)).openPopup();
       updateGnssReadout(lat, lon, null);
-      navMarker.setLatLng([lat, lon])
-        .bindPopup('<b>Titik dipilih</b><br>' + lat.toFixed(6) + ', ' + lon.toFixed(6))
-        .openPopup();
     });
 
-    // ====== TOGGLE LAYER SENTINEL ======
-    document.querySelectorAll('.toolbar button[data-layer]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.toolbar button[data-layer]').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        if (btn.dataset.layer === 's2') {
-          map.removeLayer(osmLayer);
-          map.addLayer(s2Layer);
-        } else {
-          map.removeLayer(s2Layer);
-          map.addLayer(osmLayer);
-        }
-      });
-    });
-
-    // ====== TOGGLE SEAMARK ======
-    document.querySelectorAll('.toolbar button[data-nav]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.toolbar button[data-nav]').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        if (btn.dataset.nav === 'seamark') {
-          navMap.addLayer(seamarkLayer);
-        } else {
-          navMap.removeLayer(seamarkLayer);
-        }
-      });
-    });
-
-    // ====== FUNGSI LOAD GEE DENGAN TIMESTAMP ======
-    function loadGeeApp(lat, lon) {
-      var frame = document.getElementById('gee-frame');
-      var url = GEE_APP_BASE + '?lat=' + lat.toFixed(6) + '&lon=' + lon.toFixed(6) + '&t=' + Date.now();
-      frame.src = url;
-      console.log('🛰️ GEE loaded:', url);
-    }
-
-    function loadWindy(lat, lon) {
-      var frame = document.getElementById('windy-frame');
-      frame.src = 'https://embed.windy.com/embed2.html'
-        + '?lat=' + lat.toFixed(3)
-        + '&lon=' + lon.toFixed(3)
-        + '&detailLat=' + lat.toFixed(3)
-        + '&detailLon=' + lon.toFixed(3)
-        + '&width=650&height=450&zoom=9'
-        + '&level=surface&overlay=satellite&product=ecmwf'
-        + '&menu=&message=true&marker=&calendar=now&pressure=&type=map'
-        + '&location=coordinates&metricWind=default&metricTemp=default&radarRange=-1';
-      console.log('🌤️ Windy loaded');
-    }
-
-    // ====== TERAPKAN LOKASI ======
-    function applyLocation(lat, lon, label, acc) {
-      console.log('📍 Menerapkan lokasi:', lat, lon, label);
+    // ====== PINDAHKAN SEMUA PETA/IFRAME KE LOKASI BARU (dipanggil dari modal lokasi) ======
+    function pindahKeLokasi(lat, lon, label) {
       map.setView([lat, lon], 15);
-      lokasiMarker.setLatLng([lat, lon]).bindPopup('<b>' + (label || 'Lokasi') + '</b>').openPopup();
-      loadGeeApp(lat, lon);
-      loadWindy(lat, lon);
+      lokasiMarker.setLatLng([lat, lon]).setPopupContent('<b>' + (label || 'Lokasi dipilih') + '</b>');
       navMap.setView([lat, lon], 13);
-      navMarker.setLatLng([lat, lon]).bindPopup('<b>' + (label || 'Lokasi') + '</b>');
-      updateGnssReadout(lat, lon, acc);
+      navMarker.setLatLng([lat, lon]).setPopupContent('<b>' + (label || 'Lokasi dipilih') + '</b>');
+      updateGnssReadout(lat, lon, null);
+      document.getElementById('windy-frame').src = windyUrl(lat, lon);
     }
 
-    // ====== REFERENSI ELEMEN MODAL ======
-    var overlay = document.getElementById('loc-overlay');
-    var locStatus = document.getElementById('loc-status');
-    var btnUseMine = document.getElementById('loc-use-mine');
-    var btnSkip = document.getElementById('loc-skip');
-    var btnSearch = document.getElementById('loc-search-btn');
-    var searchInput = document.getElementById('loc-search-input');
-    var resultsDiv = document.getElementById('loc-search-results');
+    // ====== TOMBOL LAYAR PENUH (fullscreen) PER PANEL ======
+    document.querySelectorAll('.fs-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var target = document.getElementById(btn.dataset.target);
+        if (!target) return;
+        if (!document.fullscreenElement){
+          (target.requestFullscreen || target.webkitRequestFullscreen || function(){}).call(target);
+        } else {
+          (document.exitFullscreen || document.webkitExitFullscreen || function(){}).call(document);
+        }
+      });
+    });
+    // Leaflet perlu tahu ukurannya berubah setiap kali masuk/keluar mode layar penuh
+    document.addEventListener('fullscreenchange', function(){
+      setTimeout(function(){ map.invalidateSize(); navMap.invalidateSize(); }, 200);
+    });
 
-    // ====== TOMBOL "GUNAKAN LOKASI SAYA" ======
-    btnUseMine.addEventListener('click', function() {
-      console.log('🔘 Tombol "Gunakan Lokasi Saya" diklik');
-      locStatus.textContent = 'Mengambil lokasi...';
-      if (!navigator.geolocation) {
-        locStatus.textContent = '❌ Geolocation tidak didukung. Gunakan default.';
-        console.warn('Geolocation tidak didukung');
+    // ====== MODAL LOKASI ======
+    var locOverlay = document.getElementById('loc-overlay');
+    var locStatus = document.getElementById('loc-status');
+    var locResults = document.getElementById('loc-search-results');
+
+    function tutupModalLokasi(){ locOverlay.classList.add('hidden'); }
+
+    document.getElementById('loc-skip').addEventListener('click', tutupModalLokasi);
+
+    document.getElementById('loc-use-mine').addEventListener('click', function(){
+      if (!navigator.geolocation){
+        locStatus.textContent = 'Perangkat/browser ini tidak mendukung layanan lokasi.';
         return;
       }
+      locStatus.textContent = 'Mengambil lokasi Anda...';
       navigator.geolocation.getCurrentPosition(
-        function(pos) {
+        function(pos){
           var lat = pos.coords.latitude, lon = pos.coords.longitude;
-          var acc = pos.coords.accuracy;
-          locStatus.textContent = '✅ Lokasi: ' + lat.toFixed(5) + ', ' + lon.toFixed(5);
-          overlay.classList.add('hidden');
-          applyLocation(lat, lon, 'Lokasi Anda', acc);
+          pindahKeLokasi(lat, lon, 'Lokasi Anda Saat Ini');
+          updateGnssReadout(lat, lon, pos.coords.accuracy);
+          locStatus.textContent = 'Lokasi ditemukan!';
+          setTimeout(tutupModalLokasi, 500);
         },
-        function(err) {
-          locStatus.textContent = '❌ Gagal: ' + err.message + '. Gunakan default.';
-          console.error('Geolocation error:', err.message);
-          overlay.classList.add('hidden');
-          applyLocation(DEFAULT_LAT, DEFAULT_LON, DEFAULT_LABEL, null);
-        },
-        { enableHighAccuracy: true }
+        function(err){
+          locStatus.textContent = 'Gagal mengambil lokasi: ' + err.message + ' — coba cari manual atau lewati.';
+        }
       );
     });
 
-    // ====== TOMBOL "LEWATI" ======
-    btnSkip.addEventListener('click', function() {
-      console.log('🔘 Tombol "Lewati" diklik');
-      overlay.classList.add('hidden');
-      applyLocation(DEFAULT_LAT, DEFAULT_LON, DEFAULT_LABEL, null);
-    });
-
-    // ====== TOMBOL "CARI" ======
-    btnSearch.addEventListener('click', function() {
-      var query = searchInput.value.trim();
-      if (!query) {
-        resultsDiv.innerHTML = 'Masukkan nama lokasi.';
-        return;
-      }
-      console.log('🔍 Mencari:', query);
-      resultsDiv.innerHTML = 'Mencari...';
-      fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=5')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (!data || data.length === 0) {
-            resultsDiv.innerHTML = 'Tidak ditemukan.';
+    function cariLokasi(){
+      var q = document.getElementById('loc-search-input').value.trim();
+      if (!q) return;
+      locStatus.textContent = 'Mencari "' + q + '"...';
+      locResults.innerHTML = '';
+      fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q))
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          if (!data || data.length === 0){
+            locStatus.textContent = 'Lokasi tidak ditemukan. Coba kata kunci lain.';
             return;
           }
-          resultsDiv.innerHTML = '';
-          data.forEach(function(item) {
+          locStatus.textContent = 'Pilih salah satu hasil di bawah:';
+          locResults.innerHTML = '';
+          data.forEach(function(item){
             var div = document.createElement('div');
             div.textContent = item.display_name;
-            div.addEventListener('click', function() {
+            div.addEventListener('click', function(){
               var lat = parseFloat(item.lat), lon = parseFloat(item.lon);
-              overlay.classList.add('hidden');
-              applyLocation(lat, lon, item.display_name, null);
+              pindahKeLokasi(lat, lon, item.display_name);
+              locStatus.textContent = 'Lokasi dipindahkan ke: ' + item.display_name;
+              setTimeout(tutupModalLokasi, 500);
             });
-            resultsDiv.appendChild(div);
+            locResults.appendChild(div);
           });
         })
-        .catch(function(err) {
-          console.error('Search error:', err);
-          resultsDiv.innerHTML = 'Gagal mencari.';
+        .catch(function(err){
+          locStatus.textContent = 'Gagal mencari lokasi: ' + err.message;
         });
-    });
-
-    // ====== ENTER PADA INPUT PENCARIAN ======
-    searchInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        btnSearch.click();
-      }
-    });
-
-    // ====== JIKA MODAL TIDAK DIAKSI, TETAP PAKAI DEFAULT ======
-    overlay.addEventListener('click', function(e) {
-      if (e.target === overlay) {
-        console.log('🖱️ Klik di luar modal -> tutup dan pakai default');
-        overlay.classList.add('hidden');
-        applyLocation(DEFAULT_LAT, DEFAULT_LON, DEFAULT_LABEL, null);
-      }
-    });
-
-    console.log('✅ Inisialisasi selesai. Modal siap.');
-
-    // ====== MUAT DEFAULT TERLEBIH DAHULU (AGAR TIDAK KOSONG) ======
-    var geeFrame = document.getElementById('gee-frame');
-    if (!geeFrame.src || geeFrame.src === '') {
-      loadGeeApp(DEFAULT_LAT, DEFAULT_LON);
     }
-    var windyFrame = document.getElementById('windy-frame');
-    if (!windyFrame.src || windyFrame.src === '') {
-      loadWindy(DEFAULT_LAT, DEFAULT_LON);
-    }
+    document.getElementById('loc-search-btn').addEventListener('click', cariLokasi);
+    document.getElementById('loc-search-input').addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){ e.preventDefault(); cariLokasi(); }
+    });
+
   });
 </script>
 </body>

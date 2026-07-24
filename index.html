@@ -39,6 +39,16 @@
   }
   .scie-page-header .brand-text{ color:#e6fbff; font-weight:800; letter-spacing:0.5px; font-size:15px; }
   .scie-page-header .brand-text small{ display:block; font-weight:600; font-size:10px; color:#22d3ee; letter-spacing:1px; }
+  .scie-page-header{ justify-content:space-between; flex-wrap:wrap; gap:16px; }
+  .scie-nav-tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+  .scie-nav-tabs a{
+    color:#8fd8e8; font-size:12.5px; font-weight:700; text-decoration:none;
+    padding:8px 16px; border-radius:20px; border:1px solid #0d3a44; transition:all .2s ease;
+  }
+  .scie-nav-tabs a:hover, .scie-nav-tabs a.active{
+    color:#e6fbff; border-color:#22d3ee; background:rgba(34,211,238,0.08);
+    box-shadow:0 0 10px rgba(34,211,238,0.15);
+  }
 
   .scie-feature-section { padding: 40px clamp(16px,4vw,60px) 80px; min-height:80vh; display:flex; align-items:center; }
   .scie-feature-card {
@@ -93,8 +103,14 @@
 <body>
 
 <header class="scie-page-header">
-  <div class="mark-standalone"></div>
-  <div class="brand-text">INFOSCIE<small>FIDI · SCIE INTELLIGENCE BRIEF</small></div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div class="mark-standalone"></div>
+    <div class="brand-text">INFOSCIE<small>FIDI · SCIE INTELLIGENCE BRIEF</small></div>
+  </div>
+  <nav class="scie-nav-tabs">
+    <a href="index.html" class="active">Weather Globe</a>
+    <a href="citra-satelit.html">Citra Satelit</a>
+  </nav>
 </header>
 
 <section class="scie-feature-section">
