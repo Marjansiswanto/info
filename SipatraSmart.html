@@ -890,9 +890,9 @@ MAIN CONTENT
         </div>
 
         <!-- Koordinat untuk Peta Satelit/Street View di atas -- ringkas 1 baris, isi manual atau otomatis dari posisi tracking -->
-        <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
-          <input type="text" id="sv-lat" placeholder="Latitude" style="flex:1; min-width:0; background:#F9FAFB; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:7px; font-size:11px; box-sizing:border-box;">
-          <input type="text" id="sv-lon" placeholder="Longitude" style="flex:1; min-width:0; background:#F9FAFB; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:7px; font-size:11px; box-sizing:border-box;">
+        <div style="display:flex; gap:6px; align-items:center; margin-top:8px; width:100%; box-sizing:border-box; flex-wrap:wrap;">
+          <input type="text" id="sv-lat" placeholder="Latitude" style="flex:1 1 0; width:0; min-width:70px; background:#F9FAFB; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:7px; font-size:11px; box-sizing:border-box;">
+          <input type="text" id="sv-lon" placeholder="Longitude" style="flex:1 1 0; width:0; min-width:70px; background:#F9FAFB; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:7px; font-size:11px; box-sizing:border-box;">
           <button id="btn-sv-dari-personel" class="icon-square-btn" style="width:34px; height:34px; font-size:14px; color:var(--red); border-color:var(--red); flex-shrink:0;" title="Pakai Posisi Saya Terkini">📍</button>
         </div>
         <div id="sv-status" style="font-size:10px; color:var(--text-dim); margin-top:3px;"></div>
