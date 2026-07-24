@@ -1621,10 +1621,10 @@ MAIN CONTENT
 </div>
 
 <!-- ===== MODAL DETAIL ZONA BAHAYA (klik zona di peta -- keterangan + foto/video/dokumen) ===== -->
-<div id="modal-detail-zona-overlay" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
-  <div class="panel" style="max-width:440px; width:100%; max-height:88vh; overflow-y:auto;">
+<div id="modal-detail-zona-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4800; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:440px; width:100%; max-height:88vh; overflow-y:auto;">
     <div class="panel-head"><h3 id="judul-detail-zona">⚠️ Zona Bahaya</h3><button id="btn-tutup-detail-zona" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
-    <div id="isi-detail-zona"></div>
+    <div id="isi-detail-zona" style="font-size:12.5px; line-height:1.8;"></div>
   </div>
 </div>
 
@@ -3769,31 +3769,38 @@ MAIN CONTENT
     window.bukaDetailZona = function(id){
       const z = zonaBahayaCache.find(x=> x.id === id);
       if (!z) return;
-      document.getElementById('judul-detail-zona').textContent = '⚠️ ' + z.nama;
 
-      let html = '<div style="font-size:12px; line-height:1.8;">';
-      if (z.lantai !== null && z.lantai !== undefined) html += '<div><b>Lantai:</b> ' + z.lantai + '</div>';
-      if (z.ketinggianMeter !== null && z.ketinggianMeter !== undefined) html += '<div><b>Ketinggian:</b> ' + z.ketinggianMeter + 'm dari ground</div>';
-      if (z.bleBeacon) html += '<div><b>BLE Beacon:</b> ' + z.bleBeacon + '</div>';
-      if (z.dibuatOleh) html += '<div><b>Ditandai oleh:</b> ' + z.dibuatOleh + '</div>';
-      html += '</div>';
+      let html = '<div class="wo-detail-hero">'
+          + '<div class="wo-detail-icon-circle" style="background:#FEE2E2; color:var(--red);">⚠️</div>'
+          + '<div class="wo-detail-title">' + z.nama + '</div>'
+          + '<div class="wo-detail-subtitle">Zona Bahaya</div>'
+        + '</div>'
+        + '<div class="wo-detail-dashed"></div>'
+        + '<div class="wo-detail-rincian-head">Rincian Zona</div>';
+      if (z.lantai !== null && z.lantai !== undefined) html += '<div class="wo-detail-row"><span class="wo-detail-label">Lantai</span><span class="wo-detail-value">' + z.lantai + '</span></div>';
+      if (z.ketinggianMeter !== null && z.ketinggianMeter !== undefined) html += '<div class="wo-detail-row"><span class="wo-detail-label">Ketinggian</span><span class="wo-detail-value">' + z.ketinggianMeter + 'm dari ground</span></div>';
+      if (z.bleBeacon) html += '<div class="wo-detail-row"><span class="wo-detail-label">BLE Beacon</span><span class="wo-detail-value">' + z.bleBeacon + '</span></div>';
+      if (z.dibuatOleh) html += '<div class="wo-detail-row"><span class="wo-detail-label">Ditandai oleh</span><span class="wo-detail-value">' + z.dibuatOleh + '</span></div>';
+
       if (z.keterangan){
-        html += '<div style="margin-top:8px; font-size:12px;"><b>Keterangan:</b><br>' + z.keterangan.replace(/</g,'&lt;') + '</div>';
+        html += '<div class="wo-detail-dashed" style="margin-top:10px;"></div>'
+          + '<div style="padding:14px 20px 4px; font-size:12.5px; line-height:1.7;"><b>Keterangan</b><br>' + z.keterangan.replace(/</g,'&lt;') + '</div>';
       }
       if (z.fotoUrl){
-        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px;">📷 Foto:</div>'
-          + '<img src="' + z.fotoUrl + '" style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + z.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')">';
+        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">📷 Foto:</div>'
+          + '<div style="padding:6px 20px 0;"><img src="' + z.fotoUrl + '" style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + z.fotoUrl.replace(/'/g,"\\'") + '\', \'foto\')"></div>';
       }
       if (z.videoUrl){
-        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px;">🎥 Video:</div>'
-          + '<video src="' + z.videoUrl + '" controls style="width:100%; margin-top:4px; border:1px solid var(--line-bright);" onerror="window.tampilkanFallbackMedia(this, \'' + z.videoUrl.replace(/'/g,"\\'") + '\', \'video\')"></video>';
+        html += '<div style="font-size:10px; color:var(--text-dim); margin-top:10px; padding:0 20px;">🎥 Video:</div>'
+          + '<div style="padding:6px 20px 0;"><video src="' + z.videoUrl + '" controls style="width:100%; border:1px solid var(--line-bright); border-radius:10px;" onerror="window.tampilkanFallbackMedia(this, \'' + z.videoUrl.replace(/'/g,"\\'") + '\', \'video\')"></video></div>';
       }
       if (z.dokumenUrl){
-        html += '<div style="margin-top:10px;"><a href="' + z.dokumenUrl + '" target="_blank" style="display:block; padding:10px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text); text-decoration:none; font-size:11px;">📄 ' + (z.dokumenNama || 'Buka Dokumen') + '</a></div>';
+        html += '<div style="padding:10px 20px 0;"><a href="' + z.dokumenUrl + '" target="_blank" style="display:block; padding:10px; background:var(--panel); border:1px solid var(--line-bright); color:var(--text); text-decoration:none; font-size:11px; border-radius:8px;">📄 ' + (z.dokumenNama || 'Buka Dokumen') + '</a></div>';
       }
       if (!z.keterangan && !z.fotoUrl && !z.videoUrl && !z.dokumenUrl){
-        html += '<div style="font-size:11px; color:var(--text-dim); margin-top:8px;">Tidak ada keterangan/lampiran tambahan untuk zona ini.</div>';
+        html += '<div style="font-size:11px; color:var(--text-dim); padding:14px 20px 4px;">Tidak ada keterangan/lampiran tambahan untuk zona ini.</div>';
       }
+      html += '<div style="height:16px;"></div>';
       document.getElementById('isi-detail-zona').innerHTML = html;
       document.getElementById('modal-detail-zona-overlay').classList.remove('hidden');
     };
