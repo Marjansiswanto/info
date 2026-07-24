@@ -82,10 +82,13 @@
   /* Aturan global SEMUA kotak input/dropdown/textarea di seluruh aplikasi -- banyak form
      (Keterangan Zona, Lapor Gangguan, dll.) masih punya inline style "background:#000"
      peninggalan tema gelap lama. Tanpa override !important ini, latar tetap hitam sementara
-     warna teks tema baru juga gelap -- jadinya teks yang diketik user TIDAK TERLIHAT. */
-  input, select, textarea{
+     warna teks tema baru juga gelap -- jadinya teks yang diketik user TIDAK TERLIHAT.
+     padding & box-sizing di-samakan juga di sini supaya teks tidak mepet ke bingkai
+     di SEMUA panel, tanpa perlu edit tiap kotak satu-satu. */
+  input:not([type="radio"]):not([type="checkbox"]):not([type="file"]):not([type="range"]):not([type="color"]), select, textarea{
     background:#FFFFFF !important; border:1px solid var(--line-bright) !important;
     color:var(--text) !important; border-radius:8px !important;
+    padding:11px 14px !important; box-sizing:border-box !important;
   }
   input::placeholder, textarea::placeholder{ color:var(--text-dim); opacity:1; }
 
@@ -1235,6 +1238,14 @@ MAIN CONTENT
   <div class="panel modal-fullscreen-panel" style="max-width:520px; width:100%; max-height:90vh; overflow-y:auto;">
     <div class="panel-head"><h3>📟 Riwayat & Verifikasi SOS</h3><button id="btn-tutup-riwayat-sos" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
     <div id="daftar-riwayat-sos" style="padding:0 20px 16px;"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL DETAIL SOS (read-only -- muncul saat klik baris di Riwayat & Verifikasi SOS) ===== -->
+<div id="modal-detail-sos-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4750; display:flex; align-items:center; justify-content:center; padding:16px;">
+  <div class="panel modal-fullscreen-panel" style="max-width:480px; width:100%; max-height:90vh; overflow-y:auto;">
+    <div class="panel-head"><h3>🆘 Detail Insiden SOS</h3><button id="btn-tutup-detail-sos" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div id="isi-detail-sos" style="font-size:12.5px; line-height:1.8;"></div>
   </div>
 </div>
 
@@ -3692,9 +3703,12 @@ MAIN CONTENT
           zonaBahayaLayers[id] = L.polygon(z.titik.map(t => [t.lat, t.lon]), {
             color: '#e05f5f', weight: 2, dashArray: '6,4', fillColor: '#e05f5f', fillOpacity: 0.15
           }).addTo(map).bindTooltip('⚠️ ' + z.nama + labelLantai, { permanent: true, direction: 'center', className: 'zona-bahaya-label' });
-          // Klik area zona -> buka panel detail (keterangan + foto/video/dokumen kalau ada)
-          zonaBahayaLayers[id].on('click', ()=> window.bukaDetailZona(id));
         }
+        // Klik area zona -> buka panel detail (keterangan + foto/video/dokumen kalau ada).
+        // Dipasang di LUAR if/else (pakai .off() dulu supaya tidak dobel) -- supaya klik tetap
+        // terpasang di semua kondisi render ulang, termasuk saat halaman baru di-refresh dan
+        // data zona dimuat dari cache/server Firestore, bukan cuma saat layer pertama kali dibuat.
+        zonaBahayaLayers[id].off('click').on('click', ()=> window.bukaDetailZona(id));
 
         let infoTambahan = '';
         if (z.lantai !== null && z.lantai !== undefined) infoTambahan += ' · Lantai ' + z.lantai;
@@ -5109,25 +5123,24 @@ MAIN CONTENT
         // tidak perlu buat ulang objeknya dari nol.
         markerBahayaDiPeta[l.id].marker.setLatLng([l.lat, l.lon]);
         markerBahayaDiPeta[l.id].circle.setLatLng([l.lat, l.lon]).setRadius(radiusGeofence).setStyle({ color: warnaTingkat, fillColor: warnaTingkat });
-        return;
+      } else {
+        // Pin custom bentuk "tetesan" (divIcon) -- beda dari marker personel biasa, supaya
+        // langsung kelihatan ini laporan bahaya, bukan posisi orang.
+        const iconBahaya = L.divIcon({
+          html: '<div style="background:' + warnaTingkat + '; width:28px; height:28px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;"><span style="transform:rotate(45deg); font-size:13px;">⚠️</span></div>',
+          className: '', iconSize: [28, 28], iconAnchor: [14, 28]
+        });
+        const marker = L.marker([l.lat, l.lon], { icon: iconBahaya }).addTo(map);
+        const circle = L.circle([l.lat, l.lon], {
+          radius: radiusGeofence, color: warnaTingkat, weight: 2, fillColor: warnaTingkat, fillOpacity: 0.15
+        }).addTo(map);
+        markerBahayaDiPeta[l.id] = { marker, circle };
       }
-
-      // Pin custom bentuk "tetesan" (divIcon) -- beda dari marker personel biasa, supaya
-      // langsung kelihatan ini laporan bahaya, bukan posisi orang.
-      const iconBahaya = L.divIcon({
-        html: '<div style="background:' + warnaTingkat + '; width:28px; height:28px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;"><span style="transform:rotate(45deg); font-size:13px;">⚠️</span></div>',
-        className: '', iconSize: [28, 28], iconAnchor: [14, 28]
-      });
-
-      const marker = L.marker([l.lat, l.lon], { icon: iconBahaya }).addTo(map);
-      marker.on('click', ()=> window.bukaDetailBahaya(l.id));
-
-      const circle = L.circle([l.lat, l.lon], {
-        radius: radiusGeofence, color: warnaTingkat, weight: 2, fillColor: warnaTingkat, fillOpacity: 0.15
-      }).addTo(map);
-      circle.on('click', ()=> window.bukaDetailBahaya(l.id));
-
-      markerBahayaDiPeta[l.id] = { marker, circle };
+      // Klik pin/lingkaran -> buka panel detail. Dipasang di LUAR if/else (pakai .off() dulu
+      // supaya tidak dobel) -- supaya klik tetap terpasang di semua kondisi render ulang,
+      // termasuk saat halaman baru di-refresh, bukan cuma saat marker pertama kali dibuat.
+      markerBahayaDiPeta[l.id].marker.off('click').on('click', ()=> window.bukaDetailBahaya(l.id));
+      markerBahayaDiPeta[l.id].circle.off('click').on('click', ()=> window.bukaDetailBahaya(l.id));
     });
   }
 
@@ -5541,15 +5554,15 @@ MAIN CONTENT
       if (x.catatanVerifikasi) subtitle += '<br><b>Catatan:</b> ' + x.catatanVerifikasi.replace(/</g,'&lt;');
       if (x.diprosesOleh) subtitle += '<br>Diproses oleh: ' + x.diprosesOleh;
 
-      htmlSOS += '<div class="wo-list-item" style="cursor:default;">'
+      htmlSOS += '<div class="wo-list-item" onclick="window.bukaDetailSOS(\'' + x.id + '\')">'
         + '<div class="wo-icon-circle" style="background:' + ikonBgStatus[x.status] + '; color:' + warnaStatus[x.status] + ';">🆘</div>'
         + '<div class="wo-info">'
         + '<div class="wo-title">' + (x.personilEmail || '-') + '</div>'
         + '<div class="wo-subtitle">' + subtitle + '</div>'
-        + (x.status === 'menunggu_verifikasi' ? '<button onclick="window.bukaVerifikasiSOSManual(\'' + x.id + '\')" style="margin-top:8px; width:100%; padding:8px; background:var(--red); color:#fff; border:none; border-radius:8px; font-family:var(--mono); font-size:11px; cursor:pointer;">Buka untuk Verifikasi</button>' : '')
+        + (x.status === 'menunggu_verifikasi' ? '<button onclick="event.stopPropagation(); window.bukaVerifikasiSOSManual(\'' + x.id + '\')" style="margin-top:8px; width:100%; padding:8px; background:var(--red); color:#fff; border:none; border-radius:8px; font-family:var(--mono); font-size:11px; cursor:pointer;">Buka untuk Verifikasi</button>' : '')
         + '</div>'
-        + '<div class="wo-status-col">'
-        + '<div class="wo-status-label" style="color:' + warnaStatus[x.status] + '; font-size:10px;">' + (labelStatus[x.status] || x.status) + '</div>'
+        + '<div class="wo-status-col" style="max-width:100px;">'
+        + '<div class="wo-status-label" style="color:' + warnaStatus[x.status] + '; font-size:10px; white-space:normal; word-break:break-word; text-align:right;">' + (labelStatus[x.status] || x.status) + '</div>'
         + '<div class="wo-status-sub">' + jamS + '</div>'
         + '</div>'
         + '</div>';
@@ -5557,8 +5570,56 @@ MAIN CONTENT
     cont.innerHTML = htmlSOS;
   }
 
+  /** Buka panel detail SOS read-only -- dipanggil dari klik baris di Riwayat & Verifikasi SOS.
+   *  Berbeda dari bukaVerifikasiSOSManual() yang membuka alur AKSI (forward/batalkan) khusus
+   *  insiden yang masih menunggu verifikasi -- ini murni untuk MELIHAT detail insiden apa pun,
+   *  termasuk yang sudah selesai/dibatalkan. */
+  window.bukaDetailSOS = function(id){
+    const x = daftarSemuaInsidenSOS.find(i=> i.id === id);
+    if (!x) return;
+    const labelStatus = {
+      menunggu_verifikasi: '🔴 Menunggu Verifikasi',
+      diteruskan_basarnas: '📡 Diteruskan ke BASARNAS',
+      palsu_dibatalkan: '❌ Alarm Palsu (Dibatalkan Moderator)',
+      dibatalkan_sendiri: '✅ Dibatalkan Sendiri oleh Personel'
+    };
+    const warnaStatus = {
+      menunggu_verifikasi: 'var(--red)', diteruskan_basarnas: 'var(--orange)',
+      palsu_dibatalkan: 'var(--text-dim)', dibatalkan_sendiri: 'var(--green)'
+    };
+    const ikonBgStatus = {
+      menunggu_verifikasi: '#FEE2E2', diteruskan_basarnas: '#FEF3C7',
+      palsu_dibatalkan: '#F3F4F6', dibatalkan_sendiri: '#D1FAE5'
+    };
+    const waktu = x.waktu && x.waktu.toDate ? x.waktu.toDate().toLocaleString('id-ID') : '-';
+
+    let html = '<div class="wo-detail-hero">'
+        + '<div class="wo-detail-icon-circle" style="background:' + ikonBgStatus[x.status] + '; color:' + warnaStatus[x.status] + ';">🆘</div>'
+        + '<div class="wo-detail-title">' + (x.personilEmail || '-') + '</div>'
+        + '<div class="wo-detail-subtitle" style="color:' + warnaStatus[x.status] + '; font-weight:700;">' + (labelStatus[x.status] || x.status) + '</div>'
+      + '</div>'
+      + '<div class="wo-detail-dashed"></div>'
+      + '<div class="wo-detail-rincian-head">Rincian Insiden</div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Waktu</span><span class="wo-detail-value">' + waktu + '</span></div>'
+      + '<div class="wo-detail-row"><span class="wo-detail-label">Lokasi</span><span class="wo-detail-value">' + (x.lat ? (x.lat.toFixed(5) + ', ' + x.lon.toFixed(5)) : 'Tidak tersedia') + '</span></div>'
+      + (x.diLuarZonaKerja ? '<div class="wo-detail-row"><span class="wo-detail-label">⚠️ Zona</span><span class="wo-detail-value" style="color:var(--amber);">Luar Zona Kerja</span></div>' : '')
+      + (x.diprosesOleh ? ('<div class="wo-detail-row"><span class="wo-detail-label">Diproses oleh</span><span class="wo-detail-value">' + x.diprosesOleh + '</span></div>') : '')
+      + (x.catatanVerifikasi ? ('<div class="wo-detail-dashed" style="margin-top:10px;"></div><div style="padding:14px 20px 20px; font-size:12.5px; line-height:1.7;"><b>Catatan Verifikasi</b><br>' + x.catatanVerifikasi.replace(/</g,'&lt;') + '</div>') : '<div style="height:16px;"></div>');
+
+    if (x.lat && x.lon){
+      html += '<div style="padding:0 20px 20px;"><a href="https://www.google.com/maps?q=' + x.lat + ',' + x.lon + '" target="_blank" class="icon-btn" style="display:block; text-align:center; padding:10px; background:var(--panel); border:1px solid var(--orange); color:var(--orange); text-decoration:none; border-radius:8px;">🗺️ Buka di Google Maps</a></div>';
+    }
+    if (x.status === 'menunggu_verifikasi'){
+      html += '<div style="padding:0 20px 20px;"><button onclick="window.bukaVerifikasiSOSManual(\'' + x.id + '\')" style="width:100%; padding:11px; background:var(--red); color:#fff; border:none; border-radius:8px; font-family:var(--mono); font-size:12px; font-weight:700; cursor:pointer;">Buka untuk Verifikasi</button></div>';
+    }
+
+    document.getElementById('isi-detail-sos').innerHTML = html;
+    document.getElementById('modal-detail-sos-overlay').classList.remove('hidden');
+  };
+
   window.bukaVerifikasiSOSManual = function(id){
     document.getElementById('modal-riwayat-sos-overlay').classList.add('hidden');
+    document.getElementById('modal-detail-sos-overlay').classList.add('hidden');
     sosDitundaSesiIni.delete(id);
     const insiden = daftarSemuaInsidenSOS.find(x=> x.id === id);
     if (insiden) antrianSosBelumDiverifikasi = [insiden];
@@ -5584,6 +5645,9 @@ MAIN CONTENT
     });
     document.getElementById('btn-tutup-riwayat-sos').addEventListener('click', ()=>{
       document.getElementById('modal-riwayat-sos-overlay').classList.add('hidden');
+    });
+    document.getElementById('btn-tutup-detail-sos').addEventListener('click', ()=>{
+      document.getElementById('modal-detail-sos-overlay').classList.add('hidden');
     });
 
     document.getElementById('btn-sos-forward-basarnas').addEventListener('click', ()=>{
