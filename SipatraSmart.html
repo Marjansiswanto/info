@@ -159,16 +159,19 @@
   .icon-square-btn:hover{ background:#E5E7EB; border-color:var(--text-dim); }
 
   /* ===== Dropdown ringkas untuk daftar Zona Bahaya/Markas/Aman/Wilayah Kerja ===== */
+  .zona-dropdown-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;
+  }
   .zona-dropdown-toggle{
     display:flex; align-items:center; justify-content:space-between; width:100%;
     background:#F9FAFB; border:1px solid var(--line-bright); border-radius:8px;
-    padding:10px 12px; margin-top:8px; cursor:pointer; font-family:var(--mono);
-    font-size:12px; font-weight:700; color:var(--text); box-sizing:border-box;
+    padding:10px 10px; cursor:pointer; font-family:var(--mono);
+    font-size:11px; font-weight:700; color:var(--text); box-sizing:border-box;
   }
   .zona-dropdown-toggle:hover{ background:#F3F4F6; }
-  .zona-dropdown-toggle .chevron{ transition:transform .2s ease; color:var(--text-dim); }
+  .zona-dropdown-toggle .chevron{ transition:transform .2s ease; color:var(--text-dim); flex-shrink:0; margin-left:4px; }
   .zona-dropdown-toggle.open .chevron{ transform:rotate(180deg); }
-  .zona-dropdown-list{ display:none; }
+  .zona-dropdown-list{ display:none; grid-column:1 / -1; }
   .zona-dropdown-list.open{ display:block; }
 
   /* ===== Popup Pilihan Moda Transportasi (tombol Aktifkan Tracking) ===== */
@@ -903,7 +906,6 @@ MAIN CONTENT
           <button id="btn-personal-sos" class="sos-btn icon-square-btn" title="SOS Saya">🚨</button>
           <button id="btn-gear-visibilitas-saya" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);" title="Atur Jadwal Tampil di Peta (Saya)">⚙️</button>
           <button id="btn-bersihkan-jejak" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--text-dim); border:1px solid var(--line-bright);" title="Bersihkan Jejak Saya">🗑</button>
-          <button id="btn-tandai-zona" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Tandai Zona Bahaya">✏️</button>
           <button id="btn-checkin-manual" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--green); border:1px solid var(--green);" title="Check-In Manual">✅</button>
           <button id="btn-checkout-manual" class="track-btn icon-square-btn hidden" style="background:var(--panel); color:var(--amber); border:1px solid var(--amber);" title="Check-Out Manual">⏰</button>
           <button id="btn-lapor-bahaya" class="track-btn icon-square-btn hidden" style="background:var(--red); color:#fff; border:1px solid var(--red);" title="Lapor Bahaya / Potensi Bahaya">⚠️</button>
@@ -925,6 +927,15 @@ MAIN CONTENT
           <button id="btn-sv-dari-personel" class="icon-square-btn" style="width:34px; height:34px; font-size:14px; color:var(--red); border-color:var(--red); flex-shrink:0;" title="Pakai Posisi Saya Terkini">📍</button>
         </div>
         <div id="sv-status" style="font-size:10px; color:var(--text-dim); margin-top:3px;"></div>
+
+        <!-- ===== Baris tombol Tandai Zona -- 4 ikon sejajar, di atas dropdown daftar masing-masing ===== -->
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button id="btn-tandai-zona" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--red); border:1px solid var(--red);" title="Tandai Zona Bahaya">✏️</button>
+          <button id="btn-tandai-markas" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--green); border:1px solid var(--green);" title="Tandai Zona Markas (Admin)">🏠</button>
+          <button id="btn-tandai-aman" class="track-btn icon-square-btn" style="background:var(--panel); color:#4aa3ff; border:1px solid #4aa3ff;" title="Tandai Zona Aman / Evakuasi (Admin)">🛟</button>
+          <button id="btn-tandai-wilayah-kerja" class="track-btn icon-square-btn" style="background:var(--panel); color:#ffb84d; border:1px solid #ffb84d;" title="Tandai Wilayah Kerja / Gerbang OGS (Admin)">🚧</button>
+        </div>
+
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
           <div style="display:flex; gap:8px; margin-bottom:8px; width:100%; box-sizing:border-box; flex-wrap:wrap;">
@@ -960,16 +971,6 @@ MAIN CONTENT
             <button id="btn-batal-zona" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
-        <button type="button" class="zona-dropdown-toggle" id="toggle-zona-bahaya">
-          <span>⚠️ <span id="jumlah-zona-bahaya">0</span> Zona Bahaya</span>
-          <span class="chevron">▾</span>
-        </button>
-        <div class="zona-dropdown-list" id="daftar-zona-bahaya-wrap">
-          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama zona untuk lihat lokasinya di peta · klik area zona di peta untuk lihat Detail</div>
-          <div id="daftar-zona-bahaya"></div>
-        </div>
-
-        <button id="btn-tandai-markas" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--green); border:1px solid var(--green); margin-top:8px;" title="Tandai Zona Markas (Admin)">🏠</button>
         <div id="panel-tandai-markas" class="hidden" style="border:1px solid var(--green); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-markas" placeholder="Nama Markas (mis. Pos Komando Utama)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
           <input type="number" id="input-radius-markas" placeholder="Radius (meter, mis. 50)" value="50" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -996,16 +997,6 @@ MAIN CONTENT
             <button id="btn-batal-markas" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
-        <button type="button" class="zona-dropdown-toggle" id="toggle-zona-markas">
-          <span>🏠 <span id="jumlah-zona-markas">0</span> Zona Markas</span>
-          <span class="chevron">▾</span>
-        </button>
-        <div class="zona-dropdown-list" id="daftar-zona-markas-wrap">
-          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama zona untuk lihat lokasinya di peta · klik area zona di peta untuk lihat Detail</div>
-          <div id="daftar-zona-markas"></div>
-        </div>
-
-        <button id="btn-tandai-aman" class="track-btn icon-square-btn" style="background:var(--panel); color:#4aa3ff; border:1px solid #4aa3ff; margin-top:8px;" title="Tandai Zona Aman / Evakuasi (Admin)">🛟</button>
         <div id="panel-tandai-aman" class="hidden" style="border:1px solid #4aa3ff; padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-aman" placeholder="Nama Zona Aman (mis. Titik Kumpul Evakuasi 1)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
           <input type="number" id="input-radius-aman" placeholder="Radius (meter, mis. 30)" value="30" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
@@ -1032,16 +1023,6 @@ MAIN CONTENT
             <button id="btn-batal-aman" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
-        <button type="button" class="zona-dropdown-toggle" id="toggle-zona-aman">
-          <span>🛟 <span id="jumlah-zona-aman">0</span> Zona Aman</span>
-          <span class="chevron">▾</span>
-        </button>
-        <div class="zona-dropdown-list" id="daftar-zona-aman-wrap">
-          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama zona untuk lihat lokasinya di peta · klik area zona di peta untuk lihat Detail</div>
-          <div id="daftar-zona-aman"></div>
-        </div>
-
-        <button id="btn-tandai-wilayah-kerja" class="track-btn icon-square-btn" style="background:var(--panel); color:#ffb84d; border:1px solid #ffb84d; margin-top:8px;" title="Tandai Wilayah Kerja / Gerbang OGS (Admin)">🚧</button>
         <div id="panel-tandai-wilayah-kerja" class="hidden" style="border:1px solid #ffb84d; padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-wilayah-kerja" placeholder="Nama (mis. Gerbang OGS Utama)" value="Wilayah Kerja Pabrik-Quarry" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
 
@@ -1075,6 +1056,36 @@ MAIN CONTENT
             <button id="btn-batal-wilayah-kerja" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
+
+        <!-- ===== Dropdown ringkas daftar 4 jenis zona -- grid 2 kolom, ergonomis ===== -->
+        <div class="zona-dropdown-grid">
+        <button type="button" class="zona-dropdown-toggle" id="toggle-zona-bahaya">
+          <span>⚠️ <span id="jumlah-zona-bahaya">0</span> Zona Bahaya</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="zona-dropdown-list" id="daftar-zona-bahaya-wrap">
+          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama zona untuk lihat lokasinya di peta · klik area zona di peta untuk lihat Detail</div>
+          <div id="daftar-zona-bahaya"></div>
+        </div>
+
+        <button type="button" class="zona-dropdown-toggle" id="toggle-zona-markas">
+          <span>🏠 <span id="jumlah-zona-markas">0</span> Zona Markas</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="zona-dropdown-list" id="daftar-zona-markas-wrap">
+          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama zona untuk lihat lokasinya di peta · klik area zona di peta untuk lihat Detail</div>
+          <div id="daftar-zona-markas"></div>
+        </div>
+
+        <button type="button" class="zona-dropdown-toggle" id="toggle-zona-aman">
+          <span>🛟 <span id="jumlah-zona-aman">0</span> Zona Aman</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="zona-dropdown-list" id="daftar-zona-aman-wrap">
+          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama zona untuk lihat lokasinya di peta · klik area zona di peta untuk lihat Detail</div>
+          <div id="daftar-zona-aman"></div>
+        </div>
+
         <button type="button" class="zona-dropdown-toggle" id="toggle-wilayah-kerja">
           <span>🚧 <span id="jumlah-wilayah-kerja">0</span> Wilayah Kerja</span>
           <span class="chevron">▾</span>
@@ -1082,6 +1093,8 @@ MAIN CONTENT
         <div class="zona-dropdown-list" id="daftar-wilayah-kerja-wrap">
           <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama untuk lihat lokasinya di peta</div>
           <div id="daftar-wilayah-kerja"></div>
+        </div>
+
         </div>
 
         <div id="panel-alert-supervisor" class="hidden" style="border:1px solid var(--amber); padding:10px; margin-top:8px;">
