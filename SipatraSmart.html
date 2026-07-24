@@ -158,6 +158,19 @@
   }
   .icon-square-btn:hover{ background:#E5E7EB; border-color:var(--text-dim); }
 
+  /* ===== Dropdown ringkas untuk daftar Zona Bahaya/Markas/Aman/Wilayah Kerja ===== */
+  .zona-dropdown-toggle{
+    display:flex; align-items:center; justify-content:space-between; width:100%;
+    background:#F9FAFB; border:1px solid var(--line-bright); border-radius:8px;
+    padding:10px 12px; margin-top:8px; cursor:pointer; font-family:var(--mono);
+    font-size:12px; font-weight:700; color:var(--text); box-sizing:border-box;
+  }
+  .zona-dropdown-toggle:hover{ background:#F3F4F6; }
+  .zona-dropdown-toggle .chevron{ transition:transform .2s ease; color:var(--text-dim); }
+  .zona-dropdown-toggle.open .chevron{ transform:rotate(180deg); }
+  .zona-dropdown-list{ display:none; }
+  .zona-dropdown-list.open{ display:block; }
+
   /* ===== Popup Pilihan Moda Transportasi (tombol Aktifkan Tracking) ===== */
   #moda-popup{
     position:absolute; z-index:250;
@@ -947,7 +960,14 @@ MAIN CONTENT
             <button id="btn-batal-zona" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
-        <div id="daftar-zona-bahaya" style="margin-top:8px;"></div>
+        <button type="button" class="zona-dropdown-toggle" id="toggle-zona-bahaya">
+          <span>⚠️ <span id="jumlah-zona-bahaya">0</span> Zona Bahaya</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="zona-dropdown-list" id="daftar-zona-bahaya-wrap">
+          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama zona untuk lihat lokasinya di peta · klik area zona di peta untuk lihat Detail</div>
+          <div id="daftar-zona-bahaya"></div>
+        </div>
 
         <button id="btn-tandai-markas" class="track-btn icon-square-btn" style="background:var(--panel); color:var(--green); border:1px solid var(--green); margin-top:8px;" title="Tandai Zona Markas (Admin)">🏠</button>
         <div id="panel-tandai-markas" class="hidden" style="border:1px solid var(--green); padding:10px; margin-top:8px;">
@@ -976,7 +996,14 @@ MAIN CONTENT
             <button id="btn-batal-markas" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
-        <div id="daftar-zona-markas" style="margin-top:8px;"></div>
+        <button type="button" class="zona-dropdown-toggle" id="toggle-zona-markas">
+          <span>🏠 <span id="jumlah-zona-markas">0</span> Zona Markas</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="zona-dropdown-list" id="daftar-zona-markas-wrap">
+          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama zona untuk lihat lokasinya di peta · klik area zona di peta untuk lihat Detail</div>
+          <div id="daftar-zona-markas"></div>
+        </div>
 
         <button id="btn-tandai-aman" class="track-btn icon-square-btn" style="background:var(--panel); color:#4aa3ff; border:1px solid #4aa3ff; margin-top:8px;" title="Tandai Zona Aman / Evakuasi (Admin)">🛟</button>
         <div id="panel-tandai-aman" class="hidden" style="border:1px solid #4aa3ff; padding:10px; margin-top:8px;">
@@ -1005,7 +1032,14 @@ MAIN CONTENT
             <button id="btn-batal-aman" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
-        <div id="daftar-zona-aman" style="margin-top:8px;"></div>
+        <button type="button" class="zona-dropdown-toggle" id="toggle-zona-aman">
+          <span>🛟 <span id="jumlah-zona-aman">0</span> Zona Aman</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="zona-dropdown-list" id="daftar-zona-aman-wrap">
+          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama zona untuk lihat lokasinya di peta · klik area zona di peta untuk lihat Detail</div>
+          <div id="daftar-zona-aman"></div>
+        </div>
 
         <button id="btn-tandai-wilayah-kerja" class="track-btn icon-square-btn" style="background:var(--panel); color:#ffb84d; border:1px solid #ffb84d; margin-top:8px;" title="Tandai Wilayah Kerja / Gerbang OGS (Admin)">🚧</button>
         <div id="panel-tandai-wilayah-kerja" class="hidden" style="border:1px solid #ffb84d; padding:10px; margin-top:8px;">
@@ -1041,7 +1075,14 @@ MAIN CONTENT
             <button id="btn-batal-wilayah-kerja" class="icon-btn icon-square-btn" title="Batal">✖</button>
           </div>
         </div>
-        <div id="daftar-wilayah-kerja" style="margin-top:8px;"></div>
+        <button type="button" class="zona-dropdown-toggle" id="toggle-wilayah-kerja">
+          <span>🚧 <span id="jumlah-wilayah-kerja">0</span> Wilayah Kerja</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="zona-dropdown-list" id="daftar-wilayah-kerja-wrap">
+          <div style="font-size:9.5px; color:var(--text-dim); padding:4px 2px;">👆 Klik nama untuk lihat lokasinya di peta</div>
+          <div id="daftar-wilayah-kerja"></div>
+        </div>
 
         <div id="panel-alert-supervisor" class="hidden" style="border:1px solid var(--amber); padding:10px; margin-top:8px;">
           <div style="font-size:12px; font-weight:700; color:var(--amber); margin-bottom:8px;">⚠️ ALERT VERIFIKASI WO (Supervisor/Admin)</div>
@@ -3670,6 +3711,15 @@ MAIN CONTENT
       }
     });
 
+    // ---------- Toggle buka/tutup dropdown daftar Zona Bahaya/Markas/Aman/Wilayah Kerja ----------
+    [['toggle-zona-bahaya', 'daftar-zona-bahaya-wrap'], ['toggle-zona-markas', 'daftar-zona-markas-wrap'],
+     ['toggle-zona-aman', 'daftar-zona-aman-wrap'], ['toggle-wilayah-kerja', 'daftar-wilayah-kerja-wrap']].forEach(([idToggle, idList])=>{
+      document.getElementById(idToggle).addEventListener('click', ()=>{
+        document.getElementById(idToggle).classList.toggle('open');
+        document.getElementById(idList).classList.toggle('open');
+      });
+    });
+
     document.getElementById('btn-tandai-zona').addEventListener('click', ()=>{
       modeGambarZona = true;
       resetGambarZona();
@@ -3780,10 +3830,17 @@ MAIN CONTENT
 
         const row = document.createElement('div');
         row.className = 'zona-row';
+        row.style.cursor = 'pointer';
+        row.title = 'Klik untuk lihat lokasi di peta -- klik area zona di peta untuk lihat Detail';
         row.innerHTML = '<span>⚠️ ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">' + (infoTambahan || 'Tanpa data lantai/ketinggian') + '</div></span>';
+        row.addEventListener('click', ()=>{
+          map.fitBounds(zonaBahayaLayers[id].getBounds(), { maxZoom: 19 });
+          document.getElementById('sar-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         const btnHapus = document.createElement('button');
         btnHapus.textContent = '🗑'; btnHapus.title = 'Hapus';
-        btnHapus.addEventListener('click', async ()=>{
+        btnHapus.addEventListener('click', async (e)=>{
+          e.stopPropagation();
           if (!confirm('Hapus zona bahaya "' + z.nama + '"?')) return;
           try{ await deleteDoc(doc(db, 'zonaBahaya', id)); }
           catch(err){ alert('Gagal menghapus: ' + err.message); }
@@ -3804,6 +3861,7 @@ MAIN CONTENT
       updateStatCard('stat-zona', zonaBahayaCache.length);
       const labelZona = document.getElementById('stat-zona-label');
       if (labelZona) labelZona.textContent = zonaBahayaCache.length > 0 ? '● Waspada' : '● Terpantau';
+      document.getElementById('jumlah-zona-bahaya').textContent = zonaBahayaCache.length;
     });
 
     // Buka detail 1 Zona Bahaya (klik area zona di peta) -- keterangan + foto/video/dokumen.
@@ -4079,12 +4137,19 @@ MAIN CONTENT
         const row = document.createElement('div');
         row.className = 'zona-row';
         row.style.borderColor = 'var(--green)';
+        row.style.cursor = 'pointer';
+        row.title = 'Klik untuk lihat lokasi di peta -- klik area zona di peta untuk lihat Detail';
         row.innerHTML = '<span>🏠 ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">radius ' + z.radiusMeter + 'm</div></span>';
+        row.addEventListener('click', ()=>{
+          map.setView([z.lat, z.lon], 19);
+          document.getElementById('sar-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         const btnHapus = document.createElement('button');
         btnHapus.textContent = '🗑'; btnHapus.title = 'Hapus';
         btnHapus.style.borderColor = 'var(--green)';
         btnHapus.style.color = 'var(--green)';
-        btnHapus.addEventListener('click', async ()=>{
+        btnHapus.addEventListener('click', async (e)=>{
+          e.stopPropagation();
           if (!confirm('Hapus Zona Markas "' + z.nama + '"?')) return;
           try{ await deleteDoc(doc(db, 'zonaMarkas', id)); }
           catch(err){ alert('Gagal menghapus: ' + err.message); }
@@ -4101,11 +4166,11 @@ MAIN CONTENT
       });
 
       if (typeof renderKelolaZonaAdmin === 'function') renderKelolaZonaAdmin();
+      document.getElementById('jumlah-zona-markas').textContent = zonaMarkasCache.length;
     });
 
     // ==========================================================
     // Wilayah Kerja (Fase A) -- dukung 2 bentuk: lingkaran (anchor+radius) ATAU poligon bebas
-    // ==========================================================
     let modeGambarWilayahKerja = false;
     let titikWilayahKerjaSementara = null;   // {lat, lon} -- mode lingkaran
     let titikPoligonWilayahKerjaSementara = []; // array {lat, lon} -- mode poligon
@@ -4271,13 +4336,20 @@ MAIN CONTENT
         const row = document.createElement('div');
         row.className = 'zona-row';
         row.style.borderColor = '#ffb84d';
+        row.style.cursor = 'pointer';
+        row.title = 'Klik untuk lihat lokasi di peta';
         const labelBentuk = tipe === 'lingkaran' ? ('radius ' + z.radiusMeter + 'm') : (( z.titik||[]).length + ' titik poligon');
         row.innerHTML = '<span>🚧 ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">' + labelBentuk + '</div></span>';
+        row.addEventListener('click', ()=>{
+          map.fitBounds(wilayahKerjaLayers[id].getBounds(), { maxZoom: 18 });
+          document.getElementById('sar-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         const btnHapus = document.createElement('button');
         btnHapus.textContent = '🗑'; btnHapus.title = 'Hapus';
         btnHapus.style.borderColor = '#ffb84d';
         btnHapus.style.color = '#ffb84d';
-        btnHapus.addEventListener('click', async ()=>{
+        btnHapus.addEventListener('click', async (e)=>{
+          e.stopPropagation();
           if (!confirm('Hapus Wilayah Kerja "' + z.nama + '"?')) return;
           try{ await deleteDoc(doc(db, 'wilayahKerja', id)); }
           catch(err){ alert('Gagal menghapus: ' + err.message); }
@@ -4295,6 +4367,7 @@ MAIN CONTENT
 
       // Cache dipakai auto/manual check-in -- ambil entri PERTAMA yang ditemukan
       wilayahKerjaCache = entriPertama;
+      document.getElementById('jumlah-wilayah-kerja').textContent = idAktif.size;
     }, (err)=>{
       // PENTING: sebelumnya listener ini TIDAK punya penanganan error sama sekali -- kalau Firestore
       // Rules menolak izin baca 'wilayahKerja' untuk role tertentu (mis. 'user'), kegagalannya diam-diam
@@ -4501,12 +4574,19 @@ MAIN CONTENT
         const row = document.createElement('div');
         row.className = 'zona-row';
         row.style.borderColor = '#4aa3ff';
+        row.style.cursor = 'pointer';
+        row.title = 'Klik untuk lihat lokasi di peta -- klik area zona di peta untuk lihat Detail';
         row.innerHTML = '<span>🛟 ' + z.nama + '<div style="font-size:9.5px; color:var(--text-dim); font-weight:400;">radius ' + z.radiusMeter + 'm</div></span>';
+        row.addEventListener('click', ()=>{
+          map.setView([z.lat, z.lon], 19);
+          document.getElementById('sar-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         const btnHapus = document.createElement('button');
         btnHapus.textContent = '🗑'; btnHapus.title = 'Hapus';
         btnHapus.style.borderColor = '#4aa3ff';
         btnHapus.style.color = '#4aa3ff';
-        btnHapus.addEventListener('click', async ()=>{
+        btnHapus.addEventListener('click', async (e)=>{
+          e.stopPropagation();
           if (!confirm('Hapus Zona Aman "' + z.nama + '"?')) return;
           try{ await deleteDoc(doc(db, 'zonaAman', id)); }
           catch(err){ alert('Gagal menghapus: ' + err.message); }
@@ -4524,6 +4604,7 @@ MAIN CONTENT
 
       // Perbarui juga daftar konsolidasi di Panel Admin (kalau sedang terbuka)
       if (typeof renderKelolaZonaAdmin === 'function') renderKelolaZonaAdmin();
+      document.getElementById('jumlah-zona-aman').textContent = zonaAmanCache.length;
     });
 
     // Render daftar konsolidasi Markas/Aman/Bahaya ke dalam Panel Admin (dipanggil ulang tiap ada perubahan data)
