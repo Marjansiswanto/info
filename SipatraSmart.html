@@ -1442,33 +1442,35 @@ MAIN CONTENT
 <div id="modal-executive-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
   <div class="panel modal-fullscreen-panel" style="max-width:640px; width:100%; max-height:92vh; overflow-y:auto;">
     <div class="panel-head panel-head-wo"><h3>📈 Executive Dashboard</h3><button id="btn-tutup-executive" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="padding:16px 20px 20px;">
 
-    <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Overview per Plant</div>
-    <div id="daftar-overview-plant" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;"></div>
+    <div style="font-size:13px; font-weight:800; color:var(--text); margin-bottom:10px;">Overview per Plant</div>
+    <div id="daftar-overview-plant" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;"></div>
 
-    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px;">
       <div style="flex:1; min-width:200px; cursor:pointer;" onclick="window.bukaPanelWODariExecutive(null)" title="Klik untuk lihat detail semua Work Order">
-        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Status Work Order <span style="font-size:9px;">(klik utk detail →)</span></div>
+        <div style="font-size:13px; font-weight:800; color:var(--text); margin-bottom:10px;">Status Work Order <span style="font-size:10px; font-weight:400; color:var(--text-dim);">(klik utk detail →)</span></div>
         <canvas id="chart-donut-wo" style="max-height:200px;"></canvas>
       </div>
       <div style="flex:1; min-width:140px; display:flex; flex-direction:column; gap:8px; justify-content:center;">
-        <div style="border:1px solid var(--red); padding:8px 10px;">
-          <div style="font-size:10px; color:var(--red);">🆘 SOS Aktif</div>
+        <div style="border:1px solid var(--red); border-radius:10px; padding:10px 12px;">
+          <div style="font-size:10.5px; color:var(--red); font-weight:600;">🆘 SOS Aktif</div>
           <div id="exec-sos-aktif" style="font-size:20px; font-weight:800; color:var(--red);">0</div>
         </div>
-        <div style="border:1px solid var(--amber); padding:8px 10px;">
-          <div style="font-size:10px; color:var(--amber);">😓 Fatigue Tinggi</div>
+        <div style="border:1px solid var(--amber); border-radius:10px; padding:10px 12px;">
+          <div style="font-size:10.5px; color:var(--amber); font-weight:600;">😓 Fatigue Tinggi</div>
           <div id="exec-fatigue-tinggi" style="font-size:20px; font-weight:800; color:var(--amber);">0</div>
         </div>
-        <div style="border:1px solid var(--orange); padding:8px 10px;">
-          <div style="font-size:10px; color:var(--orange);">⚠️ Laporan Bahaya Aktif</div>
+        <div style="border:1px solid var(--orange); border-radius:10px; padding:10px 12px;">
+          <div style="font-size:10.5px; color:var(--orange); font-weight:600;">⚠️ Laporan Bahaya Aktif</div>
           <div id="exec-bahaya-aktif" style="font-size:20px; font-weight:800; color:var(--orange);">0</div>
         </div>
       </div>
     </div>
 
-    <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Tren Harian Work Order (14 hari terakhir)</div>
+    <div style="font-size:13px; font-weight:800; color:var(--text); margin-bottom:10px;">Tren Harian Work Order (14 hari terakhir)</div>
     <canvas id="chart-tren-wo" style="max-height:220px;"></canvas>
+    </div>
   </div>
 </div>
 
@@ -6535,11 +6537,11 @@ MAIN CONTENT
       contPlant.innerHTML = namaPlant.map(nama=>{
         const p = perPlant[nama];
         const waspada = p.adaTinggi;
-        return '<div onclick="window.bukaPanelWODariExecutive(\'' + nama.replace(/'/g,"") + '\')" style="flex:1; min-width:110px; text-align:center; border:1px solid ' + (waspada ? 'var(--red)' : 'var(--green)') + '; padding:10px; cursor:pointer;">'
-          + '<div style="font-size:10px; color:var(--text-dim);">' + nama + '</div>'
-          + '<div style="font-size:20px; font-weight:800;">' + p.aktif + '/' + p.total + '</div>'
-          + '<div style="font-size:9.5px; color:' + (waspada ? 'var(--red)' : 'var(--green)') + '; font-weight:700;">' + (waspada ? '● Waspada' : '● Aman') + '</div>'
-          + '<div style="font-size:8.5px; color:var(--text-dim); margin-top:4px;">Klik utk detail →</div>'
+        return '<div onclick="window.bukaPanelWODariExecutive(\'' + nama.replace(/'/g,"") + '\')" style="flex:1; min-width:110px; text-align:center; border:1px solid ' + (waspada ? 'var(--red)' : 'var(--green)') + '; border-radius:10px; padding:12px 10px; cursor:pointer;">'
+          + '<div style="font-size:10.5px; color:var(--text-dim); font-weight:600;">' + nama + '</div>'
+          + '<div style="font-size:20px; font-weight:800; color:var(--text); margin-top:2px;">' + p.aktif + '/' + p.total + '</div>'
+          + '<div style="font-size:10px; color:' + (waspada ? 'var(--red)' : 'var(--green)') + '; font-weight:700; margin-top:2px;">' + (waspada ? '● Waspada' : '● Aman') + '</div>'
+          + '<div style="font-size:9px; color:var(--text-dim); margin-top:6px;">Klik utk detail →</div>'
           + '</div>';
       }).join('');
     }
