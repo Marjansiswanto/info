@@ -133,6 +133,14 @@
   </div>
 </div>
 
+<!-- ===== Backsound (musik latar) -- autoplay browser SELALU diblokir tanpa interaksi user
+     dulu; JS di bawah pakai fallback: coba autoplay, kalau gagal langsung mulai begitu
+     user klik/sentuh di mana pun pertama kali. Tombol kecil di pojok untuk mute/unmute manual. ===== -->
+<audio id="audio-backsound" loop preload="auto" style="display:none;">
+  <source src="backsound.mp3" type="audio/mpeg">
+</audio>
+<button id="btn-toggle-backsound" title="Mute/Unmute Musik" style="position:fixed; bottom:16px; right:16px; z-index:9999; width:44px; height:44px; border-radius:50%; border:none; background:#22d3ee; color:#04141a; font-size:18px; cursor:pointer; box-shadow:0 4px 14px rgba(34,211,238,0.4);">🔊</button>
+
 <script>
   function scieOpenGlobe(){
     const overlay = document.getElementById('scie-modal-overlay');
@@ -156,6 +164,47 @@
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape') scieCloseGlobe();
   });
+</script>
+
+<script>
+(function(){
+  var audio = document.getElementById('audio-backsound');
+  var btn = document.getElementById('btn-toggle-backsound');
+  var dimatikanManual = false; // true kalau user sengaja klik tombol utk mute
+
+  function cobaPutar(){
+    if (dimatikanManual) return;
+    var p = audio.play();
+    if (p && p.catch) p.catch(function(){ /* diblokir browser -- akan dicoba lagi saat user klik pertama */ });
+  }
+
+  // Coba autoplay langsung (kebanyakan browser akan menolak ini tanpa interaksi user dulu)
+  cobaPutar();
+
+  // Begitu user klik/sentuh APA PUN pertama kali di halaman -- ini SELALU dianggap
+  // "interaksi user" oleh browser, jadi audio pasti bisa mulai di sini.
+  function mulaiSaatInteraksiPertama(){
+    cobaPutar();
+    document.removeEventListener('click', mulaiSaatInteraksiPertama);
+    document.removeEventListener('touchstart', mulaiSaatInteraksiPertama);
+  }
+  document.addEventListener('click', mulaiSaatInteraksiPertama);
+  document.addEventListener('touchstart', mulaiSaatInteraksiPertama);
+
+  // Tombol manual mute/unmute
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (audio.paused){
+      dimatikanManual = false;
+      audio.play();
+      btn.textContent = '🔊';
+    } else {
+      dimatikanManual = true;
+      audio.pause();
+      btn.textContent = '🔇';
+    }
+  });
+})();
 </script>
 
 </body>
