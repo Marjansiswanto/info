@@ -88,9 +88,22 @@
   input:not([type="radio"]):not([type="checkbox"]):not([type="file"]):not([type="range"]):not([type="color"]), select, textarea{
     background:#FFFFFF !important; border:1px solid var(--line-bright) !important;
     color:var(--text) !important; border-radius:8px !important;
-    padding:11px 14px !important; box-sizing:border-box !important;
+    padding:11px 14px !important; box-sizing:border-box !important; text-align:left !important;
   }
   input::placeholder, textarea::placeholder{ color:var(--text-dim); opacity:1; }
+
+  /* Dropdown (select) -- panah bawaan Android/Chrome ukurannya tidak konsisten dan bisa
+     bikin teks kepepet/kepotong di sisi kanan. Ganti jadi panah custom via CSS supaya
+     ruang untuk teks selalu pasti, di semua panel. */
+  select{
+    -webkit-appearance:none !important; appearance:none !important;
+    text-align:left !important;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+    background-repeat:no-repeat !important;
+    background-position:right 12px center !important;
+    background-size:16px !important;
+    padding-right:38px !important;
+  }
 
   /* ===== Dashboard ===== */
   #dashboard{ padding:24px; max-width:1400px; margin:0 auto; width:100%; }
