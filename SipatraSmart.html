@@ -1146,34 +1146,35 @@ MAIN CONTENT
 <div id="modal-panel-bahaya-overlay" class="hidden modal-fullscreen-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:4700; display:flex; align-items:center; justify-content:center; padding:16px;">
   <div class="panel modal-fullscreen-panel" style="max-width:640px; width:100%; max-height:92vh; overflow-y:auto;">
     <div class="panel-head"><h3>📊 Panel Analitik Laporan Bahaya</h3><button id="btn-tutup-panel-bahaya" class="icon-btn icon-square-btn" title="Tutup">✕</button></div>
+    <div style="padding:16px 20px 20px;">
 
-    <div style="display:flex; gap:12px; margin-bottom:14px; font-size:11px;">
-      <div style="flex:1; text-align:center; border:1px solid var(--line-bright); padding:8px;">
-        <div style="color:var(--text-dim);">Total Laporan</div>
-        <div id="stat-bahaya-total" style="font-size:20px; font-weight:800;">0</div>
+    <div style="display:flex; gap:10px; margin-bottom:20px; font-size:11px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:70px; text-align:center; border:1px solid var(--line-bright); border-radius:10px; padding:12px 8px;">
+        <div style="color:var(--text-dim); font-weight:600; font-size:10.5px;">Total Laporan</div>
+        <div id="stat-bahaya-total" style="font-size:20px; font-weight:800; margin-top:2px;">0</div>
       </div>
-      <div style="flex:1; text-align:center; border:1px solid var(--red); padding:8px;">
-        <div style="color:var(--red);">Tinggi</div>
-        <div id="stat-bahaya-tinggi" style="font-size:20px; font-weight:800; color:var(--red);">0</div>
+      <div style="flex:1; min-width:70px; text-align:center; border:1px solid var(--red); border-radius:10px; padding:12px 8px;">
+        <div style="color:var(--red); font-weight:600; font-size:10.5px;">Tinggi</div>
+        <div id="stat-bahaya-tinggi" style="font-size:20px; font-weight:800; color:var(--red); margin-top:2px;">0</div>
       </div>
-      <div style="flex:1; text-align:center; border:1px solid var(--amber); padding:8px;">
-        <div style="color:var(--amber);">Sedang</div>
-        <div id="stat-bahaya-sedang" style="font-size:20px; font-weight:800; color:var(--amber);">0</div>
+      <div style="flex:1; min-width:70px; text-align:center; border:1px solid var(--amber); border-radius:10px; padding:12px 8px;">
+        <div style="color:var(--amber); font-weight:600; font-size:10.5px;">Sedang</div>
+        <div id="stat-bahaya-sedang" style="font-size:20px; font-weight:800; color:var(--amber); margin-top:2px;">0</div>
       </div>
-      <div style="flex:1; text-align:center; border:1px solid var(--green); padding:8px;">
-        <div style="color:var(--green);">Rendah</div>
-        <div id="stat-bahaya-rendah" style="font-size:20px; font-weight:800; color:var(--green);">0</div>
+      <div style="flex:1; min-width:70px; text-align:center; border:1px solid var(--green); border-radius:10px; padding:12px 8px;">
+        <div style="color:var(--green); font-weight:600; font-size:10.5px;">Rendah</div>
+        <div id="stat-bahaya-rendah" style="font-size:20px; font-weight:800; color:var(--green); margin-top:2px;">0</div>
       </div>
     </div>
 
-    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px;">
       <div style="flex:1; min-width:200px;">
-        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Persentase per Tingkat Bahaya</div>
+        <div style="font-size:13px; font-weight:800; color:var(--text); margin-bottom:10px;">Persentase per Tingkat Bahaya</div>
         <canvas id="chart-pie-bahaya" style="max-height:220px;"></canvas>
       </div>
       <div style="flex:1; min-width:200px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-size:11px; color:var(--text-dim);">Jumlah Laporan</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:13px; font-weight:800; color:var(--text);">Jumlah Laporan</span>
           <select id="select-periode-bahaya" style="background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); font-size:10px; padding:3px 6px;">
             <option value="harian">Per Hari (30 hari)</option>
             <option value="bulanan">Per Bulan</option>
@@ -1184,8 +1185,9 @@ MAIN CONTENT
       </div>
     </div>
 
-    <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Daftar Laporan (terbaru dulu)</div>
-    <div id="daftar-laporan-bahaya" style="padding:0 20px 16px;"></div>
+    <div style="font-size:13px; font-weight:800; color:var(--text); margin-bottom:10px;">Daftar Laporan (terbaru dulu)</div>
+    </div>
+    <div id="daftar-laporan-bahaya" style="padding:0 20px 20px;"></div>
   </div>
 </div>
 
