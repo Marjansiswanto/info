@@ -914,9 +914,9 @@ MAIN CONTENT
         <div id="sv-status" style="font-size:10px; color:var(--text-dim); margin-top:3px;"></div>
         <div id="panel-gambar-zona" class="hidden" style="border:1px solid var(--red); padding:10px; margin-top:8px;">
           <input type="text" id="input-nama-zona" placeholder="Nama zona bahaya (mis. MCC KILN Lantai 5)" style="width:100%; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box; margin-bottom:8px;">
-          <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <input type="number" id="input-lantai-zona" placeholder="Lantai (mis. 1, 5)" style="flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
-            <input type="number" id="input-ketinggian-zona" placeholder="Ketinggian dari ground (meter)" style="flex:1; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
+          <div style="display:flex; gap:8px; margin-bottom:8px; width:100%; box-sizing:border-box; flex-wrap:wrap;">
+            <input type="number" id="input-lantai-zona" placeholder="Lantai (mis. 1, 5)" style="flex:1 1 0; width:0; min-width:100px; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
+            <input type="number" id="input-ketinggian-zona" placeholder="Ketinggian dari ground (m)" style="flex:1 1 0; width:0; min-width:100px; background:#000; border:1px solid var(--line-bright); color:var(--text); font-family:var(--mono); padding:8px; box-sizing:border-box;">
           </div>
           <div style="font-size:10px; color:var(--text-dim); margin-bottom:8px;">
             Lantai/ketinggian diisi manual (bukan dari GPS) — akurasi ketinggian GPS terlalu kasar untuk membedakan antar-lantai bangunan industri.
